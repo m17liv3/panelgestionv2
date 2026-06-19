@@ -38,3 +38,8 @@ Se ha integrado el nuevo apartado "Plantillas Series" dentro del menu del panel.
 Incluye busqueda de series por TMDB, carga automatica de datos, galeria de posters, ajuste de portada, descarga JPEG, subida a imgBB y copia de enlace.
 
 El generador de series utiliza la misma clave TMDB y la misma clave imgBB configuradas en config.js.
+
+
+Actualizacion revision preview series:
+- Corregida la previsualizacion de Plantillas Series para que el canvas ocupe todo el marco 16:9.
+- Ocultado correctamente el input de subida de logo en Plantillas Series.
