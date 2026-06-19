@@ -25,3 +25,9 @@ Para probar:
 
 Para cambiar la contrasena:
 - Hay que cambiar adminPassHash en config.js por el SHA-256 de la nueva contrasena.
+
+
+Actualizacion nueva:
+- Integrado el generador de Plantillas Peliculas dentro del propio index.html.
+- Mantiene busqueda TMDB, galeria de posters, ajuste de portada, logo, descarga JPEG, subida a imgBB y copiar enlace.
+- Las claves TMDB/imgBB estan ahora en config.js, visibles si se publica como web estatica.

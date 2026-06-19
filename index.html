@@ -86,7 +86,7 @@
     <div class="menuItem" onclick="exportExcel()"><span class="ico2">&#11015;</span> Exportar a Excel</div>
     <div class="menuItem" onclick="document.getElementById('importInput').click()"><span class="ico2">&#11014;</span> Importar desde Excel</div>
     <div class="menuItem" onclick="openCartelera()"><span class="ico2">&#128249;</span> Cartelera del dia</div>
-    <div class="menuItem" onclick="window.location.href='plantillas.html'"><span class="ico2">&#127916;</span> Plantillas Películas</div>
+    <div class="menuItem" onclick="openMovieTemplates()"><span class="ico2">&#127916;</span> Plantillas Peliculas</div>
     <div class="menuItem" onclick="doLogout()"><span class="ico2">&#128682;</span> Cerrar sesion</div>
     <input type="file" id="importInput" accept=".xlsx,.xls" onchange="importExcel(event)"/>
   </div>
@@ -269,6 +269,110 @@
       </div>
     </div>
     <button onclick="cartResetVisits()" style="margin-top:10px;background:none;border:none;color:rgba(255,71,87,0.5);font-size:11px;cursor:pointer;width:100%;text-align:right;">&#128465; Resetear contador de hoy</button>
+  </div>
+</div>
+
+
+<!-- PLANTILLAS PELICULAS SHEET -->
+<div class="sheet-overlay" id="movieTplOverlay" onclick="closeSheet('movieTplSheet','movieTplOverlay')"></div>
+<div class="sheet movieTplSheet" id="movieTplSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <h3>&#127916; Plantillas Peliculas</h3>
+    <button class="sheet-close" onclick="closeSheet('movieTplSheet','movieTplOverlay')">x</button>
+  </div>
+  <div class="sheet-body movieTplBody">
+    <div class="movieTplIntro">
+      <div>
+        <div class="movieTplBrand">M17<span>LIV3</span></div>
+        <p>Generador de plantilla: pelicula recomendada de la semana</p>
+      </div>
+      <button class="movieTplMiniBtn" onclick="movieTplResetAll()">&#8635; Limpiar plantilla</button>
+    </div>
+
+    <div class="movieTplGrid">
+      <div class="movieTplControls">
+        <div class="movieTplPanel">
+          <h4>Buscar pelicula (TMDB)</h4>
+          <label for="tplSearchInput">Titulo</label>
+          <input type="text" id="tplSearchInput" placeholder="Ej: Interstellar"/>
+          <button class="movieTplBtn outline" id="tplSearchBtn" type="button">Buscar</button>
+          <div class="movieTplResults" id="tplSearchResults"></div>
+        </div>
+
+        <div class="movieTplPanel">
+          <h4>Datos de la plantilla</h4>
+          <label for="tplTitle">Titulo de la pelicula</label>
+          <input type="text" id="tplTitle" placeholder="TITULO DE LA PELICULA"/>
+
+          <label for="tplGenre">Genero</label>
+          <input type="text" id="tplGenre" placeholder="GENERO"/>
+
+          <div class="movieTplRow2">
+            <div>
+              <label for="tplRating">Puntuacion (0-10)</label>
+              <input type="text" id="tplRating" placeholder="0.0"/>
+            </div>
+            <div>
+              <label for="tplDuration">Duracion (min)</label>
+              <input type="text" id="tplDuration" placeholder="00"/>
+            </div>
+          </div>
+
+          <label for="tplSynopsis">Sinopsis</label>
+          <textarea id="tplSynopsis" placeholder="Sinopsis de la pelicula..."></textarea>
+
+          <label for="tplPosterUrl">URL del poster / portada</label>
+          <input type="text" id="tplPosterUrl" placeholder="Se rellena automaticamente al buscar"/>
+
+          <label id="tplPosterGalleryLabel" class="movieTplGalleryLabel" style="display:none;">Elegir otro poster</label>
+          <div class="movieTplPosterGallery" id="tplPosterGallery"></div>
+        </div>
+
+        <div class="movieTplPanel">
+          <h4>Logo</h4>
+          <div class="movieTplFileRow">
+            <img id="tplLogoPreviewSmall" src="assets/logo.png" alt="Logo"/>
+            <label class="movieTplFileLabel" for="tplLogoInput">&#128193; Subir logo PNG</label>
+            <input type="file" id="tplLogoInput" accept="image/png,image/*"/>
+          </div>
+          <p class="movieTplNote">Si no subes otro, se usa el logo principal de M17LIV3. El logo elegido se guarda en este navegador.</p>
+        </div>
+      </div>
+
+      <div class="movieTplPreviewWrap">
+        <div class="movieTplStageContainer">
+          <canvas id="tplCanvas" width="1600" height="900"></canvas>
+        </div>
+
+        <div class="movieTplPanel movieTplAdjustPanel">
+          <h4>Ajustar encuadre de la portada</h4>
+          <div class="movieTplAdjustGrid">
+            <div>
+              <label for="tplPosterZoom">Zoom (<span id="tplPosterZoomVal">100</span>%)</label>
+              <input type="range" id="tplPosterZoom" min="50" max="250" value="100" step="1"/>
+            </div>
+            <div>
+              <label for="tplPosterOffsetX">Horizontal</label>
+              <input type="range" id="tplPosterOffsetX" min="-100" max="100" value="0" step="1"/>
+            </div>
+            <div>
+              <label for="tplPosterOffsetY">Vertical</label>
+              <input type="range" id="tplPosterOffsetY" min="-100" max="100" value="0" step="1"/>
+            </div>
+          </div>
+          <button class="movieTplBtn secondary" id="tplPosterResetBtn" type="button">&#8634; Restablecer encuadre</button>
+        </div>
+
+        <div class="movieTplActions">
+          <button class="movieTplBtn secondary" id="tplDownloadBtn" type="button">&#11015; Descargar JPEG</button>
+          <button class="movieTplBtn primary" id="tplUploadBtn" type="button">&#9729; Subir a imgBB</button>
+          <button class="movieTplBtn secondary" id="tplCopyBtn" type="button" disabled>&#128203; Copiar enlace</button>
+        </div>
+        <div class="movieTplStatus" id="tplStatus"></div>
+        <div class="movieTplLinkBox" id="tplLinkBox"></div>
+      </div>
+    </div>
   </div>
 </div>
 
