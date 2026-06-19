@@ -1,0 +1,203 @@
+:root {
+  --bg: #0d0d14;
+  --card: #16161f;
+  --card2: #1e1e2a;
+  --border: #2a2a3d;
+  --cyan: #00e5ff;
+  --green: #69ff47;
+  --orange: #ffaa00;
+  --red: #ff4d4d;
+  --text: #eeeef5;
+  --muted: #7777aa;
+  --radius: 14px;
+  --safe: env(safe-area-inset-bottom, 0px);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; overflow: hidden; }
+body { background: var(--bg); color: var(--text); font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 15px; }
+
+#loginPage {
+  height: 100vh; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; padding: 24px;
+  background: radial-gradient(ellipse at 50% 30%, #0d1e35 0%, var(--bg) 70%);
+}
+#loginBox { width: 100%; max-width: 360px; }
+#loginBox img { width: 100px; display: block; margin: 0 auto 20px; }
+#loginBox h2 { text-align: center; color: var(--cyan); font-size: 1.1rem; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 4px; }
+#loginBox p { text-align: center; color: var(--muted); font-size: .8rem; margin-bottom: 28px; }
+.inp { width: 100%; padding: 14px 16px; background: var(--card); border: 1.5px solid var(--border);
+  border-radius: 12px; color: var(--text); font-size: 1rem; outline: none; margin-bottom: 12px; }
+.inp:focus { border-color: var(--cyan); }
+#loginErr { color: var(--red); font-size: .82rem; text-align: center; margin-bottom: 10px; display: none; }
+.btnMain { width: 100%; padding: 15px; border: none; border-radius: 12px; font-size: 1rem; font-weight: 700;
+  cursor: pointer; background: linear-gradient(135deg, var(--cyan), var(--green)); color: #0d0d14; }
+
+#appPage { display: none; height: 100vh; flex-direction: column; }
+#appPage.active { display: flex !important; }
+
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; background: var(--card); border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.topbar img { height: 38px; }
+.topbar-title { font-size: .8rem; color: var(--cyan); letter-spacing: 2px; text-transform: uppercase; }
+.topbar-right { display: flex; gap: 8px; }
+.iconBtn { width: 38px; height: 38px; border-radius: 10px; border: 1px solid var(--border);
+  background: var(--card2); color: var(--text); font-size: 1.1rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; }
+
+#mainScroll { flex: 1; overflow-y: auto; padding: 14px 14px 80px; -webkit-overflow-scrolling: touch; }
+
+.statsRow { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+.statCard { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 14px; display: flex; flex-direction: column; cursor: pointer; transition: border-color .2s; }
+.statCard:active { transform: scale(0.97); }
+.statCard .val { font-size: 1.8rem; font-weight: 800; line-height: 1; }
+.statCard .lbl { font-size: .7rem; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; margin-top: 4px; }
+
+.searchBar { display: flex; gap: 8px; margin-bottom: 14px; }
+.searchBar input { flex: 1; padding: 12px 14px; background: var(--card); border: 1.5px solid var(--border);
+  border-radius: 12px; color: var(--text); font-size: .9rem; outline: none; }
+.searchBar input:focus { border-color: var(--cyan); }
+.filterBtn { width: 44px; height: 44px; border-radius: 12px; border: 1.5px solid var(--border);
+  background: var(--card); color: var(--muted); font-size: 1.1rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.filterBtn.active { border-color: var(--cyan); color: var(--cyan); }
+
+.filterPills { display: flex; gap: 8px; margin-bottom: 14px; overflow-x: auto; padding-bottom: 4px; }
+.filterPills::-webkit-scrollbar { display: none; }
+.pill { padding: 6px 14px; border-radius: 20px; border: 1.5px solid var(--border);
+  background: var(--card); color: var(--muted); font-size: .78rem; cursor: pointer; white-space: nowrap; }
+.pill.active { border-color: var(--cyan); color: var(--cyan); background: rgba(0,229,255,0.08); }
+
+.activeFilterBar { display:none; align-items:center; gap:8px; margin-bottom:14px; padding:8px 12px;
+  background:rgba(0,229,255,0.07); border:1px solid rgba(0,229,255,0.2); border-radius:10px; font-size:.82rem; color:var(--cyan); }
+.activeFilterBar button { padding:3px 10px; border-radius:20px; border:1px solid var(--cyan);
+  background:transparent; color:var(--cyan); font-size:.75rem; cursor:pointer; margin-left:auto; }
+
+.clientCard {
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+  margin-bottom: 10px; overflow: hidden;
+}
+.clientCard-header { display: flex; align-items: center; padding: 14px 14px 10px; gap: 12px; }
+.clientCard-avatar {
+  width: 44px; height: 44px; border-radius: 12px; background: var(--card2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem; font-weight: 700; color: var(--cyan); flex-shrink: 0;
+  border: 1px solid var(--border);
+}
+.clientCard-info { flex: 1; min-width: 0; }
+.clientCard-name { font-weight: 700; font-size: .95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.clientCard-app { font-size: .75rem; color: var(--muted); margin-top: 2px; }
+.clientCard-badges { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+.badge { display: inline-block; padding: 3px 9px; border-radius: 20px; font-size: .68rem; font-weight: 700; }
+.badgeTodo { background: rgba(0,229,255,0.12); color: var(--cyan); }
+.badgeEs { background: rgba(105,255,71,0.12); color: var(--green); }
+.badgeOk { background: rgba(105,255,71,0.12); color: var(--green); }
+.badgeWarn { background: rgba(255,170,0,0.12); color: var(--orange); }
+.badgeExp { background: rgba(255,77,77,0.12); color: var(--red); }
+
+.clientCard-body { padding: 0 14px 10px; display: flex; gap: 8px; flex-wrap: wrap; }
+.copyField { display: flex; align-items: center; gap: 6px; background: var(--card2);
+  border-radius: 8px; padding: 7px 10px; flex: 1; min-width: 120px; }
+.copyField-label { font-size: .65rem; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+.copyField-val { font-family: monospace; font-size: .82rem; color: var(--cyan); white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis; max-width: 100px; }
+.copyField-val.pass { color: var(--text); }
+.btnCopy { padding: 4px 9px; border-radius: 7px; border: 1px solid var(--border);
+  background: transparent; color: var(--muted); font-size: .7rem; cursor: pointer; flex-shrink: 0; }
+.btnCopy.done { color: var(--green); border-color: var(--green); }
+
+.clientCard-expiry { padding: 0 14px 10px; font-size: .78rem; color: var(--muted); }
+.clientCard-expiry span { color: var(--text); }
+
+.clientCard-actions { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; border-top: 1px solid var(--border); }
+.clientCard-actions button {
+  padding: 11px 4px; border: none; background: transparent; font-size: .75rem;
+  font-weight: 600; cursor: pointer; color: var(--muted); border-right: 1px solid var(--border);
+}
+.clientCard-actions button:last-child { border-right: none; }
+.clientCard-actions button.act-ver { color: var(--text); }
+.clientCard-actions button.act-edit { color: var(--cyan); }
+.clientCard-actions button.act-renew { color: var(--green); }
+.clientCard-actions button.act-del { color: var(--red); }
+
+.fab {
+  position: fixed; bottom: calc(20px + var(--safe)); right: 20px;
+  width: 58px; height: 58px; border-radius: 50%; border: none;
+  background: linear-gradient(135deg, var(--cyan), var(--green));
+  color: #0d0d14; font-size: 1.7rem; font-weight: 300; cursor: pointer;
+  box-shadow: 0 4px 20px rgba(0,229,255,0.4);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 90;
+}
+
+.empty { text-align: center; padding: 60px 20px; color: var(--muted); }
+.empty .ico { font-size: 2.5rem; margin-bottom: 10px; }
+
+.sheet-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 200; }
+.sheet-overlay.active { display: block; }
+.sheet {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 201;
+  background: var(--card); border-radius: 20px 20px 0 0;
+  border-top: 1px solid var(--border);
+  max-height: 92vh; overflow-y: auto;
+  transform: translateY(100%); transition: transform .3s cubic-bezier(.4,0,.2,1);
+  padding-bottom: calc(20px + var(--safe));
+}
+.sheet.open { transform: translateY(0); }
+.sheet-handle { width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 14px auto 0; }
+.sheet-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; }
+.sheet-header h3 { font-size: 1.05rem; color: var(--cyan); }
+.sheet-close { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--card2); color: var(--muted); font-size: 1rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; }
+.sheet-body { padding: 0 20px 20px; }
+
+.formGroup { margin-bottom: 14px; }
+.formGroup label { display: block; font-size: .75rem; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
+.formGroup input, .formGroup select, .formGroup textarea {
+  width: 100%; padding: 13px 14px; background: var(--bg); border: 1.5px solid var(--border);
+  border-radius: 12px; color: var(--text); font-size: .95rem; outline: none; font-family: inherit;
+}
+.formGroup input:focus, .formGroup select:focus, .formGroup textarea:focus { border-color: var(--cyan); }
+.formGroup textarea { resize: vertical; min-height: 80px; }
+.formRow2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.appsGrid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.appChip { padding: 8px 13px; background: var(--bg); border: 1.5px solid var(--border);
+  border-radius: 20px; cursor: pointer; font-size: .78rem; transition: all .15s; }
+.appChip.selected { border-color: var(--cyan); color: var(--cyan); background: rgba(0,229,255,0.08); }
+
+.appNote { background: rgba(0,229,255,0.07); border: 1px solid rgba(0,229,255,0.2);
+  border-radius: 10px; padding: 10px 14px; font-size: .8rem; color: var(--cyan); margin-bottom: 14px; display: none; }
+
+.formError { color: var(--red); font-size: .8rem; margin-top: 6px; display: none; }
+.required-star { color: var(--red); }
+
+.btnFull { width: 100%; padding: 14px; border: none; border-radius: 12px; font-size: .95rem;
+  font-weight: 700; cursor: pointer; margin-top: 8px; }
+.btnFull.primary { background: linear-gradient(135deg, var(--cyan), var(--green)); color: #0d0d14; }
+.btnFull.danger { background: rgba(255,77,77,0.15); color: var(--red); border: 1.5px solid var(--red); }
+.btnFull.gray { background: var(--card2); color: var(--text); border: 1px solid var(--border); }
+
+.renewSelector { margin: 16px 0; }
+.renewSelector label { display:block; font-size:.78rem; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin-bottom:10px; }
+.renewMonthsRow { display:flex; align-items:center; gap:14px; margin-bottom:18px; }
+.renewMonthsRow button { width:38px; height:38px; border-radius:10px; border:1.5px solid var(--border);
+  background:var(--card2); color:var(--text); font-size:1.2rem; cursor:pointer; flex-shrink:0; }
+.renewMonthsVal { font-size:2rem; font-weight:800; color:var(--cyan); min-width:50px; text-align:center; }
+.renewMonthsHint { font-size:.78rem; color:var(--muted); }
+
+.viewRow { display: flex; flex-direction: column; margin-bottom: 14px; }
+.viewRow .vlabel { font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 5px; }
+.viewRow .vval { font-size: .92rem; }
+.viewApp { background: var(--card2); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; }
+.viewApp-name { font-weight: 700; margin-bottom: 6px; }
+
+.menuItem { display: flex; align-items: center; gap: 14px; padding: 15px 0;
+  border-bottom: 1px solid var(--border); cursor: pointer; font-size: .95rem; }
+.menuItem:last-child { border-bottom: none; }
+.menuItem .ico2 { font-size: 1.2rem; width: 28px; text-align: center; }
+#importInput { display: none; }

@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>M17LIV3 Gestion Clientes</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link rel="stylesheet" href="styles.css"/>
+
+</head>
+<body>
+
+<div id="loginPage">
+  <div id="loginBox">
+    <img src="assets/logo.png" alt="M17LIV3"/>
+    <h2>Gestion Clientes</h2>
+    <p>M17LIV3 Panel de administracion</p>
+    <div id="loginErr">Usuario o contrasena incorrectos</div>
+    <input class="inp" type="text" id="lUser" placeholder="Usuario" autocomplete="username"/>
+    <input class="inp" type="password" id="lPass" placeholder="Contrasena" autocomplete="current-password"/>
+    <button type="button" class="btnMain" onclick="doLogin()">Entrar</button>
+  </div>
+</div>
+
+<div id="appPage">
+  <div class="topbar">
+    <img src="assets/logo.png" alt="M17LIV3"/>
+    <span class="topbar-title">Gestion Clientes M17LIV3</span>
+    <div class="topbar-right">
+      <button class="iconBtn" onclick="openMenu()">&#9776;</button>
+    </div>
+  </div>
+
+  <div id="mainScroll">
+    <div class="statsRow">
+      <div class="statCard" onclick="quickFilter('')">
+        <div class="val" id="stTotal" style="color:var(--cyan)">0</div>
+        <div class="lbl">Total Clientes</div>
+      </div>
+      <div class="statCard" onclick="quickFilter('ok')" style="border-color:rgba(105,255,71,0.3)">
+        <div class="val" id="stActive" style="color:var(--green)">0</div>
+        <div class="lbl" style="color:var(--green)">&#10003; Total clientes activos</div>
+      </div>
+      <div class="statCard" onclick="quickFilter('warn')" style="border-color:rgba(255,170,0,0.3)">
+        <div class="val" id="stSoon" style="color:var(--orange)">0</div>
+        <div class="lbl">&#9888; Expiran pronto</div>
+      </div>
+      <div class="statCard" onclick="quickFilter('exp')" style="border-color:rgba(255,77,77,0.3)">
+        <div class="val" id="stExp" style="color:var(--red)">0</div>
+        <div class="lbl">&#128683; Expirados</div>
+      </div>
+    </div>
+
+    <div id="activeFilterBar" class="activeFilterBar">
+      <span id="activeFilterLabel"></span>
+      <button onclick="quickFilter('')">&#10005; Quitar filtro</button>
+    </div>
+
+    <div class="searchBar">
+      <input type="search" id="searchBox" placeholder="Buscar cliente..." oninput="renderCards()"/>
+      <button class="filterBtn" id="filterToggleBtn" onclick="toggleFilters()">&#9881;</button>
+    </div>
+
+    <div class="filterPills" id="filterPills" style="display:none">
+      <div class="pill active" data-svc="" onclick="setPillSvc(this,'')">Todos</div>
+      <div class="pill" data-svc="TODO" onclick="setPillSvc(this,'TODO')">TODO</div>
+      <div class="pill" data-svc="ESPANA" onclick="setPillSvc(this,'ESPANA')">ESPA&Ntilde;A</div>
+    </div>
+
+    <div id="cardsContainer"></div>
+    <div class="empty" id="emptyState" style="display:none">
+      <div class="ico">&#128250;</div>
+      <div>No hay clientes</div>
+    </div>
+  </div>
+
+  <button class="fab" onclick="openNewClient()">+</button>
+</div>
+
+<!-- MENU -->
+<div class="sheet-overlay" id="menuOverlay" onclick="closeSheet('menuSheet','menuOverlay')"></div>
+<div class="sheet" id="menuSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header"><h3>Menu</h3><button class="sheet-close" onclick="closeSheet('menuSheet','menuOverlay')">x</button></div>
+  <div class="sheet-body">
+    <div class="menuItem" onclick="exportExcel()"><span class="ico2">&#11015;</span> Exportar a Excel</div>
+    <div class="menuItem" onclick="document.getElementById('importInput').click()"><span class="ico2">&#11014;</span> Importar desde Excel</div>
+    <div class="menuItem" onclick="openCartelera()"><span class="ico2">&#128249;</span> Cartelera del dia</div>
+    <div class="menuItem" onclick="window.location.href='plantillas.html'"><span class="ico2">&#127916;</span> Plantillas Películas</div>
+    <div class="menuItem" onclick="doLogout()"><span class="ico2">&#128682;</span> Cerrar sesion</div>
+    <input type="file" id="importInput" accept=".xlsx,.xls" onchange="importExcel(event)"/>
+  </div>
+</div>
+
+<!-- CLIENT SHEET -->
+<div class="sheet-overlay" id="clientOverlay" onclick="closeSheet('clientSheet','clientOverlay')"></div>
+<div class="sheet" id="clientSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <h3 id="clientSheetTitle">Nuevo Cliente</h3>
+    <button class="sheet-close" onclick="closeSheet('clientSheet','clientOverlay')">x</button>
+  </div>
+  <div class="sheet-body">
+    <input type="hidden" id="editId"/>
+    <div class="formGroup">
+      <label>Nombre / Apodo <span class="required-star">*</span></label>
+      <input type="text" id="fName" placeholder="Ej: Juan Garcia"/>
+    </div>
+    <div class="formRow2">
+      <div class="formGroup">
+        <label>Usuario <span class="required-star">*</span></label>
+        <input type="text" id="fUser" placeholder="usuario"/>
+      </div>
+      <div class="formGroup">
+        <label>Contrasena <span class="required-star">*</span></label>
+        <input type="text" id="fPass" placeholder="contrasena"/>
+      </div>
+    </div>
+    <div class="formRow2">
+      <div class="formGroup">
+        <label>Servicio <span class="required-star">*</span></label>
+        <select id="fService">
+          <option value="TODO">TODO</option>
+          <option value="ESPANA">ESPA&Ntilde;A</option>
+        </select>
+      </div>
+      <div class="formGroup">
+        <label>Expiracion <span class="required-star">*</span></label>
+        <input type="date" id="fExpiry"/>
+      </div>
+    </div>
+    <div class="formGroup">
+      <label>Apps instaladas <span class="required-star">*</span> (primera = principal)</label>
+      <div class="appsGrid" id="appsGrid"></div>
+    </div>
+    <div class="appNote" id="appNote"></div>
+    <div id="macCodeBox"></div>
+    <div id="otraAppBox" style="display:none">
+      <div class="formGroup">
+        <label>Nombre de la app <span class="required-star">*</span></label>
+        <input type="text" id="fOtraApp" placeholder="Nombre"/>
+      </div>
+      <div class="formRow2">
+        <div class="formGroup">
+          <label>Tiene MAC?</label>
+          <select id="fOtraHasMac" onchange="renderOtraExtras()"><option value="no">No</option><option value="si">Si</option></select>
+        </div>
+        <div class="formGroup">
+          <label>Tiene Codigo?</label>
+          <select id="fOtraHasCode" onchange="renderOtraExtras()"><option value="no">No</option><option value="si">Si</option></select>
+        </div>
+      </div>
+      <div id="otraExtrasBox"></div>
+    </div>
+    <div class="formGroup">
+      <label>Notas</label>
+      <textarea id="fNotes" placeholder="Informacion adicional..."></textarea>
+    </div>
+    <div class="formError" id="formError"></div>
+    <button class="btnFull primary" onclick="saveClient()">Guardar</button>
+    <button class="btnFull gray" onclick="closeSheet('clientSheet','clientOverlay')" style="margin-top:8px">Cancelar</button>
+  </div>
+</div>
+
+<!-- RENEW SHEET -->
+<div class="sheet-overlay" id="renewOverlay" onclick="closeSheet('renewSheet','renewOverlay')"></div>
+<div class="sheet" id="renewSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <h3>Renovar Suscripcion</h3>
+    <button class="sheet-close" onclick="closeSheet('renewSheet','renewOverlay')">x</button>
+  </div>
+  <div class="sheet-body">
+    <p id="renewInfo" style="color:var(--muted);font-size:.88rem;margin-bottom:16px"></p>
+    <div class="renewSelector">
+      <label>Meses a renovar</label>
+      <div class="renewMonthsRow">
+        <button onclick="changeRenewMonths(-1)">&#8722;</button>
+        <div class="renewMonthsVal" id="renewMonthsVal">1</div>
+        <button onclick="changeRenewMonths(1)">+</button>
+        <div class="renewMonthsHint" id="renewMonthsHint"></div>
+      </div>
+    </div>
+    <button class="btnFull primary" onclick="doRenew()">&#8635; Confirmar Renovacion</button>
+    <button class="btnFull gray" onclick="closeSheet('renewSheet','renewOverlay')" style="margin-top:8px">Cancelar</button>
+  </div>
+</div>
+
+<!-- DELETE SHEET -->
+<div class="sheet-overlay" id="deleteOverlay" onclick="closeSheet('deleteSheet','deleteOverlay')"></div>
+<div class="sheet" id="deleteSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <h3 style="color:var(--red)">Eliminar Cliente</h3>
+    <button class="sheet-close" onclick="closeSheet('deleteSheet','deleteOverlay')">x</button>
+  </div>
+  <div class="sheet-body">
+    <p style="color:var(--muted);font-size:.9rem;margin-bottom:20px">Esta accion no se puede deshacer.</p>
+    <button class="btnFull danger" onclick="confirmDelete()">Si, eliminar</button>
+    <button class="btnFull gray" onclick="closeSheet('deleteSheet','deleteOverlay')" style="margin-top:8px">Cancelar</button>
+  </div>
+</div>
+
+<!-- VIEW SHEET -->
+<div class="sheet-overlay" id="viewOverlay" onclick="closeSheet('viewSheet','viewOverlay')"></div>
+<div class="sheet" id="viewSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <h3 id="viewSheetTitle"></h3>
+    <button class="sheet-close" onclick="closeSheet('viewSheet','viewOverlay')">x</button>
+  </div>
+  <div class="sheet-body" id="viewSheetBody"></div>
+</div>
+
+<!-- CARTELERA SHEET -->
+<div class="sheet-overlay" id="carteleraOverlay" onclick="closeSheet('carteleraSheet','carteleraOverlay')"></div>
+<div class="sheet" id="carteleraSheet" style="max-height:92vh;overflow-y:auto;">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <h3>&#128249; Cartelera del dia</h3>
+    <button class="sheet-close" onclick="closeSheet('carteleraSheet','carteleraOverlay')">x</button>
+  </div>
+  <div class="sheet-body" style="padding-bottom:30px;">
+    <div style="background:rgba(57,255,20,0.07);border:1px solid rgba(57,255,20,0.25);border-radius:12px;padding:14px 16px;margin-bottom:20px;">
+      <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#7AA3C8;margin-bottom:8px;">&#128279; Enlace para tus clientes</div>
+      <div id="clienteLinkBox" style="font-size:13px;color:#00D4FF;word-break:break-all;padding:8px 12px;background:rgba(0,0,0,0.3);border-radius:8px;cursor:pointer;border:1px solid rgba(0,212,255,0.2);">Cargando...</div>
+      <button onclick="copyClienteLink()" style="margin-top:10px;width:100%;padding:10px;background:linear-gradient(135deg,#0099CC,#00D4FF);color:#001822;border:none;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;">&#128203; Copiar enlace de clientes</button>
+    </div>
+    <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#7AA3C8;margin-bottom:10px;">&#127937; Evento del dia</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+      <input type="file" id="cart-img-file" accept="image/*" style="flex:1;min-width:0;background:rgba(255,255,255,0.04);border:1px solid rgba(0,212,255,0.15);border-radius:10px;color:#E8F4FF;font-size:13px;padding:8px 10px;cursor:pointer;">
+      <button onclick="cartUploadImage()" id="cart-upload-btn" style="padding:10px 16px;background:rgba(57,255,20,0.1);border:1px solid rgba(57,255,20,0.3);color:#39FF14;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer;white-space:nowrap;">&#8593; Subir</button>
+    </div>
+    <div id="cart-imgbb-result" style="display:none;margin-bottom:16px;">
+      <div style="font-size:12px;color:#7AA3C8;margin-bottom:6px;">Link de la imagen:</div>
+      <div id="cart-img-link" style="font-size:12px;color:#00D4FF;word-break:break-all;padding:8px 10px;background:rgba(0,0,0,0.3);border-radius:8px;border:1px solid rgba(0,212,255,0.2);"></div>
+      <img id="cart-preview-img" src="" alt="Preview" style="max-width:100%;max-height:180px;border-radius:8px;border:1px solid rgba(0,212,255,0.15);display:block;margin-top:10px;object-fit:contain;">
+      <button onclick="cartRemoveImage()" style="margin-top:8px;width:100%;padding:8px;background:rgba(255,71,87,0.1);border:1px solid rgba(255,71,87,0.3);color:#FF4757;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer;">&#128465; Quitar imagen del evento</button>
+    </div>
+    <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#7AA3C8;margin-bottom:10px;">&#128221; Cartelera del dia</div>
+    <textarea id="cart-texto" placeholder="Escribe aqui la cartelera..." style="width:100%;min-height:200px;background:rgba(255,255,255,0.04);border:1px solid rgba(0,212,255,0.15);border-radius:10px;color:#E8F4FF;font-family:inherit;font-size:14px;line-height:1.7;padding:12px 14px;resize:vertical;outline:none;" oninput="document.getElementById('cart-char-count').textContent=this.value.length+' caracteres'"></textarea>
+    <div id="cart-char-count" style="font-size:11px;color:#7AA3C8;text-align:right;margin-top:4px;">0 caracteres</div>
+    <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;">
+      <button onclick="cartSave()" id="cart-save-btn" style="flex:1;padding:12px;background:linear-gradient(135deg,#0099CC,#00D4FF);color:#001822;border:none;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;">&#128190; Guardar y publicar</button>
+      <button onclick="cartLoadExisting()" style="padding:12px 16px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:#E8F4FF;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer;">&#8634; Recargar</button>
+    </div>
+    <button onclick="cartClear()" style="margin-top:8px;width:100%;padding:10px;background:rgba(255,71,87,0.1);border:1px solid rgba(255,71,87,0.3);color:#FF4757;border-radius:8px;font-weight:600;font-size:14px;cursor:pointer;">&#128465; Borrar cartelera</button>
+
+    <div style="margin-top:24px;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#7AA3C8;margin-bottom:12px;">&#128064; Lo que ven tus clientes ahora</div>
+    <div style="background:rgba(14,29,53,0.8);border:1px solid rgba(0,212,255,0.15);border-radius:12px;overflow:hidden;">
+      <div id="cart-prev-evento" style="display:none;">
+        <div style="background:linear-gradient(135deg,rgba(0,212,255,0.1),rgba(57,255,20,0.07));padding:8px 14px;font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#00D4FF;border-bottom:1px solid rgba(0,212,255,0.15);">&#11088; Evento exclusivo del dia &#11088;</div>
+        <img id="cart-prev-img" src="" alt="Evento" style="width:100%;max-height:200px;object-fit:contain;display:block;background:#000;">
+      </div>
+      <div style="padding:16px;">
+        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#7AA3C8;margin-bottom:8px;">Cartelera:</div>
+        <div id="cart-prev-texto" style="font-size:14px;line-height:1.7;color:#E8F4FF;white-space:pre-wrap;word-break:break-word;min-height:40px;">Sin publicar todavia</div>
+      </div>
+    </div>
+    <div style="margin-top:24px;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#7AA3C8;margin-bottom:12px;">&#128202; Visitas a la cartelera</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div style="background:rgba(0,0,0,0.25);border:1px solid rgba(0,212,255,0.12);border-radius:12px;padding:16px;text-align:center;">
+        <div id="cart-visits-today" style="font-size:36px;font-weight:700;font-family:'Rajdhani',sans-serif;background:linear-gradient(135deg,#00D4FF,#39FF14);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">-</div>
+        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#7AA3C8;margin-top:4px;">Hoy</div>
+      </div>
+      <div style="background:rgba(0,0,0,0.25);border:1px solid rgba(0,212,255,0.12);border-radius:12px;padding:16px;text-align:center;">
+        <div id="cart-visits-total" style="font-size:36px;font-weight:700;font-family:'Rajdhani',sans-serif;background:linear-gradient(135deg,#00D4FF,#39FF14);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">-</div>
+        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#7AA3C8;margin-top:4px;">Total</div>
+      </div>
+    </div>
+    <button onclick="cartResetVisits()" style="margin-top:10px;background:none;border:none;color:rgba(255,71,87,0.5);font-size:11px;cursor:pointer;width:100%;text-align:right;">&#128465; Resetear contador de hoy</button>
+  </div>
+</div>
+
+<div id="toastMsg" style="position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(100px);background:#1e1e2a;border:1px solid rgba(0,229,255,0.3);color:#eeeef5;padding:12px 24px;border-radius:12px;font-size:14px;font-weight:600;z-index:9999;transition:transform 0.3s ease;pointer-events:none;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,0.5);">Mensaje</div>
+  <script src="config.js" defer></script>
+  <script src="script.js" defer></script>
+</body>
+</html>
