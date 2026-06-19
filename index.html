@@ -87,6 +87,7 @@
     <div class="menuItem" onclick="document.getElementById('importInput').click()"><span class="ico2">&#11014;</span> Importar desde Excel</div>
     <div class="menuItem" onclick="openCartelera()"><span class="ico2">&#128249;</span> Cartelera del dia</div>
     <div class="menuItem" onclick="openMovieTemplates()"><span class="ico2">&#127916;</span> Plantillas Peliculas</div>
+    <div class="menuItem" onclick="openSeriesTemplates()"><span class="ico2">&#127909;</span> Plantillas Series</div>
     <div class="menuItem" onclick="doLogout()"><span class="ico2">&#128682;</span> Cerrar sesion</div>
     <input type="file" id="importInput" accept=".xlsx,.xls" onchange="importExcel(event)"/>
   </div>
@@ -371,6 +372,130 @@
         </div>
         <div class="movieTplStatus" id="tplStatus"></div>
         <div class="movieTplLinkBox" id="tplLinkBox"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- PLANTILLAS SERIES SHEET -->
+<div class="sheet-overlay" id="seriesTplOverlay" onclick="closeSheet('seriesTplSheet','seriesTplOverlay')"></div>
+<div class="sheet movieTplSheet" id="seriesTplSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <h3>&#127909; Plantillas Series</h3>
+    <button class="sheet-close" onclick="closeSheet('seriesTplSheet','seriesTplOverlay')">x</button>
+  </div>
+  <div class="sheet-body movieTplBody">
+    <div class="movieTplIntro">
+      <div>
+        <div class="movieTplBrand">M17<span>LIV3</span></div>
+        <p>Generador de plantilla: serie recomendada de la semana</p>
+      </div>
+      <button class="movieTplMiniBtn" onclick="seriesTplResetAll()">&#8635; Limpiar plantilla</button>
+    </div>
+
+    <div class="movieTplGrid">
+      <div class="movieTplControls">
+        <div class="movieTplPanel">
+          <h4>Buscar serie (TMDB)</h4>
+          <label for="seriesTplSearchInput">Titulo</label>
+          <input type="text" id="seriesTplSearchInput" placeholder="Ej: Breaking Bad"/>
+          <button class="movieTplBtn outline" id="seriesTplSearchBtn" type="button">Buscar</button>
+          <div class="movieTplResults" id="seriesTplSearchResults"></div>
+        </div>
+
+        <div class="movieTplPanel">
+          <h4>Datos de la plantilla</h4>
+          <label for="seriesTplTitle">Titulo de la serie</label>
+          <input type="text" id="seriesTplTitle" placeholder="TITULO DE LA SERIE"/>
+
+          <label for="seriesTplGenre">Genero</label>
+          <input type="text" id="seriesTplGenre" placeholder="GENERO"/>
+
+          <div class="movieTplRow2">
+            <div>
+              <label for="seriesTplYear">Estreno / Ano</label>
+              <input type="text" id="seriesTplYear" placeholder="2026"/>
+            </div>
+            <div>
+              <label for="seriesTplRating">Puntuacion (0-10)</label>
+              <input type="text" id="seriesTplRating" placeholder="0.0"/>
+            </div>
+          </div>
+
+          <div class="movieTplRow2">
+            <div>
+              <label for="seriesTplSeasons">Temporadas</label>
+              <input type="text" id="seriesTplSeasons" placeholder="1"/>
+            </div>
+            <div>
+              <label for="seriesTplEpisodes">Episodios</label>
+              <input type="text" id="seriesTplEpisodes" placeholder="8"/>
+            </div>
+          </div>
+
+          <label for="seriesTplCreator">Creada por</label>
+          <input type="text" id="seriesTplCreator" placeholder="Creador/a"/>
+
+          <label for="seriesTplCast">Reparto principal</label>
+          <input type="text" id="seriesTplCast" placeholder="Actor 1, Actor 2, Actor 3"/>
+
+          <label for="seriesTplSynopsis">Sinopsis</label>
+          <textarea id="seriesTplSynopsis" placeholder="Sinopsis de la serie..."></textarea>
+
+          <label for="seriesTplWhy">Por que verla</label>
+          <textarea id="seriesTplWhy" placeholder="Motivos para recomendar esta serie..."></textarea>
+
+          <label for="seriesTplPosterUrl">URL del poster / portada</label>
+          <input type="text" id="seriesTplPosterUrl" placeholder="Se rellena automaticamente al buscar"/>
+
+          <label id="seriesTplPosterGalleryLabel" class="movieTplGalleryLabel" style="display:none;">Elegir otro poster</label>
+          <div class="movieTplPosterGallery" id="seriesTplPosterGallery"></div>
+        </div>
+
+        <div class="movieTplPanel">
+          <h4>Logo</h4>
+          <div class="movieTplFileRow">
+            <img id="seriesTplLogoPreviewSmall" src="assets/logo.png" alt="Logo"/>
+            <label class="movieTplFileLabel" for="seriesTplLogoInput">&#128193; Subir logo PNG</label>
+            <input type="file" id="seriesTplLogoInput" accept="image/png,image/*"/>
+          </div>
+          <p class="movieTplNote">Si no subes otro, se usa el logo principal de M17LIV3. El logo elegido se guarda en este navegador.</p>
+        </div>
+      </div>
+
+      <div class="movieTplPreviewWrap">
+        <div class="movieTplStageContainer">
+          <canvas id="seriesTplCanvas" width="1600" height="900"></canvas>
+        </div>
+
+        <div class="movieTplPanel movieTplAdjustPanel">
+          <h4>Ajustar encuadre de la portada</h4>
+          <div class="movieTplAdjustGrid">
+            <div>
+              <label for="seriesTplPosterZoom">Zoom (<span id="seriesTplPosterZoomVal">100</span>%)</label>
+              <input type="range" id="seriesTplPosterZoom" min="50" max="250" value="100" step="1"/>
+            </div>
+            <div>
+              <label for="seriesTplPosterOffsetX">Horizontal</label>
+              <input type="range" id="seriesTplPosterOffsetX" min="-100" max="100" value="0" step="1"/>
+            </div>
+            <div>
+              <label for="seriesTplPosterOffsetY">Vertical</label>
+              <input type="range" id="seriesTplPosterOffsetY" min="-100" max="100" value="0" step="1"/>
+            </div>
+          </div>
+          <button class="movieTplBtn secondary" id="seriesTplPosterResetBtn" type="button">&#8634; Restablecer encuadre</button>
+        </div>
+
+        <div class="movieTplActions">
+          <button class="movieTplBtn secondary" id="seriesTplDownloadBtn" type="button">&#11015; Descargar JPEG</button>
+          <button class="movieTplBtn primary" id="seriesTplUploadBtn" type="button">&#9729; Subir a imgBB</button>
+          <button class="movieTplBtn secondary" id="seriesTplCopyBtn" type="button" disabled>&#128203; Copiar enlace</button>
+        </div>
+        <div class="movieTplStatus" id="seriesTplStatus"></div>
+        <div class="movieTplLinkBox" id="seriesTplLinkBox"></div>
       </div>
     </div>
   </div>

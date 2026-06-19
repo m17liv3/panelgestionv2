@@ -31,3 +31,10 @@ Actualizacion nueva:
 - Integrado el generador de Plantillas Peliculas dentro del propio index.html.
 - Mantiene busqueda TMDB, galeria de posters, ajuste de portada, logo, descarga JPEG, subida a imgBB y copiar enlace.
 - Las claves TMDB/imgBB estan ahora en config.js, visibles si se publica como web estatica.
+
+ACTUALIZACION - PLANTILLAS SERIES
+---------------------------------
+Se ha integrado el nuevo apartado "Plantillas Series" dentro del menu del panel.
+Incluye busqueda de series por TMDB, carga automatica de datos, galeria de posters, ajuste de portada, descarga JPEG, subida a imgBB y copia de enlace.
+
+El generador de series utiliza la misma clave TMDB y la misma clave imgBB configuradas en config.js.
