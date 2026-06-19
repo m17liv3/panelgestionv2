@@ -1379,7 +1379,6 @@ var seriesTplState = {
   creator: 'CREADOR/A',
   cast: 'REPARTO PRINCIPAL',
   synopsis: 'Escribe aqui la sinopsis de la serie. Tambien puedes buscar en TMDB para rellenar automaticamente titulo, genero, puntuacion, temporadas, episodios, reparto, portada y descripcion.',
-  why: 'Una recomendacion perfecta por su ritmo, historia, personajes y capacidad para enganchar desde el primer episodio.',
   posterUrl: '',
   logoDataUrl: null,
   posterZoom: 100,
@@ -1407,7 +1406,7 @@ function seriesTplInit() {
   if (searchBtn) searchBtn.addEventListener('click', seriesTplDoSearch);
   if (searchInput) searchInput.addEventListener('keydown', function(e){ if(e.key === 'Enter') seriesTplDoSearch(); });
 
-  ['seriesTplTitle','seriesTplGenre','seriesTplYear','seriesTplRating','seriesTplSeasons','seriesTplEpisodes','seriesTplCreator','seriesTplCast','seriesTplSynopsis','seriesTplWhy','seriesTplPosterUrl'].forEach(function(id){
+  ['seriesTplTitle','seriesTplGenre','seriesTplYear','seriesTplRating','seriesTplSeasons','seriesTplEpisodes','seriesTplCreator','seriesTplCast','seriesTplSynopsis','seriesTplPosterUrl'].forEach(function(id){
     var el = document.getElementById(id);
     if (el) el.addEventListener('input', seriesTplSyncStateFromInputsDebounced);
   });
@@ -1454,7 +1453,6 @@ function seriesTplFillInputsFromState() {
     seriesTplCreator: 'creator',
     seriesTplCast: 'cast',
     seriesTplSynopsis: 'synopsis',
-    seriesTplWhy: 'why',
     seriesTplPosterUrl: 'posterUrl'
   };
   Object.keys(map).forEach(function(id){
@@ -1473,7 +1471,6 @@ function seriesTplResetAll() {
   seriesTplState.creator = 'CREADOR/A';
   seriesTplState.cast = 'REPARTO PRINCIPAL';
   seriesTplState.synopsis = 'Escribe aqui la sinopsis de la serie. Tambien puedes buscar en TMDB para rellenar automaticamente titulo, genero, puntuacion, temporadas, episodios, reparto, portada y descripcion.';
-  seriesTplState.why = 'Una recomendacion perfecta por su ritmo, historia, personajes y capacidad para enganchar desde el primer episodio.';
   seriesTplState.posterUrl = '';
   seriesTplPosterImg = null;
   seriesTplFillInputsFromState();
@@ -1743,13 +1740,7 @@ function seriesTplDrawTextContent(){
   ctx.fillStyle = '#22d3ee'; ctx.font = '800 28px Arial, sans-serif'; ctx.fillText('SINOPSIS', leftX, yCursor);
   yCursor += 38;
   ctx.fillStyle = '#e6e9ef'; ctx.font = '400 24px Arial, sans-serif';
-  var synLines = seriesTplWrapText(ctx, seriesTplState.synopsis || '', leftX, yCursor, W-leftX-90, 34, 4);
-  yCursor += synLines * 34 + 42;
-
-  ctx.fillStyle = '#a3e635'; ctx.font = '800 28px Arial, sans-serif'; ctx.fillText('POR QUE VERLA', leftX, yCursor);
-  yCursor += 38;
-  ctx.fillStyle = '#e6e9ef'; ctx.font = '400 24px Arial, sans-serif';
-  seriesTplWrapText(ctx, seriesTplState.why || '', leftX, yCursor, W-leftX-90, 34, 3);
+  seriesTplWrapText(ctx, seriesTplState.synopsis || '', leftX, yCursor, W-leftX-90, 34, 7);
 }
 
 function seriesTplDrawStar(cx, cy, r, color){
@@ -1839,9 +1830,6 @@ async function seriesTplSelectShow(id){
     var cast = details.credits && details.credits.cast ? details.credits.cast.slice(0,5).map(function(c){ return c.name; }).join(', ') : '';
     document.getElementById('seriesTplCast').value = cast || '-';
     document.getElementById('seriesTplSynopsis').value = details.overview || '';
-    if(!document.getElementById('seriesTplWhy').value.trim()){
-      document.getElementById('seriesTplWhy').value = 'Una serie ideal para engancharse por su historia, sus personajes y su ritmo episodio a episodio.';
-    }
     var posterUrl = details.poster_path ? 'https://image.tmdb.org/t/p/w780' + details.poster_path : '';
     document.getElementById('seriesTplPosterUrl').value = posterUrl;
     await seriesTplSyncStateFromInputs();
@@ -1899,7 +1887,6 @@ async function seriesTplSyncStateFromInputs(){
   seriesTplState.creator = document.getElementById('seriesTplCreator').value;
   seriesTplState.cast = document.getElementById('seriesTplCast').value;
   seriesTplState.synopsis = document.getElementById('seriesTplSynopsis').value;
-  seriesTplState.why = document.getElementById('seriesTplWhy').value;
   var newPosterUrl = document.getElementById('seriesTplPosterUrl').value.trim();
   if(newPosterUrl !== seriesTplState.posterUrl){
     seriesTplState.posterUrl = newPosterUrl;
