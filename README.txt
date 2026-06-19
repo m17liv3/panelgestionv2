@@ -43,3 +43,19 @@ El generador de series utiliza la misma clave TMDB y la misma clave imgBB config
 Actualizacion revision preview series:
 - Corregida la previsualizacion de Plantillas Series para que el canvas ocupe todo el marco 16:9.
 - Ocultado correctamente el input de subida de logo en Plantillas Series.
+
+
+PWA / MODO APP INSTALABLE
+-------------------------
+Esta versión incluye modo PWA:
+- manifest.webmanifest
+- sw.js
+- iconos en assets/icons/
+- botón "Instalar como app" dentro del menú.
+
+Para que funcione correctamente debe estar publicada con HTTPS. GitHub Pages ya usa HTTPS.
+En Android/Chrome puede aparecer el botón de instalación automáticamente.
+En iPhone/iPad hay que abrir la web en Safari y usar Compartir > Añadir a pantalla de inicio.
+
+Nota: la app podrá abrirse como app instalada, pero las funciones que dependen de Internet
+(TMDB, imgBB, cartelera online, CDN de Excel, etc.) seguirán necesitando conexión.

@@ -2030,3 +2030,69 @@ async function seriesTplCopyLink(){
   }
 }
 // ========== FIN PLANTILLAS SERIES ADMIN ==========
+
+// ========== MODO APP INSTALABLE PWA ==========
+var deferredPWAInstallPrompt = null;
+
+function isPWAStandalone(){
+  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+}
+
+function updatePWAInstallMenu(){
+  var item = document.getElementById('pwaInstallMenuItem');
+  if(!item) return;
+  if(isPWAStandalone()){
+    item.style.display = 'none';
+  } else {
+    item.style.display = 'flex';
+  }
+}
+
+window.addEventListener('beforeinstallprompt', function(e){
+  e.preventDefault();
+  deferredPWAInstallPrompt = e;
+  updatePWAInstallMenu();
+});
+
+window.addEventListener('appinstalled', function(){
+  deferredPWAInstallPrompt = null;
+  updatePWAInstallMenu();
+});
+
+async function installPWA(){
+  if(isPWAStandalone()){
+    alert('La app ya esta instalada en este dispositivo.');
+    return;
+  }
+
+  if(deferredPWAInstallPrompt){
+    deferredPWAInstallPrompt.prompt();
+    try{
+      await deferredPWAInstallPrompt.userChoice;
+    }catch(err){}
+    deferredPWAInstallPrompt = null;
+    updatePWAInstallMenu();
+    return;
+  }
+
+  var ua = navigator.userAgent || '';
+  var isIOS = /iphone|ipad|ipod/i.test(ua);
+  if(isIOS){
+    alert('Para instalarla en iPhone/iPad: abre esta web en Safari, toca Compartir y elige "Anadir a pantalla de inicio".');
+  } else {
+    alert('Para instalarla: abre el menu del navegador y pulsa "Instalar app" o "Anadir a pantalla de inicio". En Chrome Android tambien puede aparecer el aviso automaticamente.');
+  }
+}
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('./sw.js').catch(function(err){
+      console.warn('No se pudo registrar el Service Worker PWA:', err);
+    });
+    updatePWAInstallMenu();
+  });
+} else {
+  window.addEventListener('load', updatePWAInstallMenu);
+}
+// ========== FIN MODO APP INSTALABLE PWA ==========
+
