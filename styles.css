@@ -291,3 +291,114 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, 'S
   .clientCard-actions button { font-size: .68rem; padding: 10px 2px; }
   .msgActionsGrid { grid-template-columns: 1fr; }
 }
+
+
+/* Sorteos clientes */
+.raffleNote {
+  background: rgba(0,229,255,0.07);
+  border: 1px solid rgba(0,229,255,0.2);
+  color: var(--cyan);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: .82rem;
+  line-height: 1.45;
+  margin-bottom: 16px;
+}
+.raffleCount {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: .82rem;
+}
+.raffleResult {
+  margin-top: 16px;
+  background: linear-gradient(135deg, rgba(0,229,255,0.09), rgba(105,255,71,0.07));
+  border: 1px solid rgba(105,255,71,0.28);
+  border-radius: 14px;
+  padding: 16px;
+}
+.raffleResultLabel {
+  color: var(--green);
+  font-size: .72rem;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+}
+.raffleWinner {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--text);
+}
+.rafflePrizeText {
+  color: var(--muted);
+  font-size: .86rem;
+  margin-top: 4px;
+}
+.raffleResultActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 12px;
+}
+.raffleHistoryHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 22px;
+  margin-bottom: 10px;
+  color: var(--green);
+  font-size: .78rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+.raffleHistoryHeader button {
+  background: var(--card2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: .75rem;
+}
+.raffleHistory {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+.raffleItem {
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+.raffleItemTop {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.raffleItemName {
+  font-weight: 800;
+  color: var(--text);
+  font-size: .9rem;
+}
+.raffleItemDate {
+  color: var(--muted);
+  font-size: .72rem;
+  white-space: nowrap;
+}
+.raffleItemMeta {
+  color: var(--muted);
+  font-size: .8rem;
+  line-height: 1.45;
+}
+.emptyMini {
+  color: var(--muted);
+  font-size: .82rem;
+  text-align: center;
+  padding: 20px 10px;
+}
+@media (max-width: 430px) {
+  .raffleResultActions { grid-template-columns: 1fr; }
+}

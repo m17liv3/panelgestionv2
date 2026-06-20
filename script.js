@@ -27,6 +27,9 @@ var messageTargetId = null;
 var filterSvc = '';
 var filterSt = '';
 var showFilters = false;
+var raffles = [];
+var lastRaffleResult = null;
+var SUPABASE_RAFFLES_TABLE = CONFIG.supabaseRafflesTable || 'sorteos';
 
 function initSupabase() {
   if (!USE_SUPABASE) return null;
@@ -2467,6 +2470,230 @@ async function seriesTplCopyLink(){
   }
 }
 // ========== FIN PLANTILLAS SERIES ADMIN ==========
+
+
+// ========== SORTEOS CLIENTES ==========
+function raffleTypeLabel(type) {
+  if (type === 'active') return 'Clientes activos';
+  if (type === 'soon') return 'Expiran pronto (15 dias)';
+  if (type === 'expired') return 'Clientes caducados';
+  if (type === 'all') return 'Todos los clientes';
+  return type || '-';
+}
+
+function getRaffleParticipants(type) {
+  type = type || 'active';
+  return clients.filter(function(c){
+    var st = getStatus(c.expiry);
+    if (type === 'all') return true;
+    if (type === 'active') return st === 'ok' || st === 'warn';
+    if (type === 'soon') return st === 'warn';
+    if (type === 'expired') return st === 'exp';
+    return true;
+  });
+}
+
+function updateRaffleParticipantCount() {
+  var sel = document.getElementById('raffleParticipantsType');
+  var box = document.getElementById('raffleParticipantsCount');
+  if (!box) return;
+  var type = sel ? sel.value : 'active';
+  var total = getRaffleParticipants(type).length;
+  box.textContent = total + (total === 1 ? ' participante disponible' : ' participantes disponibles');
+  box.style.color = total ? 'var(--green)' : 'var(--orange)';
+}
+
+function raffleRowToItem(row) {
+  return {
+    id: row.id,
+    nombre: row.nombre || '',
+    premio: row.premio || '',
+    ganadorId: row.ganador_id || '',
+    ganadorNombre: row.ganador_nombre || '',
+    participantesTipo: row.participantes_tipo || '',
+    participantesTotal: row.participantes_total || 0,
+    createdAt: row.created_at || ''
+  };
+}
+
+async function loadRaffles(showMsg) {
+  try {
+    if (!USE_SUPABASE) {
+      try { raffles = JSON.parse(localStorage.getItem('m17_raffles') || '[]'); } catch(e) { raffles = []; }
+      renderRaffleHistory();
+      return raffles;
+    }
+    var db = initSupabase();
+    var result = await db.from(SUPABASE_RAFFLES_TABLE).select('*').order('created_at', { ascending: false }).limit(30);
+    if (result.error) throw result.error;
+    raffles = (result.data || []).map(raffleRowToItem);
+    renderRaffleHistory();
+    if (showMsg && typeof showToast === 'function') showToast('Historial actualizado');
+    return raffles;
+  } catch(ex) {
+    console.error(ex);
+    if (typeof showToast === 'function') showToast('Error al cargar sorteos: ' + ex.message, 'error');
+    return [];
+  }
+}
+
+async function saveRaffleToStore(item) {
+  if (!USE_SUPABASE) {
+    item.id = genId();
+    item.createdAt = new Date().toISOString();
+    raffles.unshift(item);
+    localStorage.setItem('m17_raffles', JSON.stringify(raffles));
+    return item;
+  }
+  var db = initSupabase();
+  var payload = {
+    nombre: item.nombre || '',
+    premio: item.premio || '',
+    ganador_id: item.ganadorId || null,
+    ganador_nombre: item.ganadorNombre || '',
+    participantes_tipo: item.participantesTipo || '',
+    participantes_total: item.participantesTotal || 0
+  };
+  var result = await db.from(SUPABASE_RAFFLES_TABLE).insert(payload).select('*').single();
+  if (result.error) throw result.error;
+  return raffleRowToItem(result.data);
+}
+
+function renderRaffleHistory() {
+  var box = document.getElementById('raffleHistory');
+  if (!box) return;
+  if (!raffles.length) {
+    box.innerHTML = '<div class="emptyMini">Todavia no hay sorteos guardados.</div>';
+    return;
+  }
+  box.innerHTML = raffles.map(function(r){
+    var d = '-';
+    if (r.createdAt) {
+      try { d = new Date(r.createdAt).toLocaleDateString('es-ES') + ' ' + new Date(r.createdAt).toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'}); } catch(e) {}
+    }
+    return '<div class="raffleItem">' +
+      '<div class="raffleItemTop">' +
+        '<div class="raffleItemName">' + esc(r.nombre || 'Sorteo') + '</div>' +
+        '<div class="raffleItemDate">' + esc(d) + '</div>' +
+      '</div>' +
+      '<div class="raffleItemMeta">Premio: <span style="color:var(--text)">' + esc(r.premio || '-') + '</span></div>' +
+      '<div class="raffleItemMeta">Ganador: <span style="color:var(--green)">' + esc(r.ganadorNombre || '-') + '</span></div>' +
+      '<div class="raffleItemMeta">Participantes: ' + esc(raffleTypeLabel(r.participantesTipo)) + ' · ' + esc(String(r.participantesTotal || 0)) + '</div>' +
+    '</div>';
+  }).join('');
+}
+
+async function openRaffles() {
+  closeSheet('menuSheet','menuOverlay');
+  var nameEl = document.getElementById('raffleName');
+  var prizeEl = document.getElementById('rafflePrize');
+  var typeEl = document.getElementById('raffleParticipantsType');
+  var resultEl = document.getElementById('raffleResult');
+  if (nameEl && !nameEl.value) nameEl.value = 'Sorteo mensual';
+  if (prizeEl && !prizeEl.value) prizeEl.value = '1 mes gratis';
+  if (typeEl && !typeEl.value) typeEl.value = 'active';
+  if (resultEl) resultEl.style.display = 'none';
+  lastRaffleResult = null;
+  updateRaffleParticipantCount();
+  openSheet('raffleSheet','raffleOverlay');
+  await loadRaffles(false);
+  updateRaffleParticipantCount();
+}
+
+async function runRaffle() {
+  var btn = document.getElementById('raffleRunBtn');
+  var nameEl = document.getElementById('raffleName');
+  var prizeEl = document.getElementById('rafflePrize');
+  var typeEl = document.getElementById('raffleParticipantsType');
+  var nombre = (nameEl && nameEl.value ? nameEl.value : '').trim() || 'Sorteo';
+  var premio = (prizeEl && prizeEl.value ? prizeEl.value : '').trim();
+  var type = typeEl ? typeEl.value : 'active';
+
+  if (!premio) {
+    if (typeof showToast === 'function') showToast('Escribe el premio del sorteo', 'error');
+    if (prizeEl) prizeEl.focus();
+    return;
+  }
+
+  var participantes = getRaffleParticipants(type);
+  if (!participantes.length) {
+    if (typeof showToast === 'function') showToast('No hay participantes para este filtro', 'error');
+    return;
+  }
+
+  var ok = confirm('Se elegira 1 ganador entre ' + participantes.length + ' participantes. ¿Realizar sorteo ahora?');
+  if (!ok) return;
+
+  try {
+    if (btn) { btn.disabled = true; btn.textContent = 'Realizando sorteo...'; }
+    var winner = participantes[Math.floor(Math.random() * participantes.length)];
+    var item = {
+      nombre: nombre,
+      premio: premio,
+      ganadorId: winner.id,
+      ganadorNombre: winner.name,
+      participantesTipo: type,
+      participantesTotal: participantes.length
+    };
+    var saved = await saveRaffleToStore(item);
+    lastRaffleResult = saved;
+    if (!raffles.find(function(r){ return r.id === saved.id; })) raffles.unshift(saved);
+    renderRaffleResult(saved);
+    renderRaffleHistory();
+    if (typeof showToast === 'function') showToast('Sorteo realizado: ' + saved.ganadorNombre);
+  } catch(ex) {
+    console.error(ex);
+    if (typeof showToast === 'function') showToast('Error al guardar sorteo: ' + ex.message, 'error');
+    else alert('Error al guardar sorteo: ' + ex.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '&#127922; Realizar sorteo'; }
+  }
+}
+
+function renderRaffleResult(r) {
+  var box = document.getElementById('raffleResult');
+  var name = document.getElementById('raffleWinnerName');
+  var prize = document.getElementById('rafflePrizeText');
+  if (!box) return;
+  if (name) name.textContent = r.ganadorNombre || '-';
+  if (prize) prize.textContent = 'Premio: ' + (r.premio || '-') + ' · Participantes: ' + (r.participantesTotal || 0);
+  box.style.display = 'block';
+}
+
+function buildRaffleWinnerMessage(r) {
+  if (!r) return '';
+  return '🎉 ¡Enhorabuena!\n\n' +
+    'Has sido seleccionado/a en nuestro sorteo interno.\n\n' +
+    'Premio: ' + (r.premio || '-') + '\n\n' +
+    'Nos pondremos en contacto contigo para aplicarlo.';
+}
+
+function buildRafflePublicMessage(r) {
+  if (!r) return '';
+  return '🎁 Resultado del sorteo\n\n' +
+    'Sorteo: ' + (r.nombre || 'Sorteo') + '\n' +
+    'Premio: ' + (r.premio || '-') + '\n' +
+    'Ganador/a: ' + (r.ganadorNombre || '-') + '\n' +
+    'Participantes: ' + (r.participantesTotal || 0) + '\n\n' +
+    'Gracias a todos por participar.';
+}
+
+function copyRaffleWinnerMessage(btn) {
+  if (!lastRaffleResult) {
+    if (typeof showToast === 'function') showToast('Primero realiza un sorteo', 'error');
+    return;
+  }
+  copyMessageText(buildRaffleWinnerMessage(lastRaffleResult), btn);
+}
+
+function copyRafflePublicMessage(btn) {
+  if (!lastRaffleResult) {
+    if (typeof showToast === 'function') showToast('Primero realiza un sorteo', 'error');
+    return;
+  }
+  copyMessageText(buildRafflePublicMessage(lastRaffleResult), btn);
+}
+// ========== FIN SORTEOS CLIENTES ==========
 
 // ========== MODO APP INSTALABLE PWA ==========
 var deferredPWAInstallPrompt = null;
