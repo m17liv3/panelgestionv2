@@ -133,6 +133,22 @@ async function deleteClientFromStore(id) {
   return true;
 }
 
+async function deleteAllClientsFromStore() {
+  if (!USE_SUPABASE) {
+    clients = [];
+    saveData();
+    return true;
+  }
+  var db = initSupabase();
+  // RLS limita el borrado a los clientes del usuario autenticado.
+  // La condicion evita tener que conocer todos los IDs uno por uno.
+  var result = await db.from(SUPABASE_TABLE)
+    .delete()
+    .neq('id', '00000000-0000-0000-0000-000000000000');
+  if (result.error) throw result.error;
+  return true;
+}
+
 function showAppAfterLogin() {
   var lp = document.getElementById('loginPage');
   var ap = document.getElementById('appPage');
@@ -697,6 +713,75 @@ async function confirmDelete() {
     if (typeof showToast === 'function') showToast('Cliente eliminado');
   } catch(ex) {
     if (typeof showToast === 'function') showToast('Error al eliminar: '+ex.message, 'error'); else alert('Error al eliminar: '+ex.message);
+  }
+}
+
+function openDeleteAllClients() {
+  closeSheet('menuSheet','menuOverlay');
+  if (!clients.length) {
+    if (typeof showToast === 'function') showToast('No hay clientes para borrar'); else alert('No hay clientes para borrar.');
+    return;
+  }
+  var pass = document.getElementById('deleteAllPass');
+  var err = document.getElementById('deleteAllError');
+  var btn = document.getElementById('deleteAllConfirmBtn');
+  if (pass) pass.value = '';
+  if (err) { err.textContent = ''; err.style.display = 'none'; }
+  if (btn) { btn.disabled = false; btn.textContent = 'Borrar todos los clientes'; }
+  openSheet('deleteAllSheet','deleteAllOverlay');
+  setTimeout(function(){ if (pass) pass.focus(); }, 250);
+}
+
+async function verifyDeleteAllPassword(password) {
+  if (!password) throw new Error('Escribe la contrasena para confirmar.');
+
+  if (USE_SUPABASE) {
+    var db = initSupabase();
+    var userRes = await db.auth.getUser();
+    if (userRes.error) throw userRes.error;
+    var email = userRes.data && userRes.data.user && userRes.data.user.email;
+    if (!email) throw new Error('No se ha podido comprobar el usuario actual. Cierra sesion y vuelve a entrar.');
+    var res = await db.auth.signInWithPassword({ email: email, password: password });
+    if (res.error) throw new Error('Contrasena incorrecta.');
+    return true;
+  }
+
+  var okPass = ADMIN_PASS_HASH && (await sha256Text(password)) === ADMIN_PASS_HASH;
+  if (!okPass) throw new Error('Contrasena incorrecta.');
+  return true;
+}
+
+async function confirmDeleteAllClients() {
+  var passEl = document.getElementById('deleteAllPass');
+  var err = document.getElementById('deleteAllError');
+  var btn = document.getElementById('deleteAllConfirmBtn');
+  try {
+    if (err) { err.textContent = ''; err.style.display = 'none'; }
+    if (!clients.length) throw new Error('No hay clientes para borrar.');
+    var password = passEl ? passEl.value : '';
+    if (btn) { btn.disabled = true; btn.textContent = 'Comprobando...'; }
+    await verifyDeleteAllPassword(password);
+
+    var total = clients.length;
+    var really = confirm('Vas a borrar ' + total + ' clientes. Esta accion no se puede deshacer. ¿Continuar?');
+    if (!really) {
+      if (btn) { btn.disabled = false; btn.textContent = 'Borrar todos los clientes'; }
+      return;
+    }
+
+    if (btn) btn.textContent = 'Borrando...';
+    await deleteAllClientsFromStore();
+    clients = [];
+    saveData();
+    closeSheet('deleteAllSheet','deleteAllOverlay');
+    renderCards();
+    updateStats();
+    if (typeof showToast === 'function') showToast('Todos los clientes han sido borrados');
+  } catch(ex) {
+    if (err) { err.textContent = ex.message || 'Error al borrar clientes'; err.style.display = 'block'; }
+    else alert('Error al borrar clientes: ' + ex.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Borrar todos los clientes'; }
   }
 }
 

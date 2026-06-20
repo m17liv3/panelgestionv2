@@ -93,6 +93,7 @@
   <div class="sheet-body">
     <div class="menuItem" onclick="exportExcel()"><span class="ico2">&#11015;</span> Exportar a Excel</div>
     <div class="menuItem" onclick="document.getElementById('importInput').click()"><span class="ico2">&#11014;</span> Importar desde Excel</div>
+    <div class="menuItem" onclick="openDeleteAllClients()" style="color:var(--red)"><span class="ico2">&#128465;</span> Borrar todos los clientes</div>
     <div class="menuItem" onclick="openCartelera()"><span class="ico2">&#128249;</span> Cartelera del dia</div>
     <div class="menuItem" onclick="openMovieTemplates()"><span class="ico2">&#127916;</span> Plantillas Peliculas</div>
     <div class="menuItem" onclick="openSeriesTemplates()"><span class="ico2">&#127909;</span> Plantillas Series</div>
@@ -208,6 +209,27 @@
     <p style="color:var(--muted);font-size:.9rem;margin-bottom:20px">Esta accion no se puede deshacer.</p>
     <button class="btnFull danger" onclick="confirmDelete()">Si, eliminar</button>
     <button class="btnFull gray" onclick="closeSheet('deleteSheet','deleteOverlay')" style="margin-top:8px">Cancelar</button>
+  </div>
+</div>
+
+<!-- DELETE ALL CLIENTS SHEET -->
+<div class="sheet-overlay" id="deleteAllOverlay" onclick="closeSheet('deleteAllSheet','deleteAllOverlay')"></div>
+<div class="sheet" id="deleteAllSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <h3 style="color:var(--red)">Borrar todos los clientes</h3>
+    <button class="sheet-close" onclick="closeSheet('deleteAllSheet','deleteAllOverlay')">x</button>
+  </div>
+  <div class="sheet-body">
+    <p style="color:var(--muted);font-size:.9rem;margin-bottom:12px">Esta accion eliminara todos los clientes guardados en tu cuenta. No se puede deshacer.</p>
+    <p style="color:var(--orange);font-size:.82rem;margin-bottom:16px">Recomendado: exporta un Excel antes de borrar si quieres conservar una copia.</p>
+    <div class="formGroup">
+      <label>Contrasena de acceso <span class="required-star">*</span></label>
+      <input type="password" id="deleteAllPass" placeholder="Escribe tu contrasena para confirmar" autocomplete="current-password"/>
+    </div>
+    <div class="formError" id="deleteAllError"></div>
+    <button class="btnFull danger" id="deleteAllConfirmBtn" onclick="confirmDeleteAllClients()">Borrar todos los clientes</button>
+    <button class="btnFull gray" onclick="closeSheet('deleteAllSheet','deleteAllOverlay')" style="margin-top:8px">Cancelar</button>
   </div>
 </div>
 
