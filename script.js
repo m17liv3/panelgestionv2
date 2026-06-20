@@ -733,6 +733,55 @@ async function doRenew() {
   }
 }
 
+
+function pad2(n) { return String(n).padStart(2, '0'); }
+
+function dateToIsoLocal(d) {
+  if (!(d instanceof Date) || isNaN(d.getTime())) return '';
+  return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+}
+
+function excelSerialToIsoDate(value) {
+  var num = Number(value);
+  if (!isFinite(num)) return '';
+  // Excel/Sheets serial dates: day 1 = 1900-01-01. Using 1899-12-30 handles Excel's leap-year quirk.
+  var utc = Math.round((num - 25569) * 86400 * 1000);
+  var d = new Date(utc);
+  return dateToIsoLocal(d);
+}
+
+function normalizeImportDate(value) {
+  if (value === null || value === undefined || value === '') return '';
+
+  if (value instanceof Date) return dateToIsoLocal(value);
+
+  if (typeof value === 'number') return excelSerialToIsoDate(value);
+
+  var s = String(value).trim();
+  if (!s) return '';
+
+  // Already in Supabase-friendly format.
+  var iso = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (iso) return iso[1] + '-' + pad2(iso[2]) + '-' + pad2(iso[3]);
+
+  // Excel serial sometimes arrives as text: "46203".
+  if (/^\d+(\.\d+)?$/.test(s)) return excelSerialToIsoDate(Number(s));
+
+  // Spanish format: dd/mm/yyyy or dd-mm-yyyy.
+  var es = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/);
+  if (es) {
+    var day = es[1], month = es[2], year = es[3];
+    if (year.length === 2) year = '20' + year;
+    return year + '-' + pad2(month) + '-' + pad2(day);
+  }
+
+  // Last fallback: try browser parsing and normalize.
+  var parsed = new Date(s);
+  if (!isNaN(parsed.getTime())) return dateToIsoLocal(parsed);
+
+  return s;
+}
+
 function exportExcel() {
   closeSheet('menuSheet','menuOverlay');
   if(!clients.length){alert('No hay clientes para exportar.');return;}
@@ -752,9 +801,9 @@ function importExcel(event) {
   var reader=new FileReader();
   reader.onload=async function(e){
     try {
-      var wb=XLSX.read(e.target.result,{type:'binary'});
+      var wb=XLSX.read(e.target.result,{type:'binary', cellDates:true});
       var ws=wb.Sheets[wb.SheetNames[0]];
-      var rows=XLSX.utils.sheet_to_json(ws);
+      var rows=XLSX.utils.sheet_to_json(ws,{defval:''});
       var imported=0;
       for (var r=0; r<rows.length; r++) {
         var row = rows[r];
@@ -771,7 +820,7 @@ function importExcel(event) {
           var cu=a.match(/\(([^)]+)\)/); if(cu) obj.customName=cu[1];
           return obj;
         });
-        var nc={id:rowId,name:row['Nombre']||'',user:row['Usuario']||'',pass:row['Contrasena']||'',service:svc,expiry:row['Expiracion']||'',notes:row['Notas']||'',apps:apps.length?apps:[],createdAt:row['Creado']||new Date().toISOString()};
+        var nc={id:rowId,name:row['Nombre']||'',user:row['Usuario']||'',pass:row['Contrasena']||'',service:svc,expiry:normalizeImportDate(row['Expiracion']),notes:row['Notas']||'',apps:apps.length?apps:[],createdAt:row['Creado']||new Date().toISOString()};
         var saved = await saveClientToStore(nc);
         if(existingIdx>=0) clients[existingIdx]=saved; else clients.push(saved);
         imported++;
