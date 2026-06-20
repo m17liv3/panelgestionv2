@@ -499,10 +499,8 @@ function openClientMessages(id) {
   if (!c) return;
   var title = document.getElementById('messageSheetTitle');
   var info = document.getElementById('messageInfo');
-  var prev = document.getElementById('messagePreview');
   if (title) title.textContent = 'Mensajes · ' + c.name;
-  if (info) info.textContent = 'Elige un mensaje. Se copiará al portapapeles para pegarlo manualmente en WhatsApp, Telegram, Instagram o donde quieras.';
-  if (prev) prev.value = buildClientMessage(c, 'access');
+  if (info) info.textContent = 'Pulsa el tipo de mensaje que quieras y se copiará directamente al portapapeles para pegarlo manualmente donde prefieras.';
   openSheet('messageSheet','messageOverlay');
 }
 
@@ -539,15 +537,7 @@ function copyClientMessage(type, btn) {
   var c = getClientById(messageTargetId);
   if (!c) return;
   var txt = buildClientMessage(c, type);
-  var prev = document.getElementById('messagePreview');
-  if (prev) prev.value = txt;
   copyMessageText(txt, btn);
-}
-
-function copyGeneratedMessage(btn) {
-  var prev = document.getElementById('messagePreview');
-  if (!prev || !prev.value.trim()) return;
-  copyMessageText(prev.value, btn);
 }
 
 function openDelete(id) { deleteTargetId=id; openSheet('deleteSheet','deleteOverlay'); }
