@@ -462,34 +462,32 @@ function buildClientMessage(c, type) {
 
   if (type === 'access') {
     return greeting + '\n\n' +
-      'Estos son tus datos de acceso M17LIV3:\n\n' +
+      'Estos son tus datos de acceso:\n\n' +
       'App: ' + app + '\n' +
       'Usuario: ' + user + '\n' +
       'Contraseña: ' + pass + '\n' +
       'Fecha de expiración: ' + expiry + '\n\n' +
-      'Recuerda que te avisaré 15 días antes para su renovación.\n\n' +
-      'Cualquier cosa me dices.';
+      'Recuerda que te avisaré 15 días antes para su renovación.';
   }
 
   if (type === 'expiry') {
     return greeting + '\n\n' +
-      'Te recordamos que tu suscripción M17LIV3 caduca el día ' + expiry + '.\n\n' +
-      'Puedes renovarla cuando quieras para evitar cortes en el servicio.\n\n' +
-      'Cualquier cosa me dices.';
+      'Este es un aviso de que te quedan 15 días para que te caduque el servicio.\n\n' +
+      'Fecha de caducidad: ' + expiry + '\n\n' +
+      'Puedes renovarlo cuando quieras para evitar cortes en el servicio.';
   }
 
   if (type === 'renewed') {
     return greeting + '\n\n' +
-      'Tu suscripción M17LIV3 ha sido renovada correctamente.\n\n' +
+      'Tu servicio ha sido renovado correctamente.\n\n' +
       'Nueva fecha de expiración: ' + expiry + '\n\n' +
-      'Gracias por confiar en M17LIV3. Cualquier cosa me dices.';
+      'Estamos en contacto.';
   }
 
   if (type === 'expired') {
     return greeting + '\n\n' +
-      'Tu suscripción M17LIV3 expiró el día ' + expiry + '.\n\n' +
-      'Si quieres reactivarla, dime y te la renuevo.\n\n' +
-      'Cualquier cosa me dices.';
+      'Tu servicio expiró el día ' + expiry + '.\n\n' +
+      'Si quieres reactivarlo, dime y te lo renuevo.';
   }
 
   return '';
