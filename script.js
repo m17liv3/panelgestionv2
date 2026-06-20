@@ -75,6 +75,9 @@ function dbRowToClient(row) {
     expiry: row.expiracion || '',
     notes: row.notas || '',
     apps: parseAppsFromDb(row.apps),
+    avisoRenovacionEnviado: !!row.aviso_renovacion_enviado,
+    avisoRenovacionFecha: row.aviso_renovacion_fecha || '',
+    avisoRenovacionExpiracion: row.aviso_renovacion_expiracion || '',
     createdAt: row.created_at || new Date().toISOString(),
     updatedAt: row.updated_at || ''
   };
@@ -89,6 +92,9 @@ function clientToDbPayload(c) {
     expiracion: c.expiry || null,
     apps: JSON.stringify(c.apps || []),
     notas: c.notes || '',
+    aviso_renovacion_enviado: !!c.avisoRenovacionEnviado,
+    aviso_renovacion_fecha: c.avisoRenovacionFecha || null,
+    aviso_renovacion_expiracion: c.avisoRenovacionExpiracion || null,
     updated_at: new Date().toISOString()
   };
 }
@@ -256,6 +262,53 @@ function statusBadge(expiry) {
   if (s === 'warn') return '<span class="badge badgeWarn">'+diff+'d</span>';
   return '<span class="badge badgeOk">Activo</span>';
 }
+
+function isRenewalNoticeCurrent(c) {
+  return !!(c && c.avisoRenovacionEnviado && c.avisoRenovacionExpiracion && c.expiry && c.avisoRenovacionExpiracion === c.expiry);
+}
+
+function renewalNoticeHtml(c, mode) {
+  if (!c || getStatus(c.expiry) !== 'warn') return '';
+  var current = isRenewalNoticeCurrent(c);
+  var sentDate = c.avisoRenovacionFecha ? formatDate(String(c.avisoRenovacionFecha).split('T')[0]) : '';
+  var baseClass = current ? 'renewNotice done' : 'renewNotice pending';
+  var label = current ? ('Avisado' + (sentDate ? ' · ' + sentDate : '')) : 'Pendiente de aviso';
+  var btn = current
+    ? '<button type="button" data-id="'+esc(c.id)+'" onclick="toggleRenewalNotice(this.dataset.id, false, this)">Desmarcar</button>'
+    : '<button type="button" data-id="'+esc(c.id)+'" onclick="toggleRenewalNotice(this.dataset.id, true, this)">Marcar avisado</button>';
+  return '<div class="'+baseClass+(mode==='view'?' view':'')+'"><div><strong>'+label+'</strong><span> Aviso de renovación 15 días</span></div>'+btn+'</div>';
+}
+
+async function toggleRenewalNotice(id, value, btn) {
+  var c = clients.find(function(x){ return x.id === id; });
+  if (!c) return;
+  var oldText = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = 'Guardando...'; }
+  if (value) {
+    c.avisoRenovacionEnviado = true;
+    c.avisoRenovacionFecha = new Date().toISOString();
+    c.avisoRenovacionExpiracion = c.expiry || null;
+  } else {
+    c.avisoRenovacionEnviado = false;
+    c.avisoRenovacionFecha = null;
+    c.avisoRenovacionExpiracion = null;
+  }
+  try {
+    var saved = await saveClientToStore(c);
+    var idx = clients.findIndex(function(x){ return x.id === id; });
+    if (idx >= 0) clients[idx] = saved;
+    saveData();
+    renderCards();
+    if (document.getElementById('viewSheet') && document.getElementById('viewSheet').classList.contains('open')) {
+      viewClient(id);
+    }
+    if (typeof showToast === 'function') showToast(value ? 'Cliente marcado como avisado' : 'Aviso desmarcado');
+  } catch(ex) {
+    if (typeof showToast === 'function') showToast('Error al guardar aviso: ' + ex.message, 'error'); else alert('Error al guardar aviso: ' + ex.message);
+    if (btn) { btn.disabled = false; btn.textContent = oldText; }
+  }
+}
+
 function formatDate(d) {
   if (!d) return '-';
   var p = d.split('-'); return p[2]+'/'+p[1]+'/'+p[0];
@@ -391,6 +444,7 @@ function renderCards() {
         '</div>' +
       '</div>' +
       '<div class="clientCard-expiry">Expira: <span>' + formatDate(c.expiry) + '</span></div>' +
+      renewalNoticeHtml(c, 'card') +
       '<div class="clientCard-actions">' +
         '<button class="act-ver" data-id="'+c.id+'" onclick="viewClient(this.dataset.id)">&#128065; Ver</button>' +
         '<button class="act-edit" data-id="'+c.id+'" onclick="editClient(this.dataset.id)">&#9998; Editar</button>' +
@@ -569,7 +623,26 @@ async function saveClient() {
   });
   var id=document.getElementById('editId').value;
   try {
-    var clientObj = {id:id||'',name:name,user:user,pass:pass,expiry:expiry,service:service,notes:notes,apps:appsData,createdAt:new Date().toISOString()};
+    var existingClient = id ? clients.find(function(x){ return x.id === id; }) : null;
+    var clientObj = {
+      id:id||'',
+      name:name,
+      user:user,
+      pass:pass,
+      expiry:expiry,
+      service:service,
+      notes:notes,
+      apps:appsData,
+      createdAt: existingClient && existingClient.createdAt ? existingClient.createdAt : new Date().toISOString(),
+      avisoRenovacionEnviado: existingClient ? !!existingClient.avisoRenovacionEnviado : false,
+      avisoRenovacionFecha: existingClient ? existingClient.avisoRenovacionFecha : null,
+      avisoRenovacionExpiracion: existingClient ? existingClient.avisoRenovacionExpiracion : null
+    };
+    if (existingClient && existingClient.expiry !== expiry) {
+      clientObj.avisoRenovacionEnviado = false;
+      clientObj.avisoRenovacionFecha = null;
+      clientObj.avisoRenovacionExpiracion = null;
+    }
     var saved = await saveClientToStore(clientObj);
     if(id){
       var idx=clients.findIndex(function(x){return x.id===id;});
@@ -593,6 +666,7 @@ function viewClient(id) {
   var html='';
   html+='<div class="viewRow"><div class="vlabel">Servicio</div><div class="vval"><span class="badge '+(c.service==='TODO'?'badgeTodo':'badgeEs')+'">'+svcLabel+'</span></div></div>';
   html+='<div class="viewRow"><div class="vlabel">Expiracion</div><div class="vval">'+formatDate(c.expiry)+' '+statusBadge(c.expiry)+'</div></div>';
+  html+=renewalNoticeHtml(c, 'view');
   html+='<div class="viewRow"><div class="vlabel">Usuario</div><div style="display:flex;align-items:center;gap:8px"><span style="font-family:monospace;color:var(--cyan)">'+esc(c.user||'-')+'</span>'+(c.user?'<button class="btnCopy" data-copy="'+esc(c.user)+'" onclick="copyText(this.dataset.copy,this)">Copiar</button>':'')+'</div></div>';
   html+='<div class="viewRow"><div class="vlabel">Contrasena</div><div style="display:flex;align-items:center;gap:8px"><span style="font-family:monospace">'+esc(c.pass||'-')+'</span>'+(c.pass?'<button class="btnCopy" data-copy="'+esc(c.pass)+'" onclick="copyText(this.dataset.copy,this)">Copiar</button>':'')+'</div></div>';
   html+='<div class="vlabel" style="margin-bottom:10px">Apps instaladas</div>';
@@ -846,6 +920,9 @@ async function doRenew() {
   var base=c.expiry?new Date(c.expiry):new Date();
   base.setMonth(base.getMonth()+renewMonths);
   c.expiry=base.toISOString().split('T')[0];
+  c.avisoRenovacionEnviado = false;
+  c.avisoRenovacionFecha = null;
+  c.avisoRenovacionExpiracion = null;
   try {
     var saved = await saveClientToStore(c);
     var idx=clients.findIndex(function(x){return x.id===renewTargetId;});
@@ -912,7 +989,7 @@ function exportExcel() {
   var rows=clients.map(function(c){
     var svc = c.service === 'ESPANA' ? 'ESPA\u00D1A' : c.service;
     var appsStr=(c.apps||[]).map(function(a){var s=a.name;if(a.customName) s+=' ('+a.customName+')';if(a.mac) s+=' MAC:'+a.mac;if(a.code) s+=' CODE:'+a.code;return s;}).join(' | ');
-    return {'ID':c.id,'Nombre':c.name,'Usuario':c.user,'Contrasena':c.pass,'Servicio':svc,'Expiracion':c.expiry,'Apps':appsStr,'Notas':c.notes,'Creado':c.createdAt?c.createdAt.split('T')[0]:''};
+    return {'ID':c.id,'Nombre':c.name,'Usuario':c.user,'Contrasena':c.pass,'Servicio':svc,'Expiracion':c.expiry,'Apps':appsStr,'Notas':c.notes,'AvisoRenovacion':isRenewalNoticeCurrent(c)?'SI':'NO','FechaAviso':c.avisoRenovacionFecha?String(c.avisoRenovacionFecha).split('T')[0]:'','Creado':c.createdAt?c.createdAt.split('T')[0]:''};
   });
   var ws=XLSX.utils.json_to_sheet(rows);
   var wb=XLSX.utils.book_new();
@@ -951,7 +1028,10 @@ function importExcel(event) {
           var cu=a.match(/\(([^)]+)\)/); if(cu) obj.customName=cu[1];
           return obj;
         });
-        var nc={id:rowId,name:row['Nombre']||'',user:row['Usuario']||'',pass:row['Contrasena']||'',service:svc,expiry:normalizeImportDate(row['Expiracion']),notes:row['Notas']||'',apps:apps.length?apps:[],createdAt:row['Creado']||new Date().toISOString()};
+        var importedExpiry = normalizeImportDate(row['Expiracion']);
+        var avisoRaw = String(row['AvisoRenovacion'] || '').trim().toLowerCase();
+        var avisoImported = avisoRaw === 'si' || avisoRaw === 'sí' || avisoRaw === 'true' || avisoRaw === '1';
+        var nc={id:rowId,name:row['Nombre']||'',user:row['Usuario']||'',pass:row['Contrasena']||'',service:svc,expiry:importedExpiry,notes:row['Notas']||'',apps:apps.length?apps:[],createdAt:row['Creado']||new Date().toISOString(),avisoRenovacionEnviado:avisoImported,avisoRenovacionFecha:row['FechaAviso']?normalizeImportDate(row['FechaAviso']):null,avisoRenovacionExpiracion:avisoImported?importedExpiry:null};
         var saved = await saveClientToStore(nc);
         if(existingIdx>=0) clients[existingIdx]=saved; else clients.push(saved);
         imported++;

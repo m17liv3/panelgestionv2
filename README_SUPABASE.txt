@@ -32,3 +32,13 @@ Importar Excel:
 Notas:
 - La clave incluida en config.js es publishable/public. No uses service_role ni secret keys en GitHub Pages.
 - Si subes cambios y la PWA sigue mostrando version antigua, cierra la app, borra cache o espera a que el service worker actualice.
+
+AVISO DE RENOVACIÓN 15 DÍAS
+Antes de usar esta versión, añade estas columnas en Supabase > SQL Editor:
+
+alter table public.clientes
+add column if not exists aviso_renovacion_enviado boolean default false,
+add column if not exists aviso_renovacion_fecha timestamptz,
+add column if not exists aviso_renovacion_expiracion date;
+
+Estas columnas permiten guardar si un cliente que expira pronto ya ha sido avisado. Al renovar o cambiar la fecha de expiración, el aviso se reinicia.

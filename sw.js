@@ -1,4 +1,4 @@
-const CACHE_NAME = 'm17liv3-pwa-v1.1.4-sorteos';
+const CACHE_NAME = 'm17liv3-pwa-v1.1.5-aviso-renovacion';
 const APP_SHELL = [
   './',
   './index.html',
