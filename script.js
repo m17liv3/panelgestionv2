@@ -725,11 +725,36 @@ function openDeleteAllClients() {
   var pass = document.getElementById('deleteAllPass');
   var err = document.getElementById('deleteAllError');
   var btn = document.getElementById('deleteAllConfirmBtn');
-  if (pass) pass.value = '';
+  if (pass) { pass.value = ''; pass.style.borderColor = ''; }
   if (err) { err.textContent = ''; err.style.display = 'none'; }
   if (btn) { btn.disabled = false; btn.textContent = 'Borrar todos los clientes'; }
   openSheet('deleteAllSheet','deleteAllOverlay');
   setTimeout(function(){ if (pass) pass.focus(); }, 250);
+}
+
+
+function setDeleteAllError(message) {
+  var err = document.getElementById('deleteAllError');
+  var passEl = document.getElementById('deleteAllPass');
+  if (err) {
+    err.textContent = message;
+    err.style.display = 'block';
+  }
+  if (passEl) {
+    passEl.style.borderColor = 'var(--red)';
+    try { passEl.focus(); passEl.select(); } catch(e) {}
+  }
+  if (typeof showToast === 'function') showToast(message, 'error');
+}
+
+function clearDeleteAllError() {
+  var err = document.getElementById('deleteAllError');
+  var passEl = document.getElementById('deleteAllPass');
+  if (err) {
+    err.textContent = '';
+    err.style.display = 'none';
+  }
+  if (passEl) passEl.style.borderColor = '';
 }
 
 async function verifyDeleteAllPassword(password) {
@@ -778,8 +803,13 @@ async function confirmDeleteAllClients() {
     updateStats();
     if (typeof showToast === 'function') showToast('Todos los clientes han sido borrados');
   } catch(ex) {
-    if (err) { err.textContent = ex.message || 'Error al borrar clientes'; err.style.display = 'block'; }
-    else alert('Error al borrar clientes: ' + ex.message);
+    var msg = ex && ex.message ? ex.message : 'Error al borrar clientes';
+    var low = String(msg).toLowerCase();
+    if (low.indexOf('contrasena incorrecta') !== -1 || low.indexOf('contraseña incorrecta') !== -1 || low.indexOf('invalid login') !== -1 || low.indexOf('invalid credentials') !== -1) {
+      msg = 'Contraseña errónea. No se ha borrado ningún cliente.';
+    }
+    if (err) setDeleteAllError(msg);
+    else alert('Error al borrar clientes: ' + msg);
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = 'Borrar todos los clientes'; }
   }

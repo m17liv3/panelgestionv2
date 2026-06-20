@@ -221,11 +221,11 @@
     <button class="sheet-close" onclick="closeSheet('deleteAllSheet','deleteAllOverlay')">x</button>
   </div>
   <div class="sheet-body">
-    <p style="color:var(--muted);font-size:.9rem;margin-bottom:12px">Esta accion eliminara todos los clientes guardados en tu cuenta. No se puede deshacer.</p>
+    <p style="color:var(--muted);font-size:.9rem;margin-bottom:12px">Esta acción eliminará todos los clientes guardados en tu cuenta. No se puede deshacer.</p>
     <p style="color:var(--orange);font-size:.82rem;margin-bottom:16px">Recomendado: exporta un Excel antes de borrar si quieres conservar una copia.</p>
     <div class="formGroup">
-      <label>Contrasena de acceso <span class="required-star">*</span></label>
-      <input type="password" id="deleteAllPass" placeholder="Escribe tu contrasena para confirmar" autocomplete="current-password"/>
+      <label>Contraseña de acceso <span class="required-star">*</span></label>
+      <input type="password" id="deleteAllPass" placeholder="Escribe tu contraseña para confirmar" autocomplete="current-password" oninput="clearDeleteAllError()"/>
     </div>
     <div class="formError" id="deleteAllError"></div>
     <button class="btnFull danger" id="deleteAllConfirmBtn" onclick="confirmDeleteAllClients()">Borrar todos los clientes</button>

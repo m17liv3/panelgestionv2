@@ -1,4 +1,4 @@
-const CACHE_NAME = 'm17liv3-pwa-v1.1.1-supabase-import';
+const CACHE_NAME = 'm17liv3-pwa-v1.1.2-pass-error';
 const APP_SHELL = [
   './',
   './index.html',
