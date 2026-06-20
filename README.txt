@@ -62,3 +62,6 @@ Nota: la app podrá abrirse como app instalada, pero las funciones que dependen 
 
 
 Actualizacion: se ha añadido el modulo de mensajes rapidos para clientes. Permite copiar textos para WhatsApp/Telegram sin guardar telefonos, incluyendo datos de acceso, fecha de expiracion y aviso de renovacion 15 dias antes.
+
+
+Actualización: los clientes se muestran ordenados por fecha de expiración, de más próxima a más lejana. Los clientes sin fecha quedan al final.

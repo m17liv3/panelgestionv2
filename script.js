@@ -102,12 +102,13 @@ function clientToDbPayload(c) {
 async function loadClientsFromStore() {
   if (!USE_SUPABASE) {
     try { clients = JSON.parse(localStorage.getItem('m17_clients') || '[]'); } catch(e) { clients = []; }
+    clients = sortClientsByExpiryAsc(clients);
     return clients;
   }
   var db = initSupabase();
   var result = await db.from(SUPABASE_TABLE).select('*').order('created_at', { ascending: false });
   if (result.error) throw result.error;
-  clients = (result.data || []).map(dbRowToClient);
+  clients = sortClientsByExpiryAsc((result.data || []).map(dbRowToClient));
   return clients;
 }
 
@@ -313,6 +314,21 @@ function formatDate(d) {
   if (!d) return '-';
   var p = d.split('-'); return p[2]+'/'+p[1]+'/'+p[0];
 }
+
+function clientExpirySortValue(c) {
+  if (!c || !c.expiry) return Number.POSITIVE_INFINITY;
+  var t = new Date(c.expiry).getTime();
+  return isNaN(t) ? Number.POSITIVE_INFINITY : t;
+}
+
+function sortClientsByExpiryAsc(list) {
+  return (list || []).slice().sort(function(a, b) {
+    var da = clientExpirySortValue(a);
+    var db = clientExpirySortValue(b);
+    if (da !== db) return da - db;
+    return String(a.name || '').localeCompare(String(b.name || ''), 'es', { sensitivity: 'base' });
+  });
+}
 function esc(s) {
   if (!s) return '';
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -407,6 +423,7 @@ function renderCards() {
     var mt = !filterSt || (filterSt==='ok' ? (getStatus(c.expiry)==='ok'||getStatus(c.expiry)==='warn') : getStatus(c.expiry)===filterSt);
     return ms && mv && mt;
   });
+  filtered = sortClientsByExpiryAsc(filtered);
   var container = document.getElementById('cardsContainer');
   container.innerHTML = '';
   document.getElementById('emptyState').style.display = filtered.length ? 'none' : 'block';
