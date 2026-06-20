@@ -59,3 +59,6 @@ En iPhone/iPad hay que abrir la web en Safari y usar Compartir > Añadir a panta
 
 Nota: la app podrá abrirse como app instalada, pero las funciones que dependen de Internet
 (TMDB, imgBB, cartelera online, CDN de Excel, etc.) seguirán necesitando conexión.
+
+
+Actualizacion: se ha añadido el modulo de mensajes rapidos para clientes. Permite copiar textos para WhatsApp/Telegram sin guardar telefonos, incluyendo datos de acceso, fecha de expiracion y aviso de renovacion 15 dias antes.

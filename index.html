@@ -222,6 +222,31 @@
   <div class="sheet-body" id="viewSheetBody"></div>
 </div>
 
+<!-- MESSAGE SHEET -->
+<div class="sheet-overlay" id="messageOverlay" onclick="closeSheet('messageSheet','messageOverlay')"></div>
+<div class="sheet" id="messageSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <h3 id="messageSheetTitle">Mensajes rapidos</h3>
+    <button class="sheet-close" onclick="closeSheet('messageSheet','messageOverlay')">x</button>
+  </div>
+  <div class="sheet-body">
+    <p id="messageInfo" style="color:var(--muted);font-size:.88rem;margin-bottom:14px"></p>
+    <div class="msgActionsGrid">
+      <button class="btnFull gray" onclick="copyClientMessage('access', this)">&#128272; Datos acceso</button>
+      <button class="btnFull gray" onclick="copyClientMessage('expiry', this)">&#9200; Aviso caducidad</button>
+      <button class="btnFull gray" onclick="copyClientMessage('renewed', this)">&#9989; Renovacion OK</button>
+      <button class="btnFull gray" onclick="copyClientMessage('expired', this)">&#9888; Cliente caducado</button>
+    </div>
+    <div class="formGroup">
+      <label>Mensaje generado</label>
+      <textarea id="messagePreview" class="msgPreview" placeholder="Elige un mensaje rapido..." readonly></textarea>
+    </div>
+    <button class="btnFull primary" onclick="copyGeneratedMessage(this)">&#128203; Copiar mensaje mostrado</button>
+    <button class="btnFull gray" onclick="closeSheet('messageSheet','messageOverlay')" style="margin-top:8px">Cerrar</button>
+  </div>
+</div>
+
 <!-- CARTELERA SHEET -->
 <div class="sheet-overlay" id="carteleraOverlay" onclick="closeSheet('carteleraSheet','carteleraOverlay')"></div>
 <div class="sheet" id="carteleraSheet" style="max-height:92vh;overflow-y:auto;">

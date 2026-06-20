@@ -18,6 +18,7 @@ var selectedApps = [];
 var deleteTargetId = null;
 var renewTargetId = null;
 var renewMonths = 1;
+var messageTargetId = null;
 var filterSvc = '';
 var filterSt = '';
 var showFilters = false;
@@ -235,6 +236,7 @@ function renderCards() {
         '<button class="act-ver" data-id="'+c.id+'" onclick="viewClient(this.dataset.id)">&#128065; Ver</button>' +
         '<button class="act-edit" data-id="'+c.id+'" onclick="editClient(this.dataset.id)">&#9998; Editar</button>' +
         '<button class="act-renew" data-id="'+c.id+'" onclick="openRenew(this.dataset.id)">&#8635; Renovar</button>' +
+        '<button class="act-msg" data-id="'+c.id+'" onclick="openClientMessages(this.dataset.id)">&#128203; Msg</button>' +
         '<button class="act-del" data-id="'+c.id+'" onclick="openDelete(this.dataset.id)">&#128465; Borrar</button>' +
       '</div>';
     container.appendChild(div);
@@ -434,8 +436,120 @@ function viewClient(id) {
     html+='</div>';
   });
   if(c.notes) html+='<div class="viewRow" style="margin-top:10px"><div class="vlabel">Notas</div><div class="vval" style="color:var(--muted)">'+esc(c.notes)+'</div></div>';
+  html+='<button class="btnFull primary" data-id="'+c.id+'" onclick="openClientMessages(this.dataset.id)" style="margin-top:12px">&#128203; Copiar mensajes rapidos</button>';
   document.getElementById('viewSheetBody').innerHTML=html;
   openSheet('viewSheet','viewOverlay');
+}
+
+
+function getClientMainApp(c) {
+  if (!c || !c.apps || !c.apps.length) return '-';
+  var a = c.apps[0];
+  return a.customName ? a.customName : (a.name || '-');
+}
+
+function getClientById(id) {
+  return clients.find(function(x){ return x.id === id; });
+}
+
+function buildClientMessage(c, type) {
+  var name = c && c.name ? c.name : '';
+  var greeting = name ? 'Hola ' + name + ' 👋' : 'Hola 👋';
+  var expiry = formatDate(c && c.expiry ? c.expiry : '');
+  var user = c && c.user ? c.user : '-';
+  var pass = c && c.pass ? c.pass : '-';
+  var app = getClientMainApp(c);
+
+  if (type === 'access') {
+    return greeting + '\n\n' +
+      'Estos son tus datos de acceso M17LIV3:\n\n' +
+      'App: ' + app + '\n' +
+      'Usuario: ' + user + '\n' +
+      'Contraseña: ' + pass + '\n' +
+      'Fecha de expiración: ' + expiry + '\n\n' +
+      'Recuerda que te avisaré 15 días antes para su renovación.\n\n' +
+      'Cualquier cosa me dices.';
+  }
+
+  if (type === 'expiry') {
+    return greeting + '\n\n' +
+      'Te recordamos que tu suscripción M17LIV3 caduca el día ' + expiry + '.\n\n' +
+      'Puedes renovarla cuando quieras para evitar cortes en el servicio.\n\n' +
+      'Cualquier cosa me dices.';
+  }
+
+  if (type === 'renewed') {
+    return greeting + '\n\n' +
+      'Tu suscripción M17LIV3 ha sido renovada correctamente.\n\n' +
+      'Nueva fecha de expiración: ' + expiry + '\n\n' +
+      'Gracias por confiar en M17LIV3. Cualquier cosa me dices.';
+  }
+
+  if (type === 'expired') {
+    return greeting + '\n\n' +
+      'Tu suscripción M17LIV3 expiró el día ' + expiry + '.\n\n' +
+      'Si quieres reactivarla, dime y te la renuevo.\n\n' +
+      'Cualquier cosa me dices.';
+  }
+
+  return '';
+}
+
+function openClientMessages(id) {
+  messageTargetId = id;
+  var c = getClientById(id);
+  if (!c) return;
+  var title = document.getElementById('messageSheetTitle');
+  var info = document.getElementById('messageInfo');
+  var prev = document.getElementById('messagePreview');
+  if (title) title.textContent = 'Mensajes · ' + c.name;
+  if (info) info.textContent = 'Elige un mensaje. Se copiará al portapapeles para pegarlo manualmente en WhatsApp, Telegram, Instagram o donde quieras.';
+  if (prev) prev.value = buildClientMessage(c, 'access');
+  openSheet('messageSheet','messageOverlay');
+}
+
+function copyMessageText(txt, btn) {
+  var fallback = function() {
+    var ta = document.createElement('textarea');
+    ta.value = txt;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    try { document.execCommand('copy'); } catch(e) {}
+    document.body.removeChild(ta);
+  };
+  var done = function(){
+    if (btn) {
+      var old = btn.innerHTML;
+      btn.innerHTML = '&#10003; Copiado';
+      btn.disabled = true;
+      setTimeout(function(){ btn.innerHTML = old; btn.disabled = false; }, 1400);
+    }
+    if (typeof showToast === 'function') showToast('Mensaje copiado');
+  };
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(txt).then(done).catch(function(){ fallback(); done(); });
+  } else {
+    fallback();
+    done();
+  }
+}
+
+function copyClientMessage(type, btn) {
+  var c = getClientById(messageTargetId);
+  if (!c) return;
+  var txt = buildClientMessage(c, type);
+  var prev = document.getElementById('messagePreview');
+  if (prev) prev.value = txt;
+  copyMessageText(txt, btn);
+}
+
+function copyGeneratedMessage(btn) {
+  var prev = document.getElementById('messagePreview');
+  if (!prev || !prev.value.trim()) return;
+  copyMessageText(prev.value, btn);
 }
 
 function openDelete(id) { deleteTargetId=id; openSheet('deleteSheet','deleteOverlay'); }

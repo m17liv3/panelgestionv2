@@ -112,7 +112,7 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, 'S
 .clientCard-expiry { padding: 0 14px 10px; font-size: .78rem; color: var(--muted); }
 .clientCard-expiry span { color: var(--text); }
 
-.clientCard-actions { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; border-top: 1px solid var(--border); }
+.clientCard-actions { display: grid; grid-template-columns: repeat(5, 1fr); border-top: 1px solid var(--border); }
 .clientCard-actions button {
   padding: 11px 4px; border: none; background: transparent; font-size: .75rem;
   font-weight: 600; cursor: pointer; color: var(--muted); border-right: 1px solid var(--border);
@@ -121,6 +121,7 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, 'S
 .clientCard-actions button.act-ver { color: var(--text); }
 .clientCard-actions button.act-edit { color: var(--cyan); }
 .clientCard-actions button.act-renew { color: var(--green); }
+.clientCard-actions button.act-msg { color: var(--orange); }
 .clientCard-actions button.act-del { color: var(--red); }
 
 .fab {
@@ -282,4 +283,27 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, 'S
   .movieTplRow2, .movieTplAdjustGrid { grid-template-columns:1fr; }
   .movieTplPosterGallery { grid-template-columns:repeat(3,1fr); }
   .movieTplActions button { min-width:100%; }
+}
+
+
+.msgPreview {
+  width: 100%;
+  min-height: 170px;
+  padding: 13px 14px;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  color: var(--text);
+  font-size: .9rem;
+  line-height: 1.45;
+  font-family: inherit;
+  resize: vertical;
+  outline: none;
+}
+.msgPreview:focus { border-color: var(--cyan); }
+.msgActionsGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+.msgActionsGrid button { margin-top: 0; padding: 12px 8px; font-size: .83rem; }
+@media (max-width: 420px) {
+  .clientCard-actions button { font-size: .68rem; padding: 10px 2px; }
+  .msgActionsGrid { grid-template-columns: 1fr; }
 }
