@@ -23,8 +23,8 @@
     <img src="assets/logo.png" alt="M17LIV3"/>
     <h2>Gestion Clientes</h2>
     <p>M17LIV3 Panel de administracion</p>
-    <div id="loginErr">Usuario o contrasena incorrectos</div>
-    <input class="inp" type="text" id="lUser" placeholder="Usuario" autocomplete="username"/>
+    <div id="loginErr">Email o contrasena incorrectos</div>
+    <input class="inp" type="text" id="lUser" placeholder="Email de Supabase" autocomplete="username"/>
     <input class="inp" type="password" id="lPass" placeholder="Contrasena" autocomplete="current-password"/>
     <button type="button" class="btnMain" onclick="doLogin()">Entrar</button>
   </div>
@@ -532,6 +532,7 @@
 
 <div id="toastMsg" style="position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(100px);background:#1e1e2a;border:1px solid rgba(0,229,255,0.3);color:#eeeef5;padding:12px 24px;border-radius:12px;font-size:14px;font-weight:600;z-index:9999;transition:transform 0.3s ease;pointer-events:none;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,0.5);">Mensaje</div>
   <script src="config.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script src="script.js" defer></script>
 </body>
 </html>

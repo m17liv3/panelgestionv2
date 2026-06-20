@@ -1,6 +1,9 @@
 var CONFIG = window.M17_CONFIG || {};
 var ADMIN_USER = CONFIG.adminUser || 'admin';
 var ADMIN_PASS_HASH = CONFIG.adminPassHash || '';
+var USE_SUPABASE = !!(CONFIG.useSupabase && CONFIG.supabaseUrl && CONFIG.supabaseKey);
+var SUPABASE_TABLE = CONFIG.supabaseTable || 'clientes';
+var supabaseDb = null;
 var APPS = [
   { name: 'M17LIV3', needsMac: false, needsCode: false },
   { name: 'IBO PLAYER', needsMac: true, needsCode: true },
@@ -13,7 +16,9 @@ var APPS = [
   { name: 'OTRA APP NO CONOCIDA', needsMac: false, needsCode: false, isOther: true }
 ];
 var clients = [];
-try { clients = JSON.parse(localStorage.getItem('m17_clients') || '[]'); } catch(e) {}
+if (!USE_SUPABASE) {
+  try { clients = JSON.parse(localStorage.getItem('m17_clients') || '[]'); } catch(e) { clients = []; }
+}
 var selectedApps = [];
 var deleteTargetId = null;
 var renewTargetId = null;
@@ -23,6 +28,116 @@ var filterSvc = '';
 var filterSt = '';
 var showFilters = false;
 
+function initSupabase() {
+  if (!USE_SUPABASE) return null;
+  if (supabaseDb) return supabaseDb;
+  if (!window.supabase || !window.supabase.createClient) {
+    throw new Error('No se ha podido cargar Supabase. Revisa la conexión a Internet.');
+  }
+  supabaseDb = window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseKey);
+  return supabaseDb;
+}
+
+function isUuid(v) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(v || '').trim());
+}
+
+function parseAppsFromDb(value) {
+  if (!value) return [];
+  if (Array.isArray(value)) return value;
+  if (typeof value === 'object') return value;
+  try {
+    var parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch(e) {
+    return String(value).split(' | ').filter(Boolean).map(function(a){
+      var obj = {};
+      var mm = a.match(/MAC:([^\s]+)/); var cm = a.match(/CODE:([^\s]+)/);
+      obj.mac = mm ? mm[1] : '';
+      obj.code = cm ? cm[1] : '';
+      obj.name = a.replace(/\s*MAC:[^\s]+/,'').replace(/\s*CODE:[^\s]+/,'').replace(/\s*\(.*?\)/,'').trim();
+      var cu = a.match(/\(([^)]+)\)/); if (cu) obj.customName = cu[1];
+      return obj;
+    });
+  }
+}
+
+function dbRowToClient(row) {
+  return {
+    id: row.id,
+    name: row.nombre || '',
+    user: row.usuario || '',
+    pass: row.password || '',
+    service: row.servicio || 'TODO',
+    expiry: row.expiracion || '',
+    notes: row.notas || '',
+    apps: parseAppsFromDb(row.apps),
+    createdAt: row.created_at || new Date().toISOString(),
+    updatedAt: row.updated_at || ''
+  };
+}
+
+function clientToDbPayload(c) {
+  return {
+    nombre: c.name || '',
+    usuario: c.user || '',
+    password: c.pass || '',
+    servicio: c.service || 'TODO',
+    expiracion: c.expiry || null,
+    apps: JSON.stringify(c.apps || []),
+    notas: c.notes || '',
+    updated_at: new Date().toISOString()
+  };
+}
+
+async function loadClientsFromStore() {
+  if (!USE_SUPABASE) {
+    try { clients = JSON.parse(localStorage.getItem('m17_clients') || '[]'); } catch(e) { clients = []; }
+    return clients;
+  }
+  var db = initSupabase();
+  var result = await db.from(SUPABASE_TABLE).select('*').order('created_at', { ascending: false });
+  if (result.error) throw result.error;
+  clients = (result.data || []).map(dbRowToClient);
+  return clients;
+}
+
+async function saveClientToStore(c) {
+  if (!USE_SUPABASE) {
+    if (!c.id) c.id = genId();
+    return c;
+  }
+  var db = initSupabase();
+  var payload = clientToDbPayload(c);
+  var result;
+  if (c.id && isUuid(c.id)) {
+    result = await db.from(SUPABASE_TABLE).update(payload).eq('id', c.id).select('*').single();
+  } else {
+    result = await db.from(SUPABASE_TABLE).insert(payload).select('*').single();
+  }
+  if (result.error) throw result.error;
+  return dbRowToClient(result.data);
+}
+
+async function deleteClientFromStore(id) {
+  if (!USE_SUPABASE) return true;
+  var db = initSupabase();
+  var result = await db.from(SUPABASE_TABLE).delete().eq('id', id);
+  if (result.error) throw result.error;
+  return true;
+}
+
+function showAppAfterLogin() {
+  var lp = document.getElementById('loginPage');
+  var ap = document.getElementById('appPage');
+  lp.style.display = 'none';
+  ap.classList.add('active');
+  ap.style.display = 'flex';
+  ap.style.flexDirection = 'column';
+  ap.style.height = '100vh';
+  renderCards();
+  updateStats();
+}
 
 async function sha256Text(text) {
   if (!window.crypto || !window.crypto.subtle) {
@@ -36,25 +151,40 @@ async function sha256Text(text) {
 }
 
 async function doLogin() {
+  var btn = document.querySelector('#loginBox .btnMain');
+  var err = document.getElementById('loginErr');
   try {
     var u = document.getElementById('lUser').value.trim();
     var p = document.getElementById('lPass').value;
+    if (err) err.style.display = 'none';
+    if (btn) { btn.disabled = true; btn.textContent = 'Entrando...'; }
+
+    if (USE_SUPABASE) {
+      var db = initSupabase();
+      var res = await db.auth.signInWithPassword({ email: u, password: p });
+      if (res.error) throw res.error;
+      await loadClientsFromStore();
+      showAppAfterLogin();
+      if (typeof showToast === 'function') showToast('Conectado a Supabase');
+      return;
+    }
+
     var okPass = ADMIN_PASS_HASH && (await sha256Text(p)) === ADMIN_PASS_HASH;
     if (u === ADMIN_USER && okPass) {
-      var lp = document.getElementById('loginPage');
-      var ap = document.getElementById('appPage');
-      lp.style.display = 'none';
-      ap.classList.add('active');
-      ap.style.display = 'flex';
-      ap.style.flexDirection = 'column';
-      ap.style.height = '100vh';
-      renderCards(); 
-      updateStats();
+      showAppAfterLogin();
     } else {
-      var err = document.getElementById('loginErr');
       if(err) err.style.display = 'block';
     }
-  } catch(ex) { showToast ? showToast('Error login: ' + ex.message, 'error') : alert('Error login: ' + ex.message); }
+  } catch(ex) {
+    if (err) {
+      err.textContent = USE_SUPABASE ? 'Email o contraseña incorrectos' : 'Usuario o contrasena incorrectos';
+      err.style.display = 'block';
+    }
+    if (typeof showToast === 'function') showToast('Error login: ' + ex.message, 'error');
+    else alert('Error login: ' + ex.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Entrar'; }
+  }
 }
 document.addEventListener('DOMContentLoaded', function() {
   var lp = document.getElementById('lPass');
@@ -62,8 +192,12 @@ document.addEventListener('DOMContentLoaded', function() {
   if(lp) lp.addEventListener('keydown', function(e){ if(e.key==='Enter') doLogin(); });
   if(lu) lu.addEventListener('keydown', function(e){ if(e.key==='Enter') doLogin(); });
 });
-function doLogout() {
+async function doLogout() {
   closeSheet('menuSheet','menuOverlay');
+  if (USE_SUPABASE && supabaseDb) {
+    try { await supabaseDb.auth.signOut(); } catch(e) {}
+  }
+  clients = [];
   var ap = document.getElementById('appPage');
   var lp = document.getElementById('loginPage');
   if (ap) {
@@ -75,7 +209,7 @@ function doLogout() {
   document.getElementById('lPass').value = '';
 }
 
-function saveData() { localStorage.setItem('m17_clients', JSON.stringify(clients)); }
+function saveData() { if (!USE_SUPABASE) localStorage.setItem('m17_clients', JSON.stringify(clients)); }
 function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
 
 function getStatus(expiry) {
@@ -370,7 +504,7 @@ function editClient(id) {
   openSheet('clientSheet','clientOverlay');
 }
 
-function saveClient() {
+async function saveClient() {
   var errEl = document.getElementById('formError');
   errEl.style.display='none';
   var name=document.getElementById('fName').value.trim();
@@ -409,13 +543,21 @@ function saveClient() {
     return obj;
   });
   var id=document.getElementById('editId').value;
-  if(id){
-    var idx=clients.findIndex(function(x){return x.id===id;});
-    clients[idx]=Object.assign({},clients[idx],{name:name,user:user,pass:pass,expiry:expiry,service:service,notes:notes,apps:appsData});
-  } else {
-    clients.push({id:genId(),name:name,user:user,pass:pass,expiry:expiry,service:service,notes:notes,apps:appsData,createdAt:new Date().toISOString()});
+  try {
+    var clientObj = {id:id||'',name:name,user:user,pass:pass,expiry:expiry,service:service,notes:notes,apps:appsData,createdAt:new Date().toISOString()};
+    var saved = await saveClientToStore(clientObj);
+    if(id){
+      var idx=clients.findIndex(function(x){return x.id===id;});
+      if(idx>=0) clients[idx]=saved; else clients.unshift(saved);
+    } else {
+      clients.unshift(saved);
+    }
+    saveData(); closeSheet('clientSheet','clientOverlay'); renderCards();
+    if (typeof showToast === 'function') showToast('Cliente guardado');
+  } catch(ex) {
+    errEl.textContent='Error al guardar: '+ex.message;
+    errEl.style.display='block';
   }
-  saveData(); closeSheet('clientSheet','clientOverlay'); renderCards();
 }
 
 function viewClient(id) {
@@ -541,9 +683,15 @@ function copyClientMessage(type, btn) {
 }
 
 function openDelete(id) { deleteTargetId=id; openSheet('deleteSheet','deleteOverlay'); }
-function confirmDelete() {
-  clients=clients.filter(function(x){return x.id!==deleteTargetId;});
-  saveData(); closeSheet('deleteSheet','deleteOverlay'); renderCards();
+async function confirmDelete() {
+  try {
+    await deleteClientFromStore(deleteTargetId);
+    clients=clients.filter(function(x){return x.id!==deleteTargetId;});
+    saveData(); closeSheet('deleteSheet','deleteOverlay'); renderCards();
+    if (typeof showToast === 'function') showToast('Cliente eliminado');
+  } catch(ex) {
+    if (typeof showToast === 'function') showToast('Error al eliminar: '+ex.message, 'error'); else alert('Error al eliminar: '+ex.message);
+  }
 }
 
 function openRenew(id) {
@@ -568,14 +716,21 @@ function updateRenewHint(c) {
   var previewStr=preview.toISOString().split('T')[0];
   document.getElementById('renewMonthsHint').textContent='Nueva fecha: '+formatDate(previewStr);
 }
-function doRenew() {
+async function doRenew() {
   var c=clients.find(function(x){return x.id===renewTargetId;});
   if(!c) return;
   var base=c.expiry?new Date(c.expiry):new Date();
   base.setMonth(base.getMonth()+renewMonths);
   c.expiry=base.toISOString().split('T')[0];
-  saveData(); closeSheet('renewSheet','renewOverlay'); renderCards();
-  alert('Renovado ' + renewMonths + ' mes(es)!\nNueva fecha: '+formatDate(c.expiry));
+  try {
+    var saved = await saveClientToStore(c);
+    var idx=clients.findIndex(function(x){return x.id===renewTargetId;});
+    if(idx>=0) clients[idx]=saved;
+    saveData(); closeSheet('renewSheet','renewOverlay'); renderCards();
+    alert('Renovado ' + renewMonths + ' mes(es)!\nNueva fecha: '+formatDate(saved.expiry));
+  } catch(ex) {
+    if (typeof showToast === 'function') showToast('Error al renovar: '+ex.message, 'error'); else alert('Error al renovar: '+ex.message);
+  }
 }
 
 function exportExcel() {
@@ -595,17 +750,19 @@ function exportExcel() {
 function importExcel(event) {
   var file=event.target.files[0]; if(!file) return;
   var reader=new FileReader();
-  reader.onload=function(e){
+  reader.onload=async function(e){
     try {
       var wb=XLSX.read(e.target.result,{type:'binary'});
       var ws=wb.Sheets[wb.SheetNames[0]];
       var rows=XLSX.utils.sheet_to_json(ws);
       var imported=0;
-      rows.forEach(function(row){
-        if(!row['Nombre']||!row['Usuario']) return;
+      for (var r=0; r<rows.length; r++) {
+        var row = rows[r];
+        if(!row['Nombre']||!row['Usuario']) continue;
         var svcRaw = (row['Servicio']||'TODO');
         var svc = (svcRaw==='ESPA\u00D1A'||svcRaw==='ESPANA') ? 'ESPANA' : 'TODO';
-        var existingIdx=clients.findIndex(function(c){return c.id===row['ID'];});
+        var rowId = row['ID'] ? String(row['ID']).trim() : '';
+        var existingIdx=clients.findIndex(function(c){return c.id===rowId;});
         var apps=(row['Apps']||'').split(' | ').filter(Boolean).map(function(a){
           var obj={};
           var mm=a.match(/MAC:([^\s]+)/); var cm=a.match(/CODE:([^\s]+)/);
@@ -614,10 +771,11 @@ function importExcel(event) {
           var cu=a.match(/\(([^)]+)\)/); if(cu) obj.customName=cu[1];
           return obj;
         });
-        var nc={id:row['ID']||genId(),name:row['Nombre']||'',user:row['Usuario']||'',pass:row['Contrasena']||'',service:svc,expiry:row['Expiracion']||'',notes:row['Notas']||'',apps:apps.length?apps:[],createdAt:row['Creado']||new Date().toISOString()};
-        if(existingIdx>=0) clients[existingIdx]=nc; else clients.push(nc);
+        var nc={id:rowId,name:row['Nombre']||'',user:row['Usuario']||'',pass:row['Contrasena']||'',service:svc,expiry:row['Expiracion']||'',notes:row['Notas']||'',apps:apps.length?apps:[],createdAt:row['Creado']||new Date().toISOString()};
+        var saved = await saveClientToStore(nc);
+        if(existingIdx>=0) clients[existingIdx]=saved; else clients.push(saved);
         imported++;
-      });
+      }
       saveData(); renderCards(); closeSheet('menuSheet','menuOverlay');
       alert('Importados/actualizados: '+imported+' clientes.');
     } catch(err){ alert('Error al importar: '+err.message); }

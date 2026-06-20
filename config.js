@@ -8,5 +8,9 @@ window.M17_CONFIG = {
   cartKey: '$2a$10$9ikO.ZJ.tHgDUL0ddUaO.eNMFAT5S6FGO.Ub6rJKwpIsE/Mr/L2xG',
   cartImgBBKey: '8cb8483f3601ee9ae19b976b9f63d1fa',
   tmdbKey: '6b8e3eaa1a03ebb45642e9531d8a76d2',
-  templateImgBBKey: '8cb8483f3601ee9ae19b976b9f63d1fa'
+  templateImgBBKey: '8cb8483f3601ee9ae19b976b9f63d1fa',
+  useSupabase: true,
+  supabaseUrl: 'https://qjbnjhojwhcndcfjcyrc.supabase.co',
+  supabaseKey: 'sb_publishable_HxThHPoZaGm8YgirIX4BQQ_1Sjs907O',
+  supabaseTable: 'clientes'
 };

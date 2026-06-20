@@ -1,4 +1,4 @@
-const CACHE_NAME = 'm17liv3-pwa-v1.0.0';
+const CACHE_NAME = 'm17liv3-pwa-v1.1.0-supabase';
 const APP_SHELL = [
   './',
   './index.html',
