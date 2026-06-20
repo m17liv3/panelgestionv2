@@ -239,7 +239,7 @@ function getStatus(expiry) {
   var now = new Date(); now.setHours(0,0,0,0);
   var diff = Math.floor((new Date(expiry) - now) / 86400000);
   if (diff < 0) return 'exp';
-  if (diff <= 7) return 'warn';
+  if (diff <= 15) return 'warn';
   return 'ok';
 }
 function getDaysLeft(expiry) {
@@ -304,7 +304,7 @@ function quickFilter(st) {
   } else {
     bar.style.display = 'flex';
     if (st === 'ok') lbl.textContent = 'Mostrando: Clientes activos';
-    if (st === 'warn') lbl.textContent = 'Mostrando: Expiran pronto (menos de 7 dias)';
+    if (st === 'warn') lbl.textContent = 'Mostrando: Expiran pronto (menos de 15 dias)';
     if (st === 'exp') lbl.textContent = 'Mostrando: Expirados';
   }
   renderCards();
