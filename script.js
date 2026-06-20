@@ -110,11 +110,17 @@ async function saveClientToStore(c) {
   var db = initSupabase();
   var payload = clientToDbPayload(c);
   var result;
+
+  // Si el cliente trae un UUID existente, intentamos actualizarlo.
+  // Si ese ID no existe en Supabase o no pertenece al usuario actual,
+  // Supabase devuelve 0 filas. En ese caso lo tratamos como cliente nuevo.
   if (c.id && isUuid(c.id)) {
-    result = await db.from(SUPABASE_TABLE).update(payload).eq('id', c.id).select('*').single();
-  } else {
-    result = await db.from(SUPABASE_TABLE).insert(payload).select('*').single();
+    result = await db.from(SUPABASE_TABLE).update(payload).eq('id', c.id).select('*').maybeSingle();
+    if (result.error) throw result.error;
+    if (result.data) return dbRowToClient(result.data);
   }
+
+  result = await db.from(SUPABASE_TABLE).insert(payload).select('*').single();
   if (result.error) throw result.error;
   return dbRowToClient(result.data);
 }
@@ -812,6 +818,13 @@ function importExcel(event) {
         var svc = (svcRaw==='ESPA\u00D1A'||svcRaw==='ESPANA') ? 'ESPANA' : 'TODO';
         var rowId = row['ID'] ? String(row['ID']).trim() : '';
         var existingIdx=clients.findIndex(function(c){return c.id===rowId;});
+        // Para evitar errores al importar plantillas o excels con IDs antiguos,
+        // solo conservamos el ID si existe ya en los clientes cargados.
+        // Si no existe, se inserta como cliente nuevo y Supabase crea el ID.
+        if (!rowId || existingIdx < 0 || !isUuid(rowId)) {
+          rowId = '';
+          existingIdx = -1;
+        }
         var apps=(row['Apps']||'').split(' | ').filter(Boolean).map(function(a){
           var obj={};
           var mm=a.match(/MAC:([^\s]+)/); var cm=a.match(/CODE:([^\s]+)/);
