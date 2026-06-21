@@ -1,3 +1,4 @@
+// avisados-filtro-fix-v1.2.2
 var CONFIG = window.M17_CONFIG || {};
 var ADMIN_USER = CONFIG.adminUser || 'admin';
 var ADMIN_PASS_HASH = CONFIG.adminPassHash || '';
