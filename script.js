@@ -361,16 +361,10 @@ function openMenu() { openSheet('menuSheet','menuOverlay'); }
 var IBO_PANEL_URL = 'https://damaplay.top/panelr/m17live/';
 function openIboPanel() {
   closeSheet('menuSheet','menuOverlay');
-  var frame = document.getElementById('iboPanelFrame');
-  if (frame && (!frame.src || frame.src === 'about:blank')) frame.src = IBO_PANEL_URL;
-  openSheet('iboPanelSheet','iboPanelOverlay');
-}
-function reloadIboPanel() {
-  var frame = document.getElementById('iboPanelFrame');
-  if (frame) frame.src = IBO_PANEL_URL + (IBO_PANEL_URL.indexOf('?') === -1 ? '?t=' : '&t=') + Date.now();
+  window.open(IBO_PANEL_URL, '_blank', 'noopener');
 }
 function openIboPanelExternal() {
-  window.open(IBO_PANEL_URL, '_blank', 'noopener');
+  openIboPanel();
 }
 
 function toggleFilters() {

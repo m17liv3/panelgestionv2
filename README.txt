@@ -69,6 +69,6 @@ Actualización: los clientes se muestran ordenados por fecha de expiración, de 
 
 Actualización Panel APP IBO:
 - Añadido nuevo apartado "Panel APP IBO" en el menú.
-- Integra https://damaplay.top/panelr/m17live/ mediante iframe.
+- Al pulsarlo, abre https://damaplay.top/panelr/m17live/ en una nueva pestaña/ventana.
 - Incluye botón "Abrir fuera" por si el panel externo bloquea la vista integrada.
 - Actualizada versión de service worker para forzar refresco de PWA.
