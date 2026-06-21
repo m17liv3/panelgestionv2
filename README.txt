@@ -72,3 +72,14 @@ Actualización Panel APP IBO:
 - Al pulsarlo, abre https://damaplay.top/panelr/m17live/ en una nueva pestaña/ventana.
 - Incluye botón "Abrir fuera" por si el panel externo bloquea la vista integrada.
 - Actualizada versión de service worker para forzar refresco de PWA.
+
+NOVEDAD: Backup inteligente + ingresos por renovacion
+-----------------------------------------------------
+1. Ejecuta una sola vez en Supabase SQL Editor el contenido de SQL_RENOVACIONES.txt.
+2. Sube todos los archivos de esta carpeta a GitHub Pages.
+3. En la app veras:
+   - Menu > Backup inteligente.
+   - Menu > Ingresos / renovaciones.
+   - Al pulsar Renovar en un cliente, podras poner importe pagado, metodo y notas.
+
+El aviso de backup se guarda en el dispositivo/navegador desde el que exportas la copia.

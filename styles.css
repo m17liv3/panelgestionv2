@@ -456,3 +456,84 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, 'S
 .renewNotice.pending button { color: var(--orange); }
 .renewNotice.done button { color: var(--green); }
 .renewNotice button:disabled { opacity: .6; cursor: wait; }
+
+
+/* Backup inteligente */
+.backupNotice {
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding: 11px 12px;
+  background: rgba(255,170,0,0.08);
+  border: 1px solid rgba(255,170,0,0.28);
+  border-radius: 12px;
+}
+.backupNotice strong { display:block; color: var(--orange); font-size:.86rem; margin-bottom:2px; }
+.backupNotice span { display:block; color: var(--muted); font-size:.78rem; line-height:1.35; }
+.backupNotice button {
+  border: 1px solid var(--orange);
+  background: transparent;
+  color: var(--orange);
+  border-radius: 9px;
+  padding: 8px 10px;
+  font-size: .76rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.backupPanel {
+  background: linear-gradient(135deg, rgba(0,229,255,0.08), rgba(105,255,71,0.06));
+  border: 1px solid rgba(0,229,255,0.22);
+  border-radius: 14px;
+  padding: 15px;
+  margin-bottom: 14px;
+}
+.backupPanelLabel { color: var(--muted); font-size:.72rem; text-transform:uppercase; letter-spacing:.8px; margin-bottom:6px; }
+.backupPanelValue { color: var(--text); font-size:1rem; font-weight:800; margin-bottom:6px; }
+.backupPanelStatus { color: var(--green); font-size:.82rem; line-height:1.4; }
+.miniHelp { color: var(--muted); font-size:.78rem; line-height:1.45; margin-top:12px; }
+.renewPaymentBox {
+  background: rgba(255,255,255,0.025);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px;
+  margin: 14px 0;
+}
+.renewPaymentBox .formGroup:last-child { margin-bottom: 0; }
+.paymentsStatsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.paymentsStat {
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  padding: 12px;
+}
+.paymentsStat span { display:block; color: var(--muted); font-size:.68rem; text-transform:uppercase; letter-spacing:.6px; margin-bottom:6px; }
+.paymentsStat strong { display:block; color: var(--green); font-size:1.05rem; }
+.paymentsHistory {
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  max-height:330px;
+  overflow-y:auto;
+  margin-bottom:12px;
+}
+.paymentItem {
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+.paymentItemTop { display:flex; justify-content:space-between; gap:10px; margin-bottom:6px; }
+.paymentName { font-weight:800; color:var(--text); font-size:.9rem; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.paymentAmount { color:var(--green); font-weight:900; white-space:nowrap; }
+.paymentMeta { color:var(--muted); font-size:.78rem; line-height:1.45; }
+@media (max-width: 420px) {
+  .paymentsStatsGrid { grid-template-columns: 1fr; }
+  .backupNotice { align-items:flex-start; flex-direction:column; }
+  .backupNotice button { width:100%; }
+}

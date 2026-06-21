@@ -30,6 +30,10 @@ var showFilters = false;
 var raffles = [];
 var lastRaffleResult = null;
 var SUPABASE_RAFFLES_TABLE = CONFIG.supabaseRafflesTable || 'sorteos';
+var SUPABASE_RENEWALS_TABLE = CONFIG.supabaseRenewalsTable || 'renovaciones';
+var renewals = [];
+var BACKUP_LAST_KEY = 'm17_last_backup_at';
+var BACKUP_REMINDER_DAYS = 7;
 
 function initSupabase() {
   if (!USE_SUPABASE) return null;
@@ -169,7 +173,9 @@ function showAppAfterLogin() {
   ap.style.height = '100vh';
   renderCards();
   updateStats();
+  updateBackupReminder();
 }
+
 
 async function sha256Text(text) {
   if (!window.crypto || !window.crypto.subtle) {
@@ -357,6 +363,262 @@ function closeSheet(id, ovl) {
 }
 function openMenu() { openSheet('menuSheet','menuOverlay'); }
 
+
+// ========== BACKUP INTELIGENTE ==========
+function getLastBackupAt() {
+  try { return localStorage.getItem(BACKUP_LAST_KEY) || ''; } catch(e) { return ''; }
+}
+
+function setLastBackupNow() {
+  try { localStorage.setItem(BACKUP_LAST_KEY, new Date().toISOString()); } catch(e) {}
+  updateBackupReminder();
+  updateBackupCenterText();
+}
+
+function daysSinceIso(iso) {
+  if (!iso) return null;
+  var d = new Date(iso);
+  if (isNaN(d.getTime())) return null;
+  var now = new Date();
+  d.setHours(0,0,0,0); now.setHours(0,0,0,0);
+  return Math.floor((now - d) / 86400000);
+}
+
+function formatDateTimeEs(iso) {
+  if (!iso) return '-';
+  try {
+    var d = new Date(iso);
+    return d.toLocaleDateString('es-ES') + ' ' + d.toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'});
+  } catch(e) { return iso; }
+}
+
+function getBackupStatusText() {
+  var last = getLastBackupAt();
+  var days = daysSinceIso(last);
+  if (days === null) return { due:true, text:'Todavia no hay ninguna copia registrada en este dispositivo.' };
+  if (days >= BACKUP_REMINDER_DAYS) return { due:true, text:'Ultima copia hace ' + days + ' dias. Recomendado exportar backup.' };
+  return { due:false, text:'Ultima copia: ' + formatDateTimeEs(last) + ' · Correcto.' };
+}
+
+function updateBackupReminder() {
+  var box = document.getElementById('backupNotice');
+  if (!box) return;
+  var st = getBackupStatusText();
+  if (!st.due) {
+    box.style.display = 'none';
+    return;
+  }
+  box.style.display = 'flex';
+  var txt = document.getElementById('backupNoticeText');
+  if (txt) txt.textContent = st.text;
+}
+
+function updateBackupCenterText() {
+  var lastEl = document.getElementById('backupLastText');
+  var statusEl = document.getElementById('backupStatusText');
+  var st = getBackupStatusText();
+  if (lastEl) lastEl.textContent = getLastBackupAt() ? formatDateTimeEs(getLastBackupAt()) : 'Sin copia registrada en este dispositivo';
+  if (statusEl) {
+    statusEl.textContent = st.due ? st.text : 'Backup al dia. Aun asi puedes exportar una copia cuando quieras.';
+    statusEl.style.color = st.due ? 'var(--orange)' : 'var(--green)';
+  }
+}
+
+function openBackupCenter() {
+  closeSheet('menuSheet','menuOverlay');
+  updateBackupCenterText();
+  openSheet('backupSheet','backupOverlay');
+}
+
+function buildClientExportRows() {
+  return clients.map(function(c){
+    var svc = c.service === 'ESPANA' ? 'ESPAÑA' : c.service;
+    var appsStr=(c.apps||[]).map(function(a){var s=a.name;if(a.customName) s+=' ('+a.customName+')';if(a.mac) s+=' MAC:'+a.mac;if(a.code) s+=' CODE:'+a.code;return s;}).join(' | ');
+    return {'ID':c.id,'Nombre':c.name,'Usuario':c.user,'Contrasena':c.pass,'Servicio':svc,'Expiracion':c.expiry,'Apps':appsStr,'Notas':c.notes,'AvisoRenovacion':isRenewalNoticeCurrent(c)?'SI':'NO','FechaAviso':c.avisoRenovacionFecha?String(c.avisoRenovacionFecha).split('T')[0]:'','Creado':c.createdAt?String(c.createdAt).split('T')[0]:''};
+  });
+}
+
+function buildRenewalExportRows() {
+  return (renewals || []).map(function(r){
+    return {
+      'ID': r.id || '',
+      'ClienteID': r.clientId || '',
+      'Cliente': r.clientName || '',
+      'Fecha anterior': r.previousExpiry || '',
+      'Fecha nueva': r.newExpiry || '',
+      'Meses': r.months || 0,
+      'Importe': Number(r.amount || 0),
+      'Metodo pago': r.paymentMethod || '',
+      'Notas': r.notes || '',
+      'Fecha registro': r.createdAt ? String(r.createdAt).replace('T',' ').slice(0,16) : ''
+    };
+  });
+}
+
+async function exportFullBackup() {
+  try {
+    if(!clients.length){ alert('No hay clientes para exportar.'); return; }
+    await loadRenewals(false);
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(buildClientExportRows()), 'Clientes');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(buildRenewalExportRows()), 'Renovaciones');
+    XLSX.writeFile(wb, 'M17LIV3_backup_completo_' + new Date().toISOString().split('T')[0] + '.xlsx');
+    setLastBackupNow();
+    if (typeof showToast === 'function') showToast('Backup completo exportado');
+  } catch(ex) {
+    if (typeof showToast === 'function') showToast('Error al exportar backup: ' + ex.message, 'error'); else alert('Error al exportar backup: ' + ex.message);
+  }
+}
+// ========== FIN BACKUP INTELIGENTE ==========
+
+// ========== RENOVACIONES E INGRESOS ==========
+function parseEuroAmount(value) {
+  if (value === null || value === undefined) return 0;
+  var s = String(value).trim();
+  if (!s) return 0;
+  s = s.replace(/\s/g, '').replace(',', '.');
+  s = s.replace(/[^0-9.\-]/g, '');
+  var n = Number(s);
+  if (!isFinite(n) || n < 0) return NaN;
+  return Math.round(n * 100) / 100;
+}
+
+function renewalRowToItem(row) {
+  return {
+    id: row.id || '',
+    clientId: row.cliente_id || '',
+    clientName: row.cliente_nombre || '',
+    previousExpiry: row.fecha_anterior || '',
+    newExpiry: row.fecha_nueva || '',
+    months: row.meses || 0,
+    amount: Number(row.importe || 0),
+    paymentMethod: row.metodo_pago || '',
+    notes: row.notas || '',
+    createdAt: row.created_at || ''
+  };
+}
+
+async function loadRenewals(showMsg) {
+  try {
+    if (!USE_SUPABASE) {
+      try { renewals = JSON.parse(localStorage.getItem('m17_renewals') || '[]'); } catch(e) { renewals = []; }
+      renderPaymentsDashboard();
+      return renewals;
+    }
+    var db = initSupabase();
+    var result = await db.from(SUPABASE_RENEWALS_TABLE).select('*').order('created_at', { ascending: false }).limit(500);
+    if (result.error) throw result.error;
+    renewals = (result.data || []).map(renewalRowToItem);
+    renderPaymentsDashboard();
+    if (showMsg && typeof showToast === 'function') showToast('Ingresos actualizados');
+    return renewals;
+  } catch(ex) {
+    console.error(ex);
+    var box = document.getElementById('paymentsHistory');
+    if (box) box.innerHTML = '<div class="emptyMini" style="color:var(--orange)">No se han podido cargar las renovaciones. Revisa que hayas ejecutado el SQL de la tabla renovaciones.</div>';
+    if (showMsg && typeof showToast === 'function') showToast('Error al cargar ingresos: ' + ex.message, 'error');
+    return [];
+  }
+}
+
+async function saveRenewalToStore(item) {
+  if (!USE_SUPABASE) {
+    item.id = genId();
+    item.createdAt = new Date().toISOString();
+    renewals.unshift(item);
+    localStorage.setItem('m17_renewals', JSON.stringify(renewals));
+    return item;
+  }
+  var db = initSupabase();
+  var payload = {
+    cliente_id: item.clientId || null,
+    cliente_nombre: item.clientName || '',
+    fecha_anterior: item.previousExpiry || null,
+    fecha_nueva: item.newExpiry || null,
+    meses: item.months || 0,
+    importe: Number(item.amount || 0),
+    metodo_pago: item.paymentMethod || '',
+    notas: item.notes || ''
+  };
+  var result = await db.from(SUPABASE_RENEWALS_TABLE).insert(payload).select('*').single();
+  if (result.error) throw result.error;
+  return renewalRowToItem(result.data);
+}
+
+function currentMonthKey(d) {
+  return d.getFullYear() + '-' + pad2(d.getMonth()+1);
+}
+
+function euro(n) {
+  n = Number(n || 0);
+  try { return n.toLocaleString('es-ES', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' €'; }
+  catch(e) { return n.toFixed(2) + ' €'; }
+}
+
+function sumRenewals(filterFn) {
+  return (renewals || []).filter(filterFn || function(){return true;}).reduce(function(acc, r){ return acc + Number(r.amount || 0); }, 0);
+}
+
+function renderPaymentsDashboard() {
+  var now = new Date();
+  var month = currentMonthKey(now);
+  var since30 = new Date(now.getTime() - 30*86400000);
+  var monthTotal = sumRenewals(function(r){ return r.createdAt && currentMonthKey(new Date(r.createdAt)) === month; });
+  var last30 = sumRenewals(function(r){ return r.createdAt && new Date(r.createdAt) >= since30; });
+  var total = sumRenewals();
+  var countMonth = (renewals || []).filter(function(r){ return r.createdAt && currentMonthKey(new Date(r.createdAt)) === month; }).length;
+  var elMonth = document.getElementById('payMonthTotal');
+  var el30 = document.getElementById('pay30Total');
+  var elAll = document.getElementById('payAllTotal');
+  var elCount = document.getElementById('payMonthCount');
+  if (elMonth) elMonth.textContent = euro(monthTotal);
+  if (el30) el30.textContent = euro(last30);
+  if (elAll) elAll.textContent = euro(total);
+  if (elCount) elCount.textContent = String(countMonth);
+
+  var box = document.getElementById('paymentsHistory');
+  if (!box) return;
+  if (!renewals.length) {
+    box.innerHTML = '<div class="emptyMini">Todavia no hay renovaciones registradas.</div>';
+    return;
+  }
+  box.innerHTML = renewals.slice(0,80).map(function(r){
+    var d = r.createdAt ? formatDateTimeEs(r.createdAt) : '-';
+    return '<div class="paymentItem">' +
+      '<div class="paymentItemTop">' +
+        '<div class="paymentName">' + esc(r.clientName || 'Cliente') + '</div>' +
+        '<div class="paymentAmount">' + euro(r.amount) + '</div>' +
+      '</div>' +
+      '<div class="paymentMeta">' + esc(d) + ' · ' + esc(r.months || 0) + ' mes(es)' + (r.paymentMethod ? ' · ' + esc(r.paymentMethod) : '') + '</div>' +
+      '<div class="paymentMeta">' + formatDate(r.previousExpiry) + ' → ' + formatDate(r.newExpiry) + '</div>' +
+      (r.notes ? '<div class="paymentMeta">Notas: ' + esc(r.notes) + '</div>' : '') +
+    '</div>';
+  }).join('');
+}
+
+async function openPayments() {
+  closeSheet('menuSheet','menuOverlay');
+  openSheet('paymentsSheet','paymentsOverlay');
+  var box = document.getElementById('paymentsHistory');
+  if (box) box.innerHTML = '<div class="emptyMini">Cargando ingresos...</div>';
+  await loadRenewals(false);
+}
+
+async function exportPaymentsExcel() {
+  try {
+    await loadRenewals(false);
+    if (!renewals.length) { alert('Todavia no hay renovaciones para exportar.'); return; }
+    var ws = XLSX.utils.json_to_sheet(buildRenewalExportRows());
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Renovaciones');
+    XLSX.writeFile(wb, 'M17LIV3_renovaciones_' + new Date().toISOString().split('T')[0] + '.xlsx');
+    if (typeof showToast === 'function') showToast('Ingresos exportados');
+  } catch(ex) {
+    if (typeof showToast === 'function') showToast('Error al exportar ingresos: ' + ex.message, 'error'); else alert('Error al exportar ingresos: ' + ex.message);
+  }
+}
+// ========== FIN RENOVACIONES E INGRESOS ==========
+
 // ========== PANEL APP IBO ==========
 var IBO_PANEL_URL = 'https://damaplay.top/panelr/m17live/';
 function openIboPanel() {
@@ -398,6 +660,7 @@ function updateStats() {
   document.getElementById('stActive').textContent = clients.filter(function(c){ var s=getStatus(c.expiry); return s==='ok'||s==='warn'; }).length;
   document.getElementById('stSoon').textContent = clients.filter(function(c){ return getStatus(c.expiry)==='warn'; }).length;
   document.getElementById('stExp').textContent = clients.filter(function(c){ return getStatus(c.expiry)==='exp'; }).length;
+  updateBackupReminder();
 }
 
 function copyText(txt, btn) {
@@ -925,6 +1188,14 @@ function openRenew(id) {
   var c=clients.find(function(x){return x.id===id;});
   document.getElementById('renewInfo').textContent='Cliente: '+c.name+' \u00b7 Expira: '+formatDate(c.expiry);
   document.getElementById('renewMonthsVal').textContent='1';
+  var amountEl = document.getElementById('renewAmount');
+  var methodEl = document.getElementById('renewPaymentMethod');
+  var notesEl = document.getElementById('renewPaymentNotes');
+  var errEl = document.getElementById('renewPaymentError');
+  if (amountEl) { amountEl.value = ''; amountEl.style.borderColor = ''; }
+  if (methodEl) methodEl.value = 'Bizum';
+  if (notesEl) notesEl.value = '';
+  if (errEl) { errEl.textContent = ''; errEl.style.display = 'none'; }
   updateRenewHint(c);
   openSheet('renewSheet','renewOverlay');
 }
@@ -944,20 +1215,58 @@ function updateRenewHint(c) {
 async function doRenew() {
   var c=clients.find(function(x){return x.id===renewTargetId;});
   if(!c) return;
+  var amountEl = document.getElementById('renewAmount');
+  var methodEl = document.getElementById('renewPaymentMethod');
+  var notesEl = document.getElementById('renewPaymentNotes');
+  var errEl = document.getElementById('renewPaymentError');
+  var btn = document.getElementById('renewConfirmBtn');
+  var amount = parseEuroAmount(amountEl ? amountEl.value : '');
+  if (isNaN(amount)) {
+    if (errEl) { errEl.textContent = 'Importe no valido. Ejemplo: 10 o 10,50'; errEl.style.display = 'block'; }
+    if (amountEl) { amountEl.style.borderColor = 'var(--red)'; amountEl.focus(); }
+    return;
+  }
+  var previousExpiry = c.expiry || '';
   var base=c.expiry?new Date(c.expiry):new Date();
   base.setMonth(base.getMonth()+renewMonths);
-  c.expiry=base.toISOString().split('T')[0];
+  var newExpiry = base.toISOString().split('T')[0];
+  c.expiry=newExpiry;
   c.avisoRenovacionEnviado = false;
   c.avisoRenovacionFecha = null;
   c.avisoRenovacionExpiracion = null;
   try {
+    if (btn) { btn.disabled = true; btn.textContent = 'Guardando renovacion...'; }
     var saved = await saveClientToStore(c);
     var idx=clients.findIndex(function(x){return x.id===renewTargetId;});
     if(idx>=0) clients[idx]=saved;
+
+    var renewalSaved = false;
+    try {
+      var item = await saveRenewalToStore({
+        clientId: saved.id,
+        clientName: saved.name,
+        previousExpiry: previousExpiry,
+        newExpiry: saved.expiry,
+        months: renewMonths,
+        amount: amount,
+        paymentMethod: methodEl ? methodEl.value : '',
+        notes: notesEl ? notesEl.value.trim() : ''
+      });
+      renewalSaved = true;
+      if (!renewals.find(function(r){ return r.id === item.id; })) renewals.unshift(item);
+    } catch(payErr) {
+      console.error(payErr);
+      if (typeof showToast === 'function') showToast('Cliente renovado, pero el pago no se guardo. Revisa SQL renovaciones.', 'error');
+    }
+
     saveData(); closeSheet('renewSheet','renewOverlay'); renderCards();
-    alert('Renovado ' + renewMonths + ' mes(es)!\nNueva fecha: '+formatDate(saved.expiry));
+    var msg = 'Renovado ' + renewMonths + ' mes(es)!\nNueva fecha: '+formatDate(saved.expiry);
+    if (renewalSaved) msg += '\nPago registrado: ' + euro(amount);
+    alert(msg);
   } catch(ex) {
     if (typeof showToast === 'function') showToast('Error al renovar: '+ex.message, 'error'); else alert('Error al renovar: '+ex.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '&#8635; Confirmar Renovacion'; }
   }
 }
 
@@ -1013,15 +1322,13 @@ function normalizeImportDate(value) {
 function exportExcel() {
   closeSheet('menuSheet','menuOverlay');
   if(!clients.length){alert('No hay clientes para exportar.');return;}
-  var rows=clients.map(function(c){
-    var svc = c.service === 'ESPANA' ? 'ESPA\u00D1A' : c.service;
-    var appsStr=(c.apps||[]).map(function(a){var s=a.name;if(a.customName) s+=' ('+a.customName+')';if(a.mac) s+=' MAC:'+a.mac;if(a.code) s+=' CODE:'+a.code;return s;}).join(' | ');
-    return {'ID':c.id,'Nombre':c.name,'Usuario':c.user,'Contrasena':c.pass,'Servicio':svc,'Expiracion':c.expiry,'Apps':appsStr,'Notas':c.notes,'AvisoRenovacion':isRenewalNoticeCurrent(c)?'SI':'NO','FechaAviso':c.avisoRenovacionFecha?String(c.avisoRenovacionFecha).split('T')[0]:'','Creado':c.createdAt?c.createdAt.split('T')[0]:''};
-  });
+  var rows = buildClientExportRows();
   var ws=XLSX.utils.json_to_sheet(rows);
   var wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,'Clientes M17LIV3');
   XLSX.writeFile(wb,'M17LIV3_clientes_'+new Date().toISOString().split('T')[0]+'.xlsx');
+  setLastBackupNow();
+  if (typeof showToast === 'function') showToast('Copia de clientes exportada');
 }
 
 function importExcel(event) {

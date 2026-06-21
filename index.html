@@ -59,6 +59,14 @@
       </div>
     </div>
 
+    <div class="backupNotice" id="backupNotice" style="display:none">
+      <div>
+        <strong>Backup recomendado</strong>
+        <span id="backupNoticeText">Hace tiempo que no exportas una copia.</span>
+      </div>
+      <button onclick="openBackupCenter()">Exportar</button>
+    </div>
+
     <div id="activeFilterBar" class="activeFilterBar">
       <span id="activeFilterLabel"></span>
       <button onclick="quickFilter('')">&#10005; Quitar filtro</button>
@@ -92,8 +100,10 @@
   <div class="sheet-header"><h3>Menu</h3><button class="sheet-close" onclick="closeSheet('menuSheet','menuOverlay')">x</button></div>
   <div class="sheet-body">
     <div class="menuItem" onclick="exportExcel()"><span class="ico2">&#11015;</span> Exportar a Excel</div>
+    <div class="menuItem" onclick="openBackupCenter()"><span class="ico2">&#128190;</span> Backup inteligente</div>
     <div class="menuItem" onclick="document.getElementById('importInput').click()"><span class="ico2">&#11014;</span> Importar desde Excel</div>
     <div class="menuItem" onclick="openDeleteAllClients()" style="color:var(--red)"><span class="ico2">&#128465;</span> Borrar todos los clientes</div>
+    <div class="menuItem" onclick="openPayments()"><span class="ico2">&#128176;</span> Ingresos / renovaciones</div>
     <div class="menuItem" onclick="openRaffles()"><span class="ico2">&#127873;</span> Sorteos clientes</div>
     <div class="menuItem" onclick="openIboPanel()"><span class="ico2">&#127760;</span> Panel APP IBO</div>
     <div class="menuItem" onclick="openCartelera()"><span class="ico2">&#128249;</span> Cartelera del dia</div>
@@ -194,7 +204,28 @@
         <div class="renewMonthsHint" id="renewMonthsHint"></div>
       </div>
     </div>
-    <button class="btnFull primary" onclick="doRenew()">&#8635; Confirmar Renovacion</button>
+    <div class="renewPaymentBox">
+      <div class="formGroup">
+        <label>Importe pagado</label>
+        <input type="text" id="renewAmount" inputmode="decimal" placeholder="Ej: 10 o 10,50"/>
+      </div>
+      <div class="formGroup">
+        <label>Metodo de pago</label>
+        <select id="renewPaymentMethod">
+          <option value="Bizum">Bizum</option>
+          <option value="Efectivo">Efectivo</option>
+          <option value="Transferencia">Transferencia</option>
+          <option value="PayPal">PayPal</option>
+          <option value="Otro">Otro</option>
+        </select>
+      </div>
+      <div class="formGroup">
+        <label>Notas del pago</label>
+        <input type="text" id="renewPaymentNotes" placeholder="Opcional"/>
+      </div>
+      <div class="formError" id="renewPaymentError"></div>
+    </div>
+    <button class="btnFull primary" id="renewConfirmBtn" onclick="doRenew()">&#8635; Confirmar Renovacion</button>
     <button class="btnFull gray" onclick="closeSheet('renewSheet','renewOverlay')" style="margin-top:8px">Cancelar</button>
   </div>
 </div>
@@ -263,6 +294,55 @@
       <button class="btnFull gray" onclick="copyClientMessage('expired', this)">&#9888; Cliente caducado</button>
     </div>
     <button class="btnFull gray" onclick="closeSheet('messageSheet','messageOverlay')" style="margin-top:8px">Cerrar</button>
+  </div>
+</div>
+
+
+<!-- BACKUP SHEET -->
+<div class="sheet-overlay" id="backupOverlay" onclick="closeSheet('backupSheet','backupOverlay')"></div>
+<div class="sheet" id="backupSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <h3>&#128190; Backup inteligente</h3>
+    <button class="sheet-close" onclick="closeSheet('backupSheet','backupOverlay')">x</button>
+  </div>
+  <div class="sheet-body">
+    <div class="backupPanel">
+      <div class="backupPanelLabel">Ultima copia registrada</div>
+      <div class="backupPanelValue" id="backupLastText">-</div>
+      <div class="backupPanelStatus" id="backupStatusText">-</div>
+    </div>
+    <button class="btnFull primary" onclick="exportFullBackup()">&#128190; Exportar backup completo</button>
+    <button class="btnFull gray" onclick="exportExcel()">&#11015; Exportar solo clientes</button>
+    <p class="miniHelp">El backup completo incluye clientes y renovaciones/pagos. La fecha del ultimo backup se guarda en este dispositivo para avisarte si pasan varios dias sin copia.</p>
+    <button class="btnFull gray" onclick="closeSheet('backupSheet','backupOverlay')" style="margin-top:8px">Cerrar</button>
+  </div>
+</div>
+
+<!-- PAYMENTS SHEET -->
+<div class="sheet-overlay" id="paymentsOverlay" onclick="closeSheet('paymentsSheet','paymentsOverlay')"></div>
+<div class="sheet" id="paymentsSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <h3>&#128176; Ingresos / renovaciones</h3>
+    <button class="sheet-close" onclick="closeSheet('paymentsSheet','paymentsOverlay')">x</button>
+  </div>
+  <div class="sheet-body">
+    <div class="paymentsStatsGrid">
+      <div class="paymentsStat"><span>Este mes</span><strong id="payMonthTotal">0,00 €</strong></div>
+      <div class="paymentsStat"><span>Ultimos 30 dias</span><strong id="pay30Total">0,00 €</strong></div>
+      <div class="paymentsStat"><span>Total registrado</span><strong id="payAllTotal">0,00 €</strong></div>
+      <div class="paymentsStat"><span>Renovaciones mes</span><strong id="payMonthCount">0</strong></div>
+    </div>
+    <div class="raffleHistoryHeader">
+      <span>Historial de renovaciones</span>
+      <button onclick="loadRenewals(true)">&#8634; Recargar</button>
+    </div>
+    <div class="paymentsHistory" id="paymentsHistory">
+      <div class="emptyMini">Todavia no hay renovaciones registradas.</div>
+    </div>
+    <button class="btnFull gray" onclick="exportPaymentsExcel()">&#11015; Exportar ingresos a Excel</button>
+    <button class="btnFull gray" onclick="closeSheet('paymentsSheet','paymentsOverlay')" style="margin-top:8px">Cerrar</button>
   </div>
 </div>
 

@@ -1,0 +1,63 @@
+-- Ejecutar una sola vez en Supabase SQL Editor
+-- Crea la tabla para guardar renovaciones, pagos e ingresos por cliente.
+
+create table if not exists public.renovaciones (
+  id uuid primary key default gen_random_uuid(),
+  owner_id uuid default auth.uid(),
+  cliente_id uuid,
+  cliente_nombre text,
+  fecha_anterior date,
+  fecha_nueva date,
+  meses integer default 0,
+  importe numeric(10,2) default 0,
+  metodo_pago text,
+  notas text,
+  created_at timestamptz default now()
+);
+
+alter table public.renovaciones
+add column if not exists owner_id uuid default auth.uid(),
+add column if not exists cliente_id uuid,
+add column if not exists cliente_nombre text,
+add column if not exists fecha_anterior date,
+add column if not exists fecha_nueva date,
+add column if not exists meses integer default 0,
+add column if not exists importe numeric(10,2) default 0,
+add column if not exists metodo_pago text,
+add column if not exists notas text,
+add column if not exists created_at timestamptz default now();
+
+alter table public.renovaciones enable row level security;
+
+grant usage on schema public to authenticated;
+grant select, insert, update, delete on public.renovaciones to authenticated;
+
+drop policy if exists "renovaciones_select_owner" on public.renovaciones;
+drop policy if exists "renovaciones_insert_owner" on public.renovaciones;
+drop policy if exists "renovaciones_update_owner" on public.renovaciones;
+drop policy if exists "renovaciones_delete_owner" on public.renovaciones;
+
+create policy "renovaciones_select_owner"
+on public.renovaciones
+for select
+to authenticated
+using (owner_id = auth.uid());
+
+create policy "renovaciones_insert_owner"
+on public.renovaciones
+for insert
+to authenticated
+with check (owner_id = auth.uid());
+
+create policy "renovaciones_update_owner"
+on public.renovaciones
+for update
+to authenticated
+using (owner_id = auth.uid())
+with check (owner_id = auth.uid());
+
+create policy "renovaciones_delete_owner"
+on public.renovaciones
+for delete
+to authenticated
+using (owner_id = auth.uid());
