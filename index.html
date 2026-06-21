@@ -95,6 +95,7 @@
     <div class="menuItem" onclick="document.getElementById('importInput').click()"><span class="ico2">&#11014;</span> Importar desde Excel</div>
     <div class="menuItem" onclick="openDeleteAllClients()" style="color:var(--red)"><span class="ico2">&#128465;</span> Borrar todos los clientes</div>
     <div class="menuItem" onclick="openRaffles()"><span class="ico2">&#127873;</span> Sorteos clientes</div>
+    <div class="menuItem" onclick="openIboPanel()"><span class="ico2">&#127760;</span> Panel APP IBO</div>
     <div class="menuItem" onclick="openCartelera()"><span class="ico2">&#128249;</span> Cartelera del dia</div>
     <div class="menuItem" onclick="openMovieTemplates()"><span class="ico2">&#127916;</span> Plantillas Peliculas</div>
     <div class="menuItem" onclick="openSeriesTemplates()"><span class="ico2">&#127909;</span> Plantillas Series</div>
@@ -320,6 +321,34 @@
     </div>
 
     <button class="btnFull gray" onclick="closeSheet('raffleSheet','raffleOverlay')" style="margin-top:12px">Cerrar</button>
+  </div>
+</div>
+
+<!-- PANEL APP IBO -->
+<div class="sheet-overlay" id="iboPanelOverlay" onclick="closeSheet('iboPanelSheet','iboPanelOverlay')"></div>
+<div class="sheet iboPanelSheet" id="iboPanelSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <h3>&#127760; Panel APP IBO</h3>
+    <button class="sheet-close" onclick="closeSheet('iboPanelSheet','iboPanelOverlay')">x</button>
+  </div>
+  <div class="sheet-body iboPanelBody">
+    <div class="iboPanelTop">
+      <div>
+        <div class="iboPanelTitle">Panel integrado</div>
+        <div class="iboPanelUrl">https://damaplay.top/panelr/m17live/</div>
+      </div>
+      <div class="iboPanelActions">
+        <button class="btnFull gray iboMiniBtn" onclick="reloadIboPanel()">Recargar</button>
+        <button class="btnFull primary iboMiniBtn" onclick="openIboPanelExternal()">Abrir fuera</button>
+      </div>
+    </div>
+    <div class="iboPanelNotice">
+      Si el panel externo se queda en blanco o no permite iniciar sesion dentro de la app, usa <b>Abrir fuera</b>. Algunas webs bloquean la vista integrada por seguridad.
+    </div>
+    <div class="iboFrameWrap">
+      <iframe id="iboPanelFrame" title="Panel APP IBO" src="about:blank" loading="lazy" allow="clipboard-read; clipboard-write; fullscreen"></iframe>
+    </div>
   </div>
 </div>
 

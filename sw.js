@@ -1,4 +1,4 @@
-const CACHE_NAME = 'm17liv3-pwa-v1.1.6-orden-expiracion';
+const CACHE_NAME = 'm17liv3-pwa-v1.1.7-panel-ibo';
 const APP_SHELL = [
   './',
   './index.html',

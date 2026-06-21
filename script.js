@@ -357,6 +357,22 @@ function closeSheet(id, ovl) {
 }
 function openMenu() { openSheet('menuSheet','menuOverlay'); }
 
+// ========== PANEL APP IBO ==========
+var IBO_PANEL_URL = 'https://damaplay.top/panelr/m17live/';
+function openIboPanel() {
+  closeSheet('menuSheet','menuOverlay');
+  var frame = document.getElementById('iboPanelFrame');
+  if (frame && (!frame.src || frame.src === 'about:blank')) frame.src = IBO_PANEL_URL;
+  openSheet('iboPanelSheet','iboPanelOverlay');
+}
+function reloadIboPanel() {
+  var frame = document.getElementById('iboPanelFrame');
+  if (frame) frame.src = IBO_PANEL_URL + (IBO_PANEL_URL.indexOf('?') === -1 ? '?t=' : '&t=') + Date.now();
+}
+function openIboPanelExternal() {
+  window.open(IBO_PANEL_URL, '_blank', 'noopener');
+}
+
 function toggleFilters() {
   showFilters = !showFilters;
   document.getElementById('filterPills').style.display = showFilters ? 'flex' : 'none';
