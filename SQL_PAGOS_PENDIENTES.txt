@@ -1,0 +1,16 @@
+SQL para activar pagos pendientes en renovaciones
+
+Ejecuta este SQL una sola vez en Supabase > SQL Editor.
+
+alter table public.renovaciones
+add column if not exists estado_pago text default 'pagado',
+add column if not exists fecha_pago timestamptz;
+
+update public.renovaciones
+set estado_pago = 'pagado'
+where estado_pago is null;
+
+-- Opcional: comprobar columnas
+-- select id, cliente_nombre, importe, metodo_pago, estado_pago, fecha_pago, created_at
+-- from public.renovaciones
+-- order by created_at desc;

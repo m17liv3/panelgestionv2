@@ -202,6 +202,7 @@ async function doLogin() {
       var res = await db.auth.signInWithPassword({ email: u, password: p });
       if (res.error) throw res.error;
       await loadClientsFromStore();
+      await loadRenewals(false);
       showAppAfterLogin();
       if (typeof showToast === 'function') showToast('Conectado a Supabase');
       return;
@@ -449,6 +450,8 @@ function buildRenewalExportRows() {
       'Meses': r.months || 0,
       'Importe': Number(r.amount || 0),
       'Metodo pago': r.paymentMethod || '',
+      'Estado pago': r.paymentStatus || 'pagado',
+      'Fecha pago': r.paymentPaidAt ? String(r.paymentPaidAt).replace('T',' ').slice(0,16) : '',
       'Notas': r.notes || '',
       'Fecha registro': r.createdAt ? String(r.createdAt).replace('T',' ').slice(0,16) : ''
     };
@@ -493,6 +496,8 @@ function renewalRowToItem(row) {
     months: row.meses || 0,
     amount: Number(row.importe || 0),
     paymentMethod: row.metodo_pago || '',
+    paymentStatus: row.estado_pago || 'pagado',
+    paymentPaidAt: row.fecha_pago || '',
     notes: row.notas || '',
     createdAt: row.created_at || ''
   };
@@ -525,6 +530,8 @@ async function saveRenewalToStore(item) {
   if (!USE_SUPABASE) {
     item.id = genId();
     item.createdAt = new Date().toISOString();
+    item.paymentStatus = item.paymentStatus || 'pagado';
+    item.paymentPaidAt = item.paymentStatus === 'pagado' ? (item.paymentPaidAt || new Date().toISOString()) : '';
     renewals.unshift(item);
     localStorage.setItem('m17_renewals', JSON.stringify(renewals));
     return item;
@@ -538,11 +545,86 @@ async function saveRenewalToStore(item) {
     meses: item.months || 0,
     importe: Number(item.amount || 0),
     metodo_pago: item.paymentMethod || '',
+    estado_pago: item.paymentStatus || 'pagado',
+    fecha_pago: (item.paymentStatus || 'pagado') === 'pagado' ? (item.paymentPaidAt || new Date().toISOString()) : null,
     notas: item.notes || ''
   };
   var result = await db.from(SUPABASE_RENEWALS_TABLE).insert(payload).select('*').single();
   if (result.error) throw result.error;
   return renewalRowToItem(result.data);
+}
+
+
+function isPaymentPending(r) {
+  return String((r && r.paymentStatus) || '').toLowerCase() === 'pendiente';
+}
+function isPaymentPaid(r) {
+  return !isPaymentPending(r);
+}
+function getPendingPaymentRenewalForClient(clientId) {
+  clientId = String(clientId || '');
+  return (renewals || []).find(function(r){
+    return String(r.clientId || '') === clientId && isPaymentPending(r);
+  }) || null;
+}
+function clientHasPendingPayment(c) {
+  return !!(c && getPendingPaymentRenewalForClient(c.id));
+}
+function pendingPaymentNoticeHtml(c, mode) {
+  var r = getPendingPaymentRenewalForClient(c && c.id);
+  if (!r) return '';
+  var amount = Number(r.amount || 0);
+  var amountTxt = amount > 0 ? (' · ' + euro(amount)) : '';
+  var d = r.createdAt ? formatDateTimeEs(r.createdAt) : '';
+  var info = (d ? d + ' · ' : '') + formatDate(r.previousExpiry) + ' → ' + formatDate(r.newExpiry);
+  return '<div class="paymentNotice pendingPay'+(mode === 'view' ? ' view' : '')+'">' +
+    '<div><strong>Pago pendiente'+amountTxt+'</strong><span>'+esc(info)+'</span></div>' +
+    '<button type="button" data-renewal-id="'+esc(r.id)+'" onclick="markRenewalAsPaid(this.dataset.renewalId, this)">Marcar pagado</button>' +
+  '</div>';
+}
+async function markRenewalAsPaid(renewalId, btn) {
+  var r = (renewals || []).find(function(x){ return String(x.id) === String(renewalId); });
+  if (!r) return;
+  var oldText = btn ? btn.textContent : '';
+  var amountInput = prompt('Importe cobrado para marcarlo como pagado:', r.amount ? String(r.amount).replace('.', ',') : '');
+  if (amountInput === null) return;
+  var amount = parseEuroAmount(amountInput);
+  if (isNaN(amount)) { alert('Importe no valido. Ejemplo: 10 o 10,50'); return; }
+  var method = prompt('Metodo de pago:', r.paymentMethod && r.paymentMethod !== 'Pendiente' ? r.paymentMethod : 'Bizum');
+  if (method === null) return;
+  try {
+    if (btn) { btn.disabled = true; btn.textContent = 'Guardando...'; }
+    var paidAt = new Date().toISOString();
+    if (USE_SUPABASE) {
+      var db = initSupabase();
+      var result = await db.from(SUPABASE_RENEWALS_TABLE).update({
+        importe: Number(amount || 0),
+        metodo_pago: method || 'Bizum',
+        estado_pago: 'pagado',
+        fecha_pago: paidAt
+      }).eq('id', renewalId).select('*').maybeSingle();
+      if (result.error) throw result.error;
+      if (result.data) {
+        var updated = renewalRowToItem(result.data);
+        var ix = renewals.findIndex(function(x){ return String(x.id) === String(renewalId); });
+        if (ix >= 0) renewals[ix] = updated;
+      }
+    } else {
+      r.amount = Number(amount || 0);
+      r.paymentMethod = method || 'Bizum';
+      r.paymentStatus = 'pagado';
+      r.paymentPaidAt = paidAt;
+      localStorage.setItem('m17_renewals', JSON.stringify(renewals));
+    }
+    renderPaymentsDashboard();
+    renderCards();
+    var sheet = document.getElementById('viewSheet');
+    if (sheet && sheet.classList.contains('open') && r.clientId) viewClient(r.clientId);
+    if (typeof showToast === 'function') showToast('Pago marcado como cobrado');
+  } catch(ex) {
+    if (typeof showToast === 'function') showToast('Error al marcar pago: ' + ex.message, 'error'); else alert('Error al marcar pago: ' + ex.message);
+    if (btn) { btn.disabled = false; btn.textContent = oldText; }
+  }
 }
 
 function currentMonthKey(d) {
@@ -563,18 +645,24 @@ function renderPaymentsDashboard() {
   var now = new Date();
   var month = currentMonthKey(now);
   var since30 = new Date(now.getTime() - 30*86400000);
-  var monthTotal = sumRenewals(function(r){ return r.createdAt && currentMonthKey(new Date(r.createdAt)) === month; });
-  var last30 = sumRenewals(function(r){ return r.createdAt && new Date(r.createdAt) >= since30; });
-  var total = sumRenewals();
+  var monthTotal = sumRenewals(function(r){ return isPaymentPaid(r) && r.createdAt && currentMonthKey(new Date(r.createdAt)) === month; });
+  var last30 = sumRenewals(function(r){ return isPaymentPaid(r) && r.createdAt && new Date(r.createdAt) >= since30; });
+  var total = sumRenewals(function(r){ return isPaymentPaid(r); });
+  var pendingTotal = sumRenewals(function(r){ return isPaymentPending(r); });
+  var pendingCount = (renewals || []).filter(function(r){ return isPaymentPending(r); }).length;
   var countMonth = (renewals || []).filter(function(r){ return r.createdAt && currentMonthKey(new Date(r.createdAt)) === month; }).length;
   var elMonth = document.getElementById('payMonthTotal');
   var el30 = document.getElementById('pay30Total');
   var elAll = document.getElementById('payAllTotal');
   var elCount = document.getElementById('payMonthCount');
+  var elPendingCount = document.getElementById('payPendingCount');
+  var elPendingTotal = document.getElementById('payPendingTotal');
   if (elMonth) elMonth.textContent = euro(monthTotal);
   if (el30) el30.textContent = euro(last30);
   if (elAll) elAll.textContent = euro(total);
   if (elCount) elCount.textContent = String(countMonth);
+  if (elPendingCount) elPendingCount.textContent = String(pendingCount);
+  if (elPendingTotal) elPendingTotal.textContent = euro(pendingTotal);
 
   var box = document.getElementById('paymentsHistory');
   if (!box) return;
@@ -582,16 +670,20 @@ function renderPaymentsDashboard() {
     box.innerHTML = '<div class="emptyMini">Todavia no hay renovaciones registradas.</div>';
     return;
   }
-  box.innerHTML = renewals.slice(0,80).map(function(r){
+  box.innerHTML = renewals.slice(0,100).map(function(r){
     var d = r.createdAt ? formatDateTimeEs(r.createdAt) : '-';
-    return '<div class="paymentItem">' +
+    var pending = isPaymentPending(r);
+    var status = pending ? '<span class="paymentStatus pending">Pendiente de pago</span>' : '<span class="paymentStatus paid">Pagado</span>';
+    var amountClass = pending ? 'paymentAmount pending' : 'paymentAmount';
+    return '<div class="paymentItem '+(pending?'paymentItemPending':'')+'">' +
       '<div class="paymentItemTop">' +
         '<div class="paymentName">' + esc(r.clientName || 'Cliente') + '</div>' +
-        '<div class="paymentAmount">' + euro(r.amount) + '</div>' +
+        '<div class="'+amountClass+'">' + euro(r.amount) + '</div>' +
       '</div>' +
-      '<div class="paymentMeta">' + esc(d) + ' · ' + esc(r.months || 0) + ' mes(es)' + (r.paymentMethod ? ' · ' + esc(r.paymentMethod) : '') + '</div>' +
+      '<div class="paymentMeta">' + status + ' · ' + esc(d) + ' · ' + esc(r.months || 0) + ' mes(es)' + (r.paymentMethod ? ' · ' + esc(r.paymentMethod) : '') + '</div>' +
       '<div class="paymentMeta">' + formatDate(r.previousExpiry) + ' → ' + formatDate(r.newExpiry) + '</div>' +
       (r.notes ? '<div class="paymentMeta">Notas: ' + esc(r.notes) + '</div>' : '') +
+      (pending ? '<div class="paymentActions"><button data-renewal-id="'+esc(r.id)+'" onclick="markRenewalAsPaid(this.dataset.renewalId, this)">Marcar pagado</button></div>' : '') +
     '</div>';
   }).join('');
 }
@@ -650,6 +742,7 @@ function quickFilter(st) {
     if (st === 'ok') lbl.textContent = 'Mostrando: Clientes activos';
     if (st === 'warn') lbl.textContent = 'Mostrando: Expiran pronto (menos de 15 dias)';
     if (st === 'exp') lbl.textContent = 'Mostrando: Expirados';
+    if (st === 'paypend') lbl.textContent = 'Mostrando: Pendientes de pago';
   }
   renderCards();
   document.getElementById('mainScroll').scrollTo({top: 200, behavior: 'smooth'});
@@ -660,6 +753,8 @@ function updateStats() {
   document.getElementById('stActive').textContent = clients.filter(function(c){ var s=getStatus(c.expiry); return s==='ok'||s==='warn'; }).length;
   document.getElementById('stSoon').textContent = clients.filter(function(c){ return getStatus(c.expiry)==='warn'; }).length;
   document.getElementById('stExp').textContent = clients.filter(function(c){ return getStatus(c.expiry)==='exp'; }).length;
+  var pendingEl = document.getElementById('stPendingPay');
+  if (pendingEl) pendingEl.textContent = clients.filter(function(c){ return clientHasPendingPayment(c); }).length;
   updateBackupReminder();
 }
 
@@ -693,7 +788,7 @@ function renderCards() {
   var filtered = clients.filter(function(c) {
     var ms = !search || c.name.toLowerCase().indexOf(search)>=0 || (c.user||'').toLowerCase().indexOf(search)>=0;
     var mv = !filterSvc || c.service===filterSvc;
-    var mt = !filterSt || (filterSt==='ok' ? (getStatus(c.expiry)==='ok'||getStatus(c.expiry)==='warn') : getStatus(c.expiry)===filterSt);
+    var mt = !filterSt || (filterSt==='paypend' ? clientHasPendingPayment(c) : (filterSt==='ok' ? (getStatus(c.expiry)==='ok'||getStatus(c.expiry)==='warn') : getStatus(c.expiry)===filterSt));
     return ms && mv && mt;
   });
   filtered = sortClientsByExpiryAsc(filtered);
@@ -715,6 +810,7 @@ function renderCards() {
         '<div class="clientCard-badges">' +
           '<span class="badge ' + (c.service==='TODO'?'badgeTodo':'badgeEs') + '">' + svcLabel + '</span>' +
           statusBadge(c.expiry) +
+          (clientHasPendingPayment(c) ? '<span class="badge badgePayPending">Pago pendiente</span>' : '') +
         '</div>' +
       '</div>' +
       '<div class="clientCard-body">' +
@@ -735,6 +831,7 @@ function renderCards() {
       '</div>' +
       '<div class="clientCard-expiry">Expira: <span>' + formatDate(c.expiry) + '</span></div>' +
       renewalNoticeHtml(c, 'card') +
+      pendingPaymentNoticeHtml(c, 'card') +
       '<div class="clientCard-actions">' +
         '<button class="act-ver" data-id="'+c.id+'" onclick="viewClient(this.dataset.id)">&#128065; Ver</button>' +
         '<button class="act-edit" data-id="'+c.id+'" onclick="editClient(this.dataset.id)">&#9998; Editar</button>' +
@@ -955,8 +1052,9 @@ function viewClient(id) {
   var svcLabel = c.service === 'ESPANA' ? 'ESPA\u00D1A' : esc(c.service);
   var html='';
   html+='<div class="viewRow"><div class="vlabel">Servicio</div><div class="vval"><span class="badge '+(c.service==='TODO'?'badgeTodo':'badgeEs')+'">'+svcLabel+'</span></div></div>';
-  html+='<div class="viewRow"><div class="vlabel">Expiracion</div><div class="vval">'+formatDate(c.expiry)+' '+statusBadge(c.expiry)+'</div></div>';
+  html+='<div class="viewRow"><div class="vlabel">Expiracion</div><div class="vval">'+formatDate(c.expiry)+' '+statusBadge(c.expiry)+(clientHasPendingPayment(c)?' <span class="badge badgePayPending">Pago pendiente</span>':'')+'</div></div>';
   html+=renewalNoticeHtml(c, 'view');
+  html+=pendingPaymentNoticeHtml(c, 'view');
   html+='<div class="viewRow"><div class="vlabel">Usuario</div><div style="display:flex;align-items:center;gap:8px"><span style="font-family:monospace;color:var(--cyan)">'+esc(c.user||'-')+'</span>'+(c.user?'<button class="btnCopy" data-copy="'+esc(c.user)+'" onclick="copyText(this.dataset.copy,this)">Copiar</button>':'')+'</div></div>';
   html+='<div class="viewRow"><div class="vlabel">Contrasena</div><div style="display:flex;align-items:center;gap:8px"><span style="font-family:monospace">'+esc(c.pass||'-')+'</span>'+(c.pass?'<button class="btnCopy" data-copy="'+esc(c.pass)+'" onclick="copyText(this.dataset.copy,this)">Copiar</button>':'')+'</div></div>';
   html+='<div class="vlabel" style="margin-bottom:10px">Apps instaladas</div>';
@@ -1212,7 +1310,8 @@ function updateRenewHint(c) {
   var previewStr=preview.toISOString().split('T')[0];
   document.getElementById('renewMonthsHint').textContent='Nueva fecha: '+formatDate(previewStr);
 }
-async function doRenew() {
+async function doRenew(markAsPending) {
+  markAsPending = !!markAsPending;
   var c=clients.find(function(x){return x.id===renewTargetId;});
   if(!c) return;
   var amountEl = document.getElementById('renewAmount');
@@ -1220,6 +1319,7 @@ async function doRenew() {
   var notesEl = document.getElementById('renewPaymentNotes');
   var errEl = document.getElementById('renewPaymentError');
   var btn = document.getElementById('renewConfirmBtn');
+  var pendingBtn = document.getElementById('renewPendingBtn');
   var amount = parseEuroAmount(amountEl ? amountEl.value : '');
   if (isNaN(amount)) {
     if (errEl) { errEl.textContent = 'Importe no valido. Ejemplo: 10 o 10,50'; errEl.style.display = 'block'; }
@@ -1236,6 +1336,7 @@ async function doRenew() {
   c.avisoRenovacionExpiracion = null;
   try {
     if (btn) { btn.disabled = true; btn.textContent = 'Guardando renovacion...'; }
+    if (pendingBtn) { pendingBtn.disabled = true; pendingBtn.textContent = 'Guardando pendiente...'; }
     var saved = await saveClientToStore(c);
     var idx=clients.findIndex(function(x){return x.id===renewTargetId;});
     if(idx>=0) clients[idx]=saved;
@@ -1249,7 +1350,9 @@ async function doRenew() {
         newExpiry: saved.expiry,
         months: renewMonths,
         amount: amount,
-        paymentMethod: methodEl ? methodEl.value : '',
+        paymentMethod: markAsPending ? 'Pendiente' : (methodEl ? methodEl.value : ''),
+        paymentStatus: markAsPending ? 'pendiente' : 'pagado',
+        paymentPaidAt: markAsPending ? '' : new Date().toISOString(),
         notes: notesEl ? notesEl.value.trim() : ''
       });
       renewalSaved = true;
@@ -1261,12 +1364,13 @@ async function doRenew() {
 
     saveData(); closeSheet('renewSheet','renewOverlay'); renderCards();
     var msg = 'Renovado ' + renewMonths + ' mes(es)!\nNueva fecha: '+formatDate(saved.expiry);
-    if (renewalSaved) msg += '\nPago registrado: ' + euro(amount);
+    if (renewalSaved) msg += markAsPending ? '\nPago pendiente registrado' : '\nPago registrado: ' + euro(amount);
     alert(msg);
   } catch(ex) {
     if (typeof showToast === 'function') showToast('Error al renovar: '+ex.message, 'error'); else alert('Error al renovar: '+ex.message);
   } finally {
     if (btn) { btn.disabled = false; btn.innerHTML = '&#8635; Confirmar Renovacion'; }
+    if (pendingBtn) { pendingBtn.disabled = false; pendingBtn.innerHTML = '&#9203; Renovar y dejar pendiente de pago'; }
   }
 }
 

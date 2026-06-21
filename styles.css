@@ -537,3 +537,47 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, 'S
   .backupNotice { align-items:flex-start; flex-direction:column; }
   .backupNotice button { width:100%; }
 }
+
+
+/* Pagos pendientes */
+.badgePayPending { background: rgba(255,170,0,0.14); color: var(--orange); }
+.paymentNotice {
+  margin: 0 14px 10px;
+  padding: 9px 10px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: .78rem;
+  border: 1px solid rgba(255,170,0,0.35);
+  background: rgba(255,170,0,0.08);
+}
+.paymentNotice.view { margin: 0 0 14px; }
+.paymentNotice strong { display:block; font-size:.8rem; color:var(--orange); margin-bottom:2px; }
+.paymentNotice span { color:var(--muted); font-size:.72rem; }
+.paymentNotice button,
+.paymentActions button {
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--orange);
+  background: transparent;
+  color: var(--orange);
+  font-size: .72rem;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.paymentNotice button:disabled,
+.paymentActions button:disabled { opacity:.6; cursor:wait; }
+.btnFull.warning { background: rgba(255,170,0,0.12); color: var(--orange); border: 1px solid rgba(255,170,0,0.45); margin-top:8px; }
+.paymentItemPending { border-color: rgba(255,170,0,0.32); background: rgba(255,170,0,0.055); }
+.paymentAmount.pending { color: var(--orange); }
+.paymentStatus { display:inline-block; padding:2px 7px; border-radius:999px; font-size:.68rem; font-weight:800; }
+.paymentStatus.paid { color:var(--green); background:rgba(105,255,71,0.12); }
+.paymentStatus.pending { color:var(--orange); background:rgba(255,170,0,0.12); }
+.paymentActions { margin-top:8px; display:flex; justify-content:flex-end; }
+@media (max-width: 420px) {
+  .paymentNotice { align-items:flex-start; flex-direction:column; }
+  .paymentNotice button { width:100%; }
+}

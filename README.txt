@@ -83,3 +83,12 @@ NOVEDAD: Backup inteligente + ingresos por renovacion
    - Al pulsar Renovar en un cliente, podras poner importe pagado, metodo y notas.
 
 El aviso de backup se guarda en el dispositivo/navegador desde el que exportas la copia.
+
+
+NOVEDAD - PAGOS PENDIENTES
+-------------------------
+- En Renovar cliente hay un boton nuevo: Renovar y dejar pendiente de pago.
+- Se guarda la renovacion aunque el cliente pague en unos dias.
+- En la pantalla principal aparece el filtro Pendientes de pago.
+- En Ingresos / renovaciones puedes marcar un pago pendiente como pagado.
+- Ejecuta primero el SQL incluido en SQL_PAGOS_PENDIENTES.txt.

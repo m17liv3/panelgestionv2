@@ -1,4 +1,4 @@
-const CACHE_NAME = 'm17liv3-pwa-v1.1.9-backup-ingresos';
+const CACHE_NAME = 'm17liv3-pwa-v1.2.0-pendiente-pago';
 const APP_SHELL = [
   './',
   './index.html',
