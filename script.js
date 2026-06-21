@@ -1776,6 +1776,37 @@ function importExcel(event) {
 try { renderCards(); } catch(e) {}
 
 
+async function refreshWebApp() {
+  try {
+    if (typeof showToast === 'function') showToast('Actualizando web-app...');
+
+    if ('serviceWorker' in navigator) {
+      try {
+        var regs = await navigator.serviceWorker.getRegistrations();
+        for (var i = 0; i < regs.length; i++) {
+          try { await regs[i].update(); } catch (e) {}
+        }
+      } catch (e) {}
+    }
+
+    if ('caches' in window) {
+      try {
+        var keys = await caches.keys();
+        await Promise.all(keys.filter(function(k){ return String(k).indexOf('m17liv3') !== -1; }).map(function(k){ return caches.delete(k); }));
+      } catch (e) {}
+    }
+
+    setTimeout(function(){
+      var url = new URL(window.location.href);
+      url.searchParams.set('refresh', Date.now().toString());
+      window.location.replace(url.toString());
+    }, 350);
+  } catch (ex) {
+    window.location.reload();
+  }
+}
+
+
 function showToast(msg, type) {
   var el = document.getElementById('toastMsg');
   if (!el) { alert(msg); return; }

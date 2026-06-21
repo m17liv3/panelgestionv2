@@ -1,4 +1,4 @@
-const CACHE_NAME = 'm17liv3-pwa-v1.2.4-google-authenticator';
+const CACHE_NAME = 'm17liv3-pwa-v1.2.5-refresh-button';
 const APP_SHELL = [
   './',
   './index.html',
