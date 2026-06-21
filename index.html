@@ -1,4 +1,4 @@
-<!-- avisados-filtro-fix-v1.2.2 -->
+<!-- google-authenticator-mfa-v1.2.4 -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -30,6 +30,36 @@
     <button type="button" class="btnMain" onclick="doLogin()">Entrar</button>
   </div>
 </div>
+
+<div id="mfaPage" style="display:none">
+  <div id="mfaBox">
+    <img src="assets/logo.png" alt="M17LIV3"/>
+    <h2 id="mfaTitle">Verificacion segura</h2>
+    <p id="mfaSubtitle">Introduce el codigo de Google Authenticator para continuar.</p>
+
+    <div id="mfaSetupBox" style="display:none">
+      <div class="mfaInfoBox">
+        <strong>Configura Google Authenticator</strong>
+        <span>Escanea este QR con Google Authenticator. Despues introduce el codigo de 6 digitos para activar la proteccion.</span>
+      </div>
+      <div class="mfaQrWrap"><img id="mfaQrImg" alt="QR Google Authenticator"/></div>
+      <div class="mfaSecretBox">
+        <span>Codigo secreto manual:</span>
+        <code id="mfaSecretText"></code>
+        <button type="button" onclick="copyMfaSecret()">Copiar secreto</button>
+      </div>
+    </div>
+
+    <div id="mfaErr">Codigo incorrecto</div>
+    <div class="mfaCodeRow">
+      <input class="inp" type="text" id="mfaCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Codigo de 6 digitos"/>
+      <button type="button" class="btnPasteCode" onclick="pasteMfaCode()">Pegar codigo</button>
+    </div>
+    <button type="button" class="btnMain" id="mfaVerifyBtn" onclick="submitMfaCode()">Verificar codigo</button>
+    <button type="button" class="btnFull gray" onclick="cancelMfaLogin()" style="margin-top:10px">Cancelar y cerrar sesion</button>
+  </div>
+</div>
+
 
 <div id="appPage">
   <div class="topbar">
@@ -78,7 +108,7 @@
 
     <div id="activeFilterBar" class="activeFilterBar">
       <span id="activeFilterLabel"></span>
-      <button onclick="resetClientView()">&#10005; Ocultar clientes</button>
+      <button onclick="quickFilter('')">&#10005; Quitar filtro</button>
     </div>
 
     <div class="searchBar">
@@ -95,7 +125,7 @@
     <div id="cardsContainer"></div>
     <div class="empty" id="emptyState" style="display:none">
       <div class="ico">&#128250;</div>
-      <div>Selecciona un filtro para ver clientes</div>
+      <div>No hay clientes</div>
     </div>
   </div>
 
@@ -115,6 +145,7 @@
     <div class="menuItem" onclick="openPayments()"><span class="ico2">&#128176;</span> Ingresos / renovaciones</div>
     <div class="menuItem" onclick="openRaffles()"><span class="ico2">&#127873;</span> Sorteos clientes</div>
     <div class="menuItem" onclick="openIboPanel()"><span class="ico2">&#127760;</span> Panel APP IBO</div>
+    <div class="menuItem" onclick="openMfaSecurity()"><span class="ico2">&#128274;</span> Seguridad Google Authenticator</div>
     <div class="menuItem" onclick="openCartelera()"><span class="ico2">&#128249;</span> Cartelera del dia</div>
     <div class="menuItem" onclick="openMovieTemplates()"><span class="ico2">&#127916;</span> Plantillas Peliculas</div>
     <div class="menuItem" onclick="openSeriesTemplates()"><span class="ico2">&#127909;</span> Plantillas Series</div>
@@ -414,6 +445,26 @@
 </div>
 
 <!-- PANEL APP IBO: acceso directo externo -->
+
+
+
+<!-- MFA SECURITY SHEET -->
+<div class="sheet-overlay" id="mfaSecurityOverlay" onclick="closeSheet('mfaSecuritySheet','mfaSecurityOverlay')"></div>
+<div class="sheet" id="mfaSecuritySheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <h3>Seguridad Google Authenticator</h3>
+    <button class="sheet-close" onclick="closeSheet('mfaSecuritySheet','mfaSecurityOverlay')">x</button>
+  </div>
+  <div class="sheet-body" id="mfaSecurityBody">
+    <div class="mfaInfoBox">
+      <strong>Doble verificacion activa</strong>
+      <span>Desde aqui puedes revisar tus autenticadores y añadir otro dispositivo de respaldo.</span>
+    </div>
+    <button class="btnFull primary" onclick="startMfaEnrollmentFromSettings()">Añadir otro autenticador</button>
+    <div id="mfaSecurityList" class="mfaFactorList"></div>
+  </div>
+</div>
 
 <!-- CARTELERA SHEET -->
 <div class="sheet-overlay" id="carteleraOverlay" onclick="closeSheet('carteleraSheet','carteleraOverlay')"></div>

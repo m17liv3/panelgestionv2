@@ -32,6 +32,36 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, 'S
 .btnMain { width: 100%; padding: 15px; border: none; border-radius: 12px; font-size: 1rem; font-weight: 700;
   cursor: pointer; background: linear-gradient(135deg, var(--cyan), var(--green)); color: #0d0d14; }
 
+
+
+/* ========== GOOGLE AUTHENTICATOR / MFA ========== */
+#mfaPage {
+  height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px;
+  background: radial-gradient(ellipse at 50% 30%, #0d1e35 0%, var(--bg) 70%);
+}
+#mfaBox { width:100%; max-width:390px; }
+#mfaBox img { width:92px; display:block; margin:0 auto 18px; }
+#mfaBox h2 { text-align:center; color:var(--cyan); font-size:1.05rem; letter-spacing:2px; text-transform:uppercase; margin-bottom:6px; }
+#mfaBox p { text-align:center; color:var(--muted); font-size:.82rem; margin-bottom:18px; line-height:1.4; }
+#mfaErr { color:var(--red); font-size:.82rem; text-align:center; margin-bottom:10px; display:none; }
+.mfaCodeRow { display:grid; grid-template-columns:1fr auto; gap:8px; align-items:start; }
+.mfaCodeRow .inp { margin-bottom:12px; text-align:center; font-size:1.15rem; letter-spacing:4px; font-weight:800; }
+.btnPasteCode { height:50px; padding:0 12px; border-radius:12px; border:1.5px solid var(--cyan); background:rgba(0,229,255,0.08); color:var(--cyan); font-weight:800; cursor:pointer; white-space:nowrap; }
+.mfaInfoBox { background:rgba(0,229,255,0.07); border:1px solid rgba(0,229,255,0.22); border-radius:14px; padding:13px 14px; margin-bottom:14px; }
+.mfaInfoBox strong { display:block; color:var(--cyan); margin-bottom:5px; font-size:.9rem; }
+.mfaInfoBox span { display:block; color:var(--muted); font-size:.8rem; line-height:1.35; }
+.mfaQrWrap { background:#fff; border-radius:16px; padding:14px; margin:0 auto 12px; width:220px; min-height:220px; display:flex; align-items:center; justify-content:center; }
+.mfaQrWrap img { width:192px !important; height:192px; margin:0 !important; object-fit:contain; }
+.mfaSecretBox { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:10px 12px; margin-bottom:14px; }
+.mfaSecretBox span { display:block; color:var(--muted); font-size:.72rem; text-transform:uppercase; letter-spacing:.5px; margin-bottom:6px; }
+.mfaSecretBox code { display:block; color:var(--green); font-size:.8rem; word-break:break-all; margin-bottom:8px; }
+.mfaSecretBox button { width:100%; padding:9px; border-radius:10px; border:1px solid var(--border); background:var(--card2); color:var(--text); font-weight:700; cursor:pointer; }
+.mfaFactorList { margin-top:14px; }
+.mfaFactorItem { background:var(--card2); border:1px solid var(--border); border-radius:12px; padding:12px 14px; margin-bottom:8px; }
+.mfaFactorItem strong { display:block; color:var(--text); margin-bottom:4px; }
+.mfaFactorItem span { display:block; color:var(--muted); font-size:.78rem; }
+@media (max-width:420px){ .mfaCodeRow { grid-template-columns:1fr; } .btnPasteCode { width:100%; } }
+
 #appPage { display: none; height: 100vh; flex-direction: column; }
 #appPage.active { display: flex !important; }
 

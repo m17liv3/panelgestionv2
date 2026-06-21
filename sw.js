@@ -1,4 +1,4 @@
-const CACHE_NAME = 'm17liv3-pwa-v1.2.3-inicio-sin-clientes';
+const CACHE_NAME = 'm17liv3-pwa-v1.2.4-google-authenticator';
 const APP_SHELL = [
   './',
   './index.html',

@@ -1,4 +1,4 @@
-// inicio-sin-clientes-v1.2.3
+// google-authenticator-mfa-v1.2.4
 var CONFIG = window.M17_CONFIG || {};
 var ADMIN_USER = CONFIG.adminUser || 'admin';
 var ADMIN_PASS_HASH = CONFIG.adminPassHash || '';
@@ -36,6 +36,12 @@ var SUPABASE_RENEWALS_TABLE = CONFIG.supabaseRenewalsTable || 'renovaciones';
 var renewals = [];
 var BACKUP_LAST_KEY = 'm17_last_backup_at';
 var BACKUP_REMINDER_DAYS = 7;
+var MFA_ENABLED = USE_SUPABASE && CONFIG.mfaEnabled !== false;
+var MFA_FORCE_SETUP = CONFIG.mfaForceSetup !== false;
+var mfaMode = '';
+var mfaFactorId = '';
+var mfaFactorName = '';
+var mfaEnrollmentData = null;
 
 function initSupabase() {
   if (!USE_SUPABASE) return null;
@@ -179,6 +185,237 @@ function showAppAfterLogin() {
 }
 
 
+function setMfaVisible(visible) {
+  var mp = document.getElementById('mfaPage');
+  var lp = document.getElementById('loginPage');
+  var ap = document.getElementById('appPage');
+  if (mp) mp.style.display = visible ? 'flex' : 'none';
+  if (visible) {
+    if (lp) lp.style.display = 'none';
+    if (ap) { ap.classList.remove('active'); ap.style.display = 'none'; }
+    setTimeout(function(){ var input = document.getElementById('mfaCode'); if (input) input.focus(); }, 80);
+  }
+}
+
+function setMfaError(message) {
+  var err = document.getElementById('mfaErr');
+  if (!err) return;
+  if (!message) {
+    err.style.display = 'none';
+    err.textContent = '';
+  } else {
+    err.textContent = message;
+    err.style.display = 'block';
+  }
+}
+
+function normalizeMfaCode(value) {
+  return String(value || '').replace(/\D/g, '').slice(0, 6);
+}
+
+function setMfaCodeValue(value) {
+  var input = document.getElementById('mfaCode');
+  if (!input) return '';
+  var code = normalizeMfaCode(value);
+  input.value = code;
+  return code;
+}
+
+function normalizeMfaQr(qr) {
+  qr = String(qr || '');
+  if (!qr) return '';
+  if (qr.indexOf('<svg') === 0) return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(qr);
+  return qr;
+}
+
+function getVerifiedTotpFactors(factorsData) {
+  factorsData = factorsData || {};
+  var list = [];
+  if (Array.isArray(factorsData.totp)) list = factorsData.totp;
+  else if (Array.isArray(factorsData.all)) list = factorsData.all.filter(function(f){ return (f.factor_type || f.type) === 'totp'; });
+  return list.filter(function(f){ return !f.status || f.status === 'verified'; });
+}
+
+async function completeSupabaseLogin() {
+  await loadClientsFromStore();
+  await loadRenewals(false);
+  setMfaVisible(false);
+  showAppAfterLogin();
+  if (typeof showToast === 'function') showToast('Conectado a Supabase');
+}
+
+async function handleMfaAfterPasswordLogin() {
+  var db = initSupabase();
+  if (!db.auth || !db.auth.mfa) {
+    await completeSupabaseLogin();
+    return;
+  }
+  var aal = await db.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (aal.error) throw aal.error;
+
+  if (aal.data && aal.data.currentLevel === 'aal2') {
+    await completeSupabaseLogin();
+    return;
+  }
+
+  if (aal.data && aal.data.nextLevel === 'aal2' && aal.data.currentLevel !== 'aal2') {
+    await startMfaChallengeScreen();
+    return;
+  }
+
+  if (MFA_FORCE_SETUP) {
+    await startMfaEnrollmentScreen();
+    return;
+  }
+
+  await completeSupabaseLogin();
+}
+
+async function startMfaChallengeScreen() {
+  var db = initSupabase();
+  var factors = await db.auth.mfa.listFactors();
+  if (factors.error) throw factors.error;
+  var totps = getVerifiedTotpFactors(factors.data);
+  if (!totps.length) {
+    await startMfaEnrollmentScreen();
+    return;
+  }
+  mfaMode = 'challenge';
+  mfaFactorId = totps[0].id;
+  mfaFactorName = totps[0].friendly_name || totps[0].friendlyName || 'Google Authenticator';
+  mfaEnrollmentData = null;
+  var title = document.getElementById('mfaTitle');
+  var sub = document.getElementById('mfaSubtitle');
+  var setup = document.getElementById('mfaSetupBox');
+  var btn = document.getElementById('mfaVerifyBtn');
+  if (title) title.textContent = 'Codigo Google Authenticator';
+  if (sub) sub.textContent = 'Pega o escribe el codigo de 6 digitos para entrar en la app.';
+  if (setup) setup.style.display = 'none';
+  if (btn) btn.textContent = 'Verificar y entrar';
+  setMfaError('');
+  setMfaCodeValue('');
+  setMfaVisible(true);
+}
+
+async function startMfaEnrollmentScreen() {
+  var db = initSupabase();
+  var res = await db.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'M17LIV3 Panel' });
+  if (res.error) throw res.error;
+  mfaMode = 'enroll';
+  mfaFactorId = res.data.id;
+  mfaFactorName = res.data.friendly_name || 'M17LIV3 Panel';
+  mfaEnrollmentData = res.data;
+  var title = document.getElementById('mfaTitle');
+  var sub = document.getElementById('mfaSubtitle');
+  var setup = document.getElementById('mfaSetupBox');
+  var qr = document.getElementById('mfaQrImg');
+  var secret = document.getElementById('mfaSecretText');
+  var btn = document.getElementById('mfaVerifyBtn');
+  if (title) title.textContent = 'Configurar Google Authenticator';
+  if (sub) sub.textContent = 'Escanea el QR y despues pega el codigo de 6 digitos para activar la doble verificacion.';
+  if (setup) setup.style.display = 'block';
+  if (qr) qr.src = normalizeMfaQr(res.data.totp && res.data.totp.qr_code);
+  if (secret) secret.textContent = (res.data.totp && res.data.totp.secret) ? res.data.totp.secret : '';
+  if (btn) btn.textContent = 'Activar y entrar';
+  setMfaError('');
+  setMfaCodeValue('');
+  setMfaVisible(true);
+}
+
+async function submitMfaCode() {
+  var db = initSupabase();
+  var btn = document.getElementById('mfaVerifyBtn');
+  var code = setMfaCodeValue(document.getElementById('mfaCode') ? document.getElementById('mfaCode').value : '');
+  try {
+    setMfaError('');
+    if (code.length !== 6) throw new Error('Introduce un codigo de 6 digitos.');
+    if (!mfaFactorId) throw new Error('No se ha encontrado el factor de autenticacion. Vuelve a iniciar sesion.');
+    if (btn) { btn.disabled = true; btn.textContent = 'Verificando...'; }
+    var challenge = await db.auth.mfa.challenge({ factorId: mfaFactorId });
+    if (challenge.error) throw challenge.error;
+    var verify = await db.auth.mfa.verify({ factorId: mfaFactorId, challengeId: challenge.data.id, code: code });
+    if (verify.error) throw verify.error;
+    await completeSupabaseLogin();
+  } catch (ex) {
+    setMfaError(ex.message || 'Codigo incorrecto.');
+    if (typeof showToast === 'function') showToast('Error MFA: ' + (ex.message || 'codigo incorrecto'), 'error');
+  } finally {
+    if (btn) btn.disabled = false;
+    if (btn) btn.textContent = (mfaMode === 'enroll') ? 'Activar y entrar' : 'Verificar y entrar';
+  }
+}
+
+async function pasteMfaCode() {
+  try {
+    setMfaError('');
+    if (!navigator.clipboard || !navigator.clipboard.readText) throw new Error('El navegador no permite pegar automaticamente. Mantén pulsado y pega el codigo manualmente.');
+    var text = await navigator.clipboard.readText();
+    var code = setMfaCodeValue(text);
+    if (!code) throw new Error('No he encontrado ningun codigo numerico en el portapapeles.');
+    if (typeof showToast === 'function') showToast('Codigo pegado');
+  } catch (ex) {
+    setMfaError(ex.message || 'No se pudo pegar el codigo.');
+  }
+}
+
+async function copyMfaSecret() {
+  var secret = document.getElementById('mfaSecretText') ? document.getElementById('mfaSecretText').textContent : '';
+  if (!secret) return;
+  try {
+    await navigator.clipboard.writeText(secret);
+    if (typeof showToast === 'function') showToast('Secreto copiado');
+  } catch(e) {
+    alert(secret);
+  }
+}
+
+async function cancelMfaLogin() {
+  try { if (USE_SUPABASE && supabaseDb) await supabaseDb.auth.signOut(); } catch(e) {}
+  setMfaVisible(false);
+  var lp = document.getElementById('loginPage');
+  var ap = document.getElementById('appPage');
+  if (lp) lp.style.display = 'flex';
+  if (ap) { ap.classList.remove('active'); ap.style.display = 'none'; }
+  mfaMode = '';
+  mfaFactorId = '';
+  mfaEnrollmentData = null;
+}
+
+async function openMfaSecurity() {
+  closeSheet('menuSheet','menuOverlay');
+  openSheet('mfaSecuritySheet','mfaSecurityOverlay');
+  await renderMfaSecurityList();
+}
+
+async function renderMfaSecurityList() {
+  var box = document.getElementById('mfaSecurityList');
+  if (!box) return;
+  box.innerHTML = '<div class="empty" style="padding:18px 10px">Cargando autenticadores...</div>';
+  try {
+    var db = initSupabase();
+    var factors = await db.auth.mfa.listFactors();
+    if (factors.error) throw factors.error;
+    var totps = getVerifiedTotpFactors(factors.data);
+    if (!totps.length) {
+      box.innerHTML = '<div class="empty" style="padding:18px 10px">No hay autenticadores verificados.</div>';
+      return;
+    }
+    box.innerHTML = totps.map(function(f, i){
+      var name = f.friendly_name || f.friendlyName || ('Autenticador ' + (i+1));
+      var created = f.created_at ? formatDate(f.created_at.slice(0,10)) : '';
+      return '<div class="mfaFactorItem"><strong>&#128274; '+escapeHtml(name)+'</strong><span>Estado: verificado'+(created ? ' · Creado: '+created : '')+'</span></div>';
+    }).join('');
+  } catch(ex) {
+    box.innerHTML = '<div class="formError" style="display:block">'+escapeHtml(ex.message || 'No se pudo cargar la seguridad MFA')+'</div>';
+  }
+}
+
+async function startMfaEnrollmentFromSettings() {
+  closeSheet('mfaSecuritySheet','mfaSecurityOverlay');
+  await startMfaEnrollmentScreen();
+}
+
+
 async function sha256Text(text) {
   if (!window.crypto || !window.crypto.subtle) {
     throw new Error('El navegador no permite comprobar la clave en este contexto. Usa HTTPS o localhost.');
@@ -203,10 +440,11 @@ async function doLogin() {
       var db = initSupabase();
       var res = await db.auth.signInWithPassword({ email: u, password: p });
       if (res.error) throw res.error;
-      await loadClientsFromStore();
-      await loadRenewals(false);
-      showAppAfterLogin();
-      if (typeof showToast === 'function') showToast('Conectado a Supabase');
+      if (MFA_ENABLED) {
+        await handleMfaAfterPasswordLogin();
+      } else {
+        await completeSupabaseLogin();
+      }
       return;
     }
 
@@ -232,6 +470,11 @@ document.addEventListener('DOMContentLoaded', function() {
   var lu = document.getElementById('lUser');
   if(lp) lp.addEventListener('keydown', function(e){ if(e.key==='Enter') doLogin(); });
   if(lu) lu.addEventListener('keydown', function(e){ if(e.key==='Enter') doLogin(); });
+  var mc = document.getElementById('mfaCode');
+  if(mc) {
+    mc.addEventListener('input', function(){ setMfaCodeValue(mc.value); });
+    mc.addEventListener('keydown', function(e){ if(e.key==='Enter') submitMfaCode(); });
+  }
 });
 async function doLogout() {
   closeSheet('menuSheet','menuOverlay');
@@ -239,6 +482,8 @@ async function doLogout() {
     try { await supabaseDb.auth.signOut(); } catch(e) {}
   }
   clients = [];
+  var mp = document.getElementById('mfaPage');
+  if (mp) mp.style.display = 'none';
   var ap = document.getElementById('appPage');
   var lp = document.getElementById('loginPage');
   if (ap) {

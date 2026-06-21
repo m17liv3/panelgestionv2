@@ -1,0 +1,102 @@
+-- SQL opcional pero recomendado para que Supabase exija MFA real en la base de datos.
+-- Ejecutar DESPUES de subir la version con Google Authenticator y comprobar que puedes entrar/verificar MFA.
+-- Si algun dia pierdes el autenticador, puedes revertir estas politicas desde Supabase SQL Editor.
+
+-- CLIENTES
+alter table public.clientes enable row level security;
+
+drop policy if exists "clientes_select_owner" on public.clientes;
+drop policy if exists "clientes_insert_owner" on public.clientes;
+drop policy if exists "clientes_update_owner" on public.clientes;
+drop policy if exists "clientes_delete_owner" on public.clientes;
+
+create policy "clientes_select_owner"
+on public.clientes
+for select
+to authenticated
+using (owner_id = (select auth.uid()) and (select auth.jwt()->>'aal') = 'aal2');
+
+create policy "clientes_insert_owner"
+on public.clientes
+for insert
+to authenticated
+with check (owner_id = (select auth.uid()) and (select auth.jwt()->>'aal') = 'aal2');
+
+create policy "clientes_update_owner"
+on public.clientes
+for update
+to authenticated
+using (owner_id = (select auth.uid()) and (select auth.jwt()->>'aal') = 'aal2')
+with check (owner_id = (select auth.uid()) and (select auth.jwt()->>'aal') = 'aal2');
+
+create policy "clientes_delete_owner"
+on public.clientes
+for delete
+to authenticated
+using (owner_id = (select auth.uid()) and (select auth.jwt()->>'aal') = 'aal2');
+
+-- RENOVACIONES
+alter table public.renovaciones enable row level security;
+
+drop policy if exists "renovaciones_select_owner" on public.renovaciones;
+drop policy if exists "renovaciones_insert_owner" on public.renovaciones;
+drop policy if exists "renovaciones_update_owner" on public.renovaciones;
+drop policy if exists "renovaciones_delete_owner" on public.renovaciones;
+
+create policy "renovaciones_select_owner"
+on public.renovaciones
+for select
+to authenticated
+using (owner_id = (select auth.uid()) and (select auth.jwt()->>'aal') = 'aal2');
+
+create policy "renovaciones_insert_owner"
+on public.renovaciones
+for insert
+to authenticated
+with check (owner_id = (select auth.uid()) and (select auth.jwt()->>'aal') = 'aal2');
+
+create policy "renovaciones_update_owner"
+on public.renovaciones
+for update
+to authenticated
+using (owner_id = (select auth.uid()) and (select auth.jwt()->>'aal') = 'aal2')
+with check (owner_id = (select auth.uid()) and (select auth.jwt()->>'aal') = 'aal2');
+
+create policy "renovaciones_delete_owner"
+on public.renovaciones
+for delete
+to authenticated
+using (owner_id = (select auth.uid()) and (select auth.jwt()->>'aal') = 'aal2');
+
+-- SORTEOS
+alter table public.sorteos enable row level security;
+
+drop policy if exists "sorteos_select_owner" on public.sorteos;
+drop policy if exists "sorteos_insert_owner" on public.sorteos;
+drop policy if exists "sorteos_update_owner" on public.sorteos;
+drop policy if exists "sorteos_delete_owner" on public.sorteos;
+
+create policy "sorteos_select_owner"
+on public.sorteos
+for select
+to authenticated
+using (owner_id = (select auth.uid()) and (select auth.jwt()->>'aal') = 'aal2');
+
+create policy "sorteos_insert_owner"
+on public.sorteos
+for insert
+to authenticated
+with check (owner_id = (select auth.uid()) and (select auth.jwt()->>'aal') = 'aal2');
+
+create policy "sorteos_update_owner"
+on public.sorteos
+for update
+to authenticated
+using (owner_id = (select auth.uid()) and (select auth.jwt()->>'aal') = 'aal2')
+with check (owner_id = (select auth.uid()) and (select auth.jwt()->>'aal') = 'aal2');
+
+create policy "sorteos_delete_owner"
+on public.sorteos
+for delete
+to authenticated
+using (owner_id = (select auth.uid()) and (select auth.jwt()->>'aal') = 'aal2');

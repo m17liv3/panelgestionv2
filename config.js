@@ -13,5 +13,7 @@ window.M17_CONFIG = {
   supabaseUrl: 'https://qjbnjhojwhcndcfjcyrc.supabase.co',
   supabaseKey: 'sb_publishable_HxThHPoZaGm8YgirIX4BQQ_1Sjs907O',
   supabaseTable: 'clientes',
-  supabaseRenewalsTable: 'renovaciones'
+  supabaseRenewalsTable: 'renovaciones',
+  mfaEnabled: true,
+  mfaForceSetup: true
 };
