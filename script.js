@@ -275,6 +275,10 @@ function isRenewalNoticeCurrent(c) {
   return !!(c && c.avisoRenovacionEnviado && c.avisoRenovacionExpiracion && c.expiry && c.avisoRenovacionExpiracion === c.expiry);
 }
 
+function clientHasRenewalNotice(c) {
+  return !!(c && getStatus(c.expiry) === 'warn' && isRenewalNoticeCurrent(c));
+}
+
 function renewalNoticeHtml(c, mode) {
   if (!c || getStatus(c.expiry) !== 'warn') return '';
   var current = isRenewalNoticeCurrent(c);
@@ -743,6 +747,7 @@ function quickFilter(st) {
     if (st === 'warn') lbl.textContent = 'Mostrando: Expiran pronto (menos de 15 dias)';
     if (st === 'exp') lbl.textContent = 'Mostrando: Expirados';
     if (st === 'paypend') lbl.textContent = 'Mostrando: Pendientes de pago';
+    if (st === 'advised') lbl.textContent = 'Mostrando: Clientes avisados';
   }
   renderCards();
   document.getElementById('mainScroll').scrollTo({top: 200, behavior: 'smooth'});
@@ -755,6 +760,8 @@ function updateStats() {
   document.getElementById('stExp').textContent = clients.filter(function(c){ return getStatus(c.expiry)==='exp'; }).length;
   var pendingEl = document.getElementById('stPendingPay');
   if (pendingEl) pendingEl.textContent = clients.filter(function(c){ return clientHasPendingPayment(c); }).length;
+  var advisedEl = document.getElementById('stAdvised');
+  if (advisedEl) advisedEl.textContent = clients.filter(function(c){ return clientHasRenewalNotice(c); }).length;
   updateBackupReminder();
 }
 
@@ -788,7 +795,7 @@ function renderCards() {
   var filtered = clients.filter(function(c) {
     var ms = !search || c.name.toLowerCase().indexOf(search)>=0 || (c.user||'').toLowerCase().indexOf(search)>=0;
     var mv = !filterSvc || c.service===filterSvc;
-    var mt = !filterSt || (filterSt==='paypend' ? clientHasPendingPayment(c) : (filterSt==='ok' ? (getStatus(c.expiry)==='ok'||getStatus(c.expiry)==='warn') : getStatus(c.expiry)===filterSt));
+    var mt = !filterSt || (filterSt==='paypend' ? clientHasPendingPayment(c) : (filterSt==='advised' ? clientHasRenewalNotice(c) : (filterSt==='ok' ? (getStatus(c.expiry)==='ok'||getStatus(c.expiry)==='warn') : getStatus(c.expiry)===filterSt)));
     return ms && mv && mt;
   });
   filtered = sortClientsByExpiryAsc(filtered);
@@ -811,6 +818,7 @@ function renderCards() {
           '<span class="badge ' + (c.service==='TODO'?'badgeTodo':'badgeEs') + '">' + svcLabel + '</span>' +
           statusBadge(c.expiry) +
           (clientHasPendingPayment(c) ? '<span class="badge badgePayPending">Pago pendiente</span>' : '') +
+          (clientHasRenewalNotice(c) ? '<span class="badge badgeAdvised">Avisado</span>' : '') +
         '</div>' +
       '</div>' +
       '<div class="clientCard-body">' +
@@ -1052,7 +1060,7 @@ function viewClient(id) {
   var svcLabel = c.service === 'ESPANA' ? 'ESPA\u00D1A' : esc(c.service);
   var html='';
   html+='<div class="viewRow"><div class="vlabel">Servicio</div><div class="vval"><span class="badge '+(c.service==='TODO'?'badgeTodo':'badgeEs')+'">'+svcLabel+'</span></div></div>';
-  html+='<div class="viewRow"><div class="vlabel">Expiracion</div><div class="vval">'+formatDate(c.expiry)+' '+statusBadge(c.expiry)+(clientHasPendingPayment(c)?' <span class="badge badgePayPending">Pago pendiente</span>':'')+'</div></div>';
+  html+='<div class="viewRow"><div class="vlabel">Expiracion</div><div class="vval">'+formatDate(c.expiry)+' '+statusBadge(c.expiry)+(clientHasPendingPayment(c)?' <span class="badge badgePayPending">Pago pendiente</span>':'')+(clientHasRenewalNotice(c)?' <span class="badge badgeAdvised">Avisado</span>':'')+'</div></div>';
   html+=renewalNoticeHtml(c, 'view');
   html+=pendingPaymentNoticeHtml(c, 'view');
   html+='<div class="viewRow"><div class="vlabel">Usuario</div><div style="display:flex;align-items:center;gap:8px"><span style="font-family:monospace;color:var(--cyan)">'+esc(c.user||'-')+'</span>'+(c.user?'<button class="btnCopy" data-copy="'+esc(c.user)+'" onclick="copyText(this.dataset.copy,this)">Copiar</button>':'')+'</div></div>';

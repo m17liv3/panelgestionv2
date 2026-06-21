@@ -541,6 +541,7 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, 'S
 
 /* Pagos pendientes */
 .badgePayPending { background: rgba(255,170,0,0.14); color: var(--orange); }
+.badgeAdvised { background: rgba(0,229,255,0.14); color: var(--cyan); }
 .paymentNotice {
   margin: 0 14px 10px;
   padding: 9px 10px;

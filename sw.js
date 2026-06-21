@@ -1,4 +1,4 @@
-const CACHE_NAME = 'm17liv3-pwa-v1.2.0-pendiente-pago';
+const CACHE_NAME = 'm17liv3-pwa-v1.2.1-avisados-filtro';
 const APP_SHELL = [
   './',
   './index.html',

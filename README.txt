@@ -92,3 +92,9 @@ NOVEDAD - PAGOS PENDIENTES
 - En la pantalla principal aparece el filtro Pendientes de pago.
 - En Ingresos / renovaciones puedes marcar un pago pendiente como pagado.
 - Ejecuta primero el SQL incluido en SQL_PAGOS_PENDIENTES.txt.
+
+
+NOVEDAD - Filtro de clientes avisados:
+- En la pantalla principal aparece el boton Avisados junto a Pendientes de pago.
+- El filtro muestra clientes que expiran pronto y ya han sido marcados como avisados.
+- No requiere SQL nuevo; usa las columnas de aviso de renovacion ya existentes.

@@ -57,9 +57,13 @@
         <div class="val" id="stExp" style="color:var(--red)">0</div>
         <div class="lbl">&#128683; Expirados</div>
       </div>
-      <div class="statCard" onclick="quickFilter('paypend')" style="border-color:rgba(255,170,0,0.35)">
+      <div class="statCard" onclick="quickFilter('paypend')" style="border-color:rgba(255,170,0,0.3)">
         <div class="val" id="stPendingPay" style="color:var(--orange)">0</div>
         <div class="lbl">&#9203; Pendientes de pago</div>
+      </div>
+      <div class="statCard" onclick="quickFilter('advised')" style="border-color:rgba(0,229,255,0.3)">
+        <div class="val" id="stAdvised" style="color:var(--cyan)">0</div>
+        <div class="lbl">&#128276; Avisados</div>
       </div>
     </div>
 
@@ -229,8 +233,7 @@
       </div>
       <div class="formError" id="renewPaymentError"></div>
     </div>
-    <button class="btnFull primary" id="renewConfirmBtn" onclick="doRenew(false)">&#8635; Confirmar Renovacion</button>
-    <button class="btnFull warning" id="renewPendingBtn" onclick="doRenew(true)">&#9203; Renovar y dejar pendiente de pago</button>
+    <button class="btnFull primary" id="renewConfirmBtn" onclick="doRenew()">&#8635; Confirmar Renovacion</button>
     <button class="btnFull gray" onclick="closeSheet('renewSheet','renewOverlay')" style="margin-top:8px">Cancelar</button>
   </div>
 </div>
@@ -336,10 +339,8 @@
     <div class="paymentsStatsGrid">
       <div class="paymentsStat"><span>Este mes</span><strong id="payMonthTotal">0,00 €</strong></div>
       <div class="paymentsStat"><span>Ultimos 30 dias</span><strong id="pay30Total">0,00 €</strong></div>
-      <div class="paymentsStat"><span>Total cobrado</span><strong id="payAllTotal">0,00 €</strong></div>
+      <div class="paymentsStat"><span>Total registrado</span><strong id="payAllTotal">0,00 €</strong></div>
       <div class="paymentsStat"><span>Renovaciones mes</span><strong id="payMonthCount">0</strong></div>
-      <div class="paymentsStat"><span>Pendientes de pago</span><strong id="payPendingCount" style="color:var(--orange)">0</strong></div>
-      <div class="paymentsStat"><span>Total pendiente</span><strong id="payPendingTotal" style="color:var(--orange)">0,00 €</strong></div>
     </div>
     <div class="raffleHistoryHeader">
       <span>Historial de renovaciones</span>
