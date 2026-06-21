@@ -1,4 +1,4 @@
-// avisados-filtro-fix-v1.2.2
+// inicio-sin-clientes-v1.2.3
 var CONFIG = window.M17_CONFIG || {};
 var ADMIN_USER = CONFIG.adminUser || 'admin';
 var ADMIN_PASS_HASH = CONFIG.adminPassHash || '';
@@ -27,6 +27,7 @@ var renewMonths = 1;
 var messageTargetId = null;
 var filterSvc = '';
 var filterSt = '';
+var hasSelectedClientFilter = false;
 var showFilters = false;
 var raffles = [];
 var lastRaffleResult = null;
@@ -733,17 +734,40 @@ function toggleFilters() {
 }
 function setPillSvc(el, val) {
   document.querySelectorAll('[data-svc]').forEach(function(p){ p.classList.remove('active'); });
-  el.classList.add('active'); filterSvc = val; renderCards();
+  el.classList.add('active');
+  filterSvc = val;
+  hasSelectedClientFilter = true;
+  var bar = document.getElementById('activeFilterBar');
+  var lbl = document.getElementById('activeFilterLabel');
+  if (bar && lbl && !filterSt) {
+    bar.style.display = 'flex';
+    lbl.textContent = val ? ('Mostrando servicio: ' + (val === 'ESPANA' ? 'ESPAÑA' : val)) : 'Mostrando: Todos los clientes';
+  }
+  renderCards();
+}
+
+function resetClientView() {
+  filterSt = '';
+  filterSvc = '';
+  hasSelectedClientFilter = false;
+  document.querySelectorAll('[data-svc]').forEach(function(p){ p.classList.remove('active'); });
+  var allPill = document.querySelector('[data-svc=""]');
+  if (allPill) allPill.classList.add('active');
+  var bar = document.getElementById('activeFilterBar');
+  if (bar) bar.style.display = 'none';
+  var searchBox = document.getElementById('searchBox');
+  if (searchBox) searchBox.value = '';
+  renderCards();
 }
 
 function quickFilter(st) {
   filterSt = st;
+  hasSelectedClientFilter = true;
   var bar = document.getElementById('activeFilterBar');
   var lbl = document.getElementById('activeFilterLabel');
-  if (!st) {
-    bar.style.display = 'none';
-  } else {
-    bar.style.display = 'flex';
+  if (bar) bar.style.display = 'flex';
+  if (lbl) {
+    if (!st) lbl.textContent = 'Mostrando: Todos los clientes';
     if (st === 'ok') lbl.textContent = 'Mostrando: Clientes activos';
     if (st === 'warn') lbl.textContent = 'Mostrando: Expiran pronto (menos de 15 dias)';
     if (st === 'exp') lbl.textContent = 'Mostrando: Expirados';
@@ -793,6 +817,17 @@ function formatMacInput(input) {
 
 function renderCards() {
   var search = document.getElementById('searchBox').value.toLowerCase();
+  var container = document.getElementById('cardsContainer');
+  var empty = document.getElementById('emptyState');
+  if (!hasSelectedClientFilter && !search) {
+    if (container) container.innerHTML = '';
+    if (empty) {
+      empty.style.display = 'block';
+      empty.innerHTML = '<div class="ico">&#128064;</div><div>Selecciona un filtro para ver clientes</div><small style="display:block;margin-top:8px;color:var(--muted);font-size:12px">Pulsa Total, Activos, Expiran pronto, Pendientes de pago o Avisados.</small>';
+    }
+    return;
+  }
+  if (search) hasSelectedClientFilter = true;
   var filtered = clients.filter(function(c) {
     var ms = !search || c.name.toLowerCase().indexOf(search)>=0 || (c.user||'').toLowerCase().indexOf(search)>=0;
     var mv = !filterSvc || c.service===filterSvc;
@@ -800,9 +835,11 @@ function renderCards() {
     return ms && mv && mt;
   });
   filtered = sortClientsByExpiryAsc(filtered);
-  var container = document.getElementById('cardsContainer');
   container.innerHTML = '';
-  document.getElementById('emptyState').style.display = filtered.length ? 'none' : 'block';
+  if (empty) {
+    empty.style.display = filtered.length ? 'none' : 'block';
+    if (!filtered.length) empty.innerHTML = '<div class="ico">&#128250;</div><div>No hay clientes para este filtro</div>';
+  }
   filtered.forEach(function(c) {
     var mainApp = c.apps && c.apps.length ? c.apps[0].name : '-';
     var svcLabel = c.service === 'ESPANA' ? 'ESPA\u00D1A' : esc(c.service);

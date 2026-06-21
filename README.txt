@@ -98,3 +98,10 @@ NOVEDAD - Filtro de clientes avisados:
 - En la pantalla principal aparece el boton Avisados junto a Pendientes de pago.
 - El filtro muestra clientes que expiran pronto y ya han sido marcados como avisados.
 - No requiere SQL nuevo; usa las columnas de aviso de renovacion ya existentes.
+
+
+Versión inicio sin clientes:
+- Al iniciar sesión no se muestra la lista completa automáticamente.
+- Se muestran estadísticas y debes pulsar un filtro para ver clientes.
+- Pulsa Total Clientes para ver todos.
+- El botón del filtro activo permite ocultar de nuevo los clientes.

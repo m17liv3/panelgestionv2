@@ -1,4 +1,4 @@
-const CACHE_NAME = 'm17liv3-pwa-v1.2.2-avisados-filtro-fix';
+const CACHE_NAME = 'm17liv3-pwa-v1.2.3-inicio-sin-clientes';
 const APP_SHELL = [
   './',
   './index.html',
