@@ -488,6 +488,11 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, 'S
 .renewNotice.pending button { color: var(--orange); }
 .renewNotice.done button { color: var(--green); }
 .renewNotice button:disabled { opacity: .6; cursor: wait; }
+.renewNotice.answered { border-color: rgba(105,255,71,0.42); background: rgba(105,255,71,0.09); }
+.renewNotice.noanswer { border-color: rgba(0,229,255,0.35); background: rgba(0,229,255,0.07); }
+.noticeActions { display:flex; gap:7px; flex-wrap:wrap; justify-content:flex-end; }
+.renewNotice.noanswer .noticeActions button:first-child { color: var(--cyan); }
+.renewNotice.answered .noticeActions button:first-child { color: var(--orange); }
 
 
 /* Backup inteligente */
@@ -574,6 +579,8 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, 'S
 /* Pagos pendientes */
 .badgePayPending { background: rgba(255,170,0,0.14); color: var(--orange); }
 .badgeAdvised { background: rgba(0,229,255,0.14); color: var(--cyan); }
+.badgeAnswered { background: rgba(105,255,71,0.14); color: var(--green); }
+.badgeNoAnswer { background: rgba(255,170,0,0.14); color: var(--orange); }
 .paymentNotice {
   margin: 0 14px 10px;
   padding: 9px 10px;
@@ -632,4 +639,7 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, 'S
   .paymentNotice { align-items:flex-start; flex-direction:column; }
   .paymentNoticeBtns { width:100%; justify-content:flex-start; }
   .paymentNoticeBtns button { flex:1; }
+  .renewNotice { align-items:flex-start; flex-direction:column; }
+  .noticeActions { width:100%; justify-content:flex-start; }
+  .noticeActions button { flex:1; }
 }

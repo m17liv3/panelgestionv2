@@ -1,4 +1,4 @@
-// google-authenticator-mfa-v1.2.7-editar-ingresos-fix
+// google-authenticator-mfa-v1.2.8-aviso-contestado
 var CONFIG = window.M17_CONFIG || {};
 var ADMIN_USER = CONFIG.adminUser || 'admin';
 var ADMIN_PASS_HASH = CONFIG.adminPassHash || '';
@@ -90,6 +90,9 @@ function dbRowToClient(row) {
     avisoRenovacionEnviado: !!row.aviso_renovacion_enviado,
     avisoRenovacionFecha: row.aviso_renovacion_fecha || '',
     avisoRenovacionExpiracion: row.aviso_renovacion_expiracion || '',
+    avisoRenovacionContestado: !!row.aviso_renovacion_contestado,
+    avisoRenovacionContestadoFecha: row.aviso_renovacion_contestado_fecha || '',
+    avisoRenovacionContestadoExpiracion: row.aviso_renovacion_contestado_expiracion || '',
     createdAt: row.created_at || new Date().toISOString(),
     updatedAt: row.updated_at || ''
   };
@@ -107,6 +110,9 @@ function clientToDbPayload(c) {
     aviso_renovacion_enviado: !!c.avisoRenovacionEnviado,
     aviso_renovacion_fecha: c.avisoRenovacionFecha || null,
     aviso_renovacion_expiracion: c.avisoRenovacionExpiracion || null,
+    aviso_renovacion_contestado: !!c.avisoRenovacionContestado,
+    aviso_renovacion_contestado_fecha: c.avisoRenovacionContestadoFecha || null,
+    aviso_renovacion_contestado_expiracion: c.avisoRenovacionContestadoExpiracion || null,
     updated_at: new Date().toISOString()
   };
 }
@@ -526,16 +532,47 @@ function clientHasRenewalNotice(c) {
   return !!(c && getStatus(c.expiry) === 'warn' && isRenewalNoticeCurrent(c));
 }
 
+function isRenewalReplyCurrent(c) {
+  if (!c || !clientHasRenewalNotice(c)) return false;
+  if (!c.avisoRenovacionContestado) return false;
+  if (c.avisoRenovacionContestadoExpiracion && c.expiry && c.avisoRenovacionContestadoExpiracion !== c.expiry) return false;
+  return true;
+}
+
+function clientHasAnsweredRenewalNotice(c) {
+  return isRenewalReplyCurrent(c);
+}
+
+function clientHasUnansweredRenewalNotice(c) {
+  return !!(clientHasRenewalNotice(c) && !isRenewalReplyCurrent(c));
+}
+
+function renewalReplyBadgeHtml(c) {
+  if (!clientHasRenewalNotice(c)) return '';
+  return isRenewalReplyCurrent(c)
+    ? '<span class="badge badgeAnswered">Contesto</span>'
+    : '<span class="badge badgeNoAnswer">Sin contestar</span>';
+}
+
 function renewalNoticeHtml(c, mode) {
   if (!c || getStatus(c.expiry) !== 'warn') return '';
   var current = isRenewalNoticeCurrent(c);
+  var answered = isRenewalReplyCurrent(c);
   var sentDate = c.avisoRenovacionFecha ? formatDate(String(c.avisoRenovacionFecha).split('T')[0]) : '';
-  var baseClass = current ? 'renewNotice done' : 'renewNotice pending';
+  var replyDate = c.avisoRenovacionContestadoFecha ? formatDate(String(c.avisoRenovacionContestadoFecha).split('T')[0]) : '';
+  var baseClass = current ? (answered ? 'renewNotice done answered' : 'renewNotice done noanswer') : 'renewNotice pending';
   var label = current ? ('Avisado' + (sentDate ? ' · ' + sentDate : '')) : 'Pendiente de aviso';
-  var btn = current
-    ? '<button type="button" data-id="'+esc(c.id)+'" onclick="toggleRenewalNotice(this.dataset.id, false, this)">Desmarcar</button>'
-    : '<button type="button" data-id="'+esc(c.id)+'" onclick="toggleRenewalNotice(this.dataset.id, true, this)">Marcar avisado</button>';
-  return '<div class="'+baseClass+(mode==='view'?' view':'')+'"><div><strong>'+label+'</strong><span> Aviso de renovación 15 días</span></div>'+btn+'</div>';
+  var replyLabel = current ? (answered ? ('Contesto' + (replyDate ? ' · ' + replyDate : '')) : 'Sin contestar todavía') : 'Aviso de renovación 15 días';
+  var actions = '';
+  if (current) {
+    actions = '<div class="noticeActions">' +
+      '<button type="button" data-id="'+esc(c.id)+'" onclick="toggleRenewalReply(this.dataset.id, '+(!answered)+', this)">'+(answered ? 'Marcar sin contestar' : 'Marcar contestado')+'</button>' +
+      '<button type="button" data-id="'+esc(c.id)+'" onclick="toggleRenewalNotice(this.dataset.id, false, this)">Desmarcar aviso</button>' +
+    '</div>';
+  } else {
+    actions = '<div class="noticeActions"><button type="button" data-id="'+esc(c.id)+'" onclick="toggleRenewalNotice(this.dataset.id, true, this)">Marcar avisado</button></div>';
+  }
+  return '<div class="'+baseClass+(mode==='view'?' view':'')+'"><div><strong>'+label+'</strong><span>'+replyLabel+'</span></div>'+actions+'</div>';
 }
 
 async function toggleRenewalNotice(id, value, btn) {
@@ -547,10 +584,16 @@ async function toggleRenewalNotice(id, value, btn) {
     c.avisoRenovacionEnviado = true;
     c.avisoRenovacionFecha = new Date().toISOString();
     c.avisoRenovacionExpiracion = c.expiry || null;
+    c.avisoRenovacionContestado = false;
+    c.avisoRenovacionContestadoFecha = null;
+    c.avisoRenovacionContestadoExpiracion = null;
   } else {
     c.avisoRenovacionEnviado = false;
     c.avisoRenovacionFecha = null;
     c.avisoRenovacionExpiracion = null;
+    c.avisoRenovacionContestado = false;
+    c.avisoRenovacionContestadoFecha = null;
+    c.avisoRenovacionContestadoExpiracion = null;
   }
   try {
     var saved = await saveClientToStore(c);
@@ -564,6 +607,34 @@ async function toggleRenewalNotice(id, value, btn) {
     if (typeof showToast === 'function') showToast(value ? 'Cliente marcado como avisado' : 'Aviso desmarcado');
   } catch(ex) {
     if (typeof showToast === 'function') showToast('Error al guardar aviso: ' + ex.message, 'error'); else alert('Error al guardar aviso: ' + ex.message);
+    if (btn) { btn.disabled = false; btn.textContent = oldText; }
+  }
+}
+
+async function toggleRenewalReply(id, value, btn) {
+  var c = clients.find(function(x){ return x.id === id; });
+  if (!c) return;
+  if (!clientHasRenewalNotice(c)) {
+    if (typeof showToast === 'function') showToast('Primero marca el aviso como enviado', 'error'); else alert('Primero marca el aviso como enviado');
+    return;
+  }
+  var oldText = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = 'Guardando...'; }
+  c.avisoRenovacionContestado = !!value;
+  c.avisoRenovacionContestadoFecha = value ? new Date().toISOString() : null;
+  c.avisoRenovacionContestadoExpiracion = value ? (c.expiry || null) : null;
+  try {
+    var saved = await saveClientToStore(c);
+    var idx = clients.findIndex(function(x){ return x.id === id; });
+    if (idx >= 0) clients[idx] = saved;
+    saveData();
+    renderCards();
+    if (document.getElementById('viewSheet') && document.getElementById('viewSheet').classList.contains('open')) {
+      viewClient(id);
+    }
+    if (typeof showToast === 'function') showToast(value ? 'Cliente marcado como contestado' : 'Cliente marcado como sin contestar');
+  } catch(ex) {
+    if (typeof showToast === 'function') showToast('Error al guardar contestación: ' + ex.message, 'error'); else alert('Error al guardar contestación: ' + ex.message);
     if (btn) { btn.disabled = false; btn.textContent = oldText; }
   }
 }
@@ -686,7 +757,7 @@ function buildClientExportRows() {
   return clients.map(function(c){
     var svc = c.service === 'ESPANA' ? 'ESPAÑA' : c.service;
     var appsStr=(c.apps||[]).map(function(a){var s=a.name;if(a.customName) s+=' ('+a.customName+')';if(a.mac) s+=' MAC:'+a.mac;if(a.code) s+=' CODE:'+a.code;return s;}).join(' | ');
-    return {'ID':c.id,'Nombre':c.name,'Usuario':c.user,'Contrasena':c.pass,'Servicio':svc,'Expiracion':c.expiry,'Apps':appsStr,'Notas':c.notes,'AvisoRenovacion':isRenewalNoticeCurrent(c)?'SI':'NO','FechaAviso':c.avisoRenovacionFecha?String(c.avisoRenovacionFecha).split('T')[0]:'','Creado':c.createdAt?String(c.createdAt).split('T')[0]:''};
+    return {'ID':c.id,'Nombre':c.name,'Usuario':c.user,'Contrasena':c.pass,'Servicio':svc,'Expiracion':c.expiry,'Apps':appsStr,'Notas':c.notes,'AvisoRenovacion':isRenewalNoticeCurrent(c)?'SI':'NO','FechaAviso':c.avisoRenovacionFecha?String(c.avisoRenovacionFecha).split('T')[0]:'','ContestadoAviso':clientHasAnsweredRenewalNotice(c)?'SI':'NO','FechaContestacion':c.avisoRenovacionContestadoFecha?String(c.avisoRenovacionContestadoFecha).split('T')[0]:'','Creado':c.createdAt?String(c.createdAt).split('T')[0]:''};
   });
 }
 
@@ -1185,6 +1256,8 @@ function quickFilter(st) {
     if (st === 'exp') lbl.textContent = 'Mostrando: Expirados';
     if (st === 'paypend') lbl.textContent = 'Mostrando: Pendientes de pago';
     if (st === 'advised') lbl.textContent = 'Mostrando: Clientes avisados';
+    if (st === 'answered') lbl.textContent = 'Mostrando: Avisados que han contestado';
+    if (st === 'noanswer') lbl.textContent = 'Mostrando: Avisados sin contestar';
   }
   renderCards();
   document.getElementById('mainScroll').scrollTo({top: 200, behavior: 'smooth'});
@@ -1199,6 +1272,10 @@ function updateStats() {
   if (pendingEl) pendingEl.textContent = clients.filter(function(c){ return clientHasPendingPayment(c); }).length;
   var advisedEl = document.getElementById('stAdvised');
   if (advisedEl) advisedEl.textContent = clients.filter(function(c){ return clientHasRenewalNotice(c); }).length;
+  var answeredEl = document.getElementById('stAnswered');
+  if (answeredEl) answeredEl.textContent = clients.filter(function(c){ return clientHasAnsweredRenewalNotice(c); }).length;
+  var noAnswerEl = document.getElementById('stNoAnswer');
+  if (noAnswerEl) noAnswerEl.textContent = clients.filter(function(c){ return clientHasUnansweredRenewalNotice(c); }).length;
   updateBackupReminder();
 }
 
@@ -1235,7 +1312,7 @@ function renderCards() {
     if (container) container.innerHTML = '';
     if (empty) {
       empty.style.display = 'block';
-      empty.innerHTML = '<div class="ico">&#128064;</div><div>Selecciona un filtro para ver clientes</div><small style="display:block;margin-top:8px;color:var(--muted);font-size:12px">Pulsa Total, Activos, Expiran pronto, Pendientes de pago o Avisados.</small>';
+      empty.innerHTML = '<div class="ico">&#128064;</div><div>Selecciona un filtro para ver clientes</div><small style="display:block;margin-top:8px;color:var(--muted);font-size:12px">Pulsa Total, Activos, Expiran pronto, Pendientes de pago, Avisados, Contestados o Sin contestar.</small>';
     }
     return;
   }
@@ -1243,7 +1320,7 @@ function renderCards() {
   var filtered = clients.filter(function(c) {
     var ms = !search || c.name.toLowerCase().indexOf(search)>=0 || (c.user||'').toLowerCase().indexOf(search)>=0;
     var mv = !filterSvc || c.service===filterSvc;
-    var mt = !filterSt || (filterSt==='paypend' ? clientHasPendingPayment(c) : (filterSt==='advised' ? clientHasRenewalNotice(c) : (filterSt==='ok' ? (getStatus(c.expiry)==='ok'||getStatus(c.expiry)==='warn') : getStatus(c.expiry)===filterSt)));
+    var mt = !filterSt || (filterSt==='paypend' ? clientHasPendingPayment(c) : (filterSt==='advised' ? clientHasRenewalNotice(c) : (filterSt==='answered' ? clientHasAnsweredRenewalNotice(c) : (filterSt==='noanswer' ? clientHasUnansweredRenewalNotice(c) : (filterSt==='ok' ? (getStatus(c.expiry)==='ok'||getStatus(c.expiry)==='warn') : getStatus(c.expiry)===filterSt)))));
     return ms && mv && mt;
   });
   filtered = sortClientsByExpiryAsc(filtered);
@@ -1269,6 +1346,7 @@ function renderCards() {
           statusBadge(c.expiry) +
           (clientHasPendingPayment(c) ? '<span class="badge badgePayPending">Pago pendiente</span>' : '') +
           (clientHasRenewalNotice(c) ? '<span class="badge badgeAdvised">Avisado</span>' : '') +
+          renewalReplyBadgeHtml(c) +
         '</div>' +
       '</div>' +
       '<div class="clientCard-body">' +
@@ -1481,12 +1559,18 @@ async function saveClient() {
       createdAt: existingClient && existingClient.createdAt ? existingClient.createdAt : new Date().toISOString(),
       avisoRenovacionEnviado: existingClient ? !!existingClient.avisoRenovacionEnviado : false,
       avisoRenovacionFecha: existingClient ? existingClient.avisoRenovacionFecha : null,
-      avisoRenovacionExpiracion: existingClient ? existingClient.avisoRenovacionExpiracion : null
+      avisoRenovacionExpiracion: existingClient ? existingClient.avisoRenovacionExpiracion : null,
+      avisoRenovacionContestado: existingClient ? !!existingClient.avisoRenovacionContestado : false,
+      avisoRenovacionContestadoFecha: existingClient ? existingClient.avisoRenovacionContestadoFecha : null,
+      avisoRenovacionContestadoExpiracion: existingClient ? existingClient.avisoRenovacionContestadoExpiracion : null
     };
     if (existingClient && existingClient.expiry !== expiry) {
       clientObj.avisoRenovacionEnviado = false;
       clientObj.avisoRenovacionFecha = null;
       clientObj.avisoRenovacionExpiracion = null;
+      clientObj.avisoRenovacionContestado = false;
+      clientObj.avisoRenovacionContestadoFecha = null;
+      clientObj.avisoRenovacionContestadoExpiracion = null;
     }
     var saved = await saveClientToStore(clientObj);
     if(id){
@@ -1510,7 +1594,7 @@ function viewClient(id) {
   var svcLabel = c.service === 'ESPANA' ? 'ESPA\u00D1A' : esc(c.service);
   var html='';
   html+='<div class="viewRow"><div class="vlabel">Servicio</div><div class="vval"><span class="badge '+(c.service==='TODO'?'badgeTodo':'badgeEs')+'">'+svcLabel+'</span></div></div>';
-  html+='<div class="viewRow"><div class="vlabel">Expiracion</div><div class="vval">'+formatDate(c.expiry)+' '+statusBadge(c.expiry)+(clientHasPendingPayment(c)?' <span class="badge badgePayPending">Pago pendiente</span>':'')+(clientHasRenewalNotice(c)?' <span class="badge badgeAdvised">Avisado</span>':'')+'</div></div>';
+  html+='<div class="viewRow"><div class="vlabel">Expiracion</div><div class="vval">'+formatDate(c.expiry)+' '+statusBadge(c.expiry)+(clientHasPendingPayment(c)?' <span class="badge badgePayPending">Pago pendiente</span>':'')+(clientHasRenewalNotice(c)?' <span class="badge badgeAdvised">Avisado</span>':'')+renewalReplyBadgeHtml(c)+'</div></div>';
   html+=renewalNoticeHtml(c, 'view');
   html+=pendingPaymentNoticeHtml(c, 'view');
   html+='<div class="viewRow"><div class="vlabel">Usuario</div><div style="display:flex;align-items:center;gap:8px"><span style="font-family:monospace;color:var(--cyan)">'+esc(c.user||'-')+'</span>'+(c.user?'<button class="btnCopy" data-copy="'+esc(c.user)+'" onclick="copyText(this.dataset.copy,this)">Copiar</button>':'')+'</div></div>';
@@ -1793,6 +1877,9 @@ async function doRenew(markAsPending) {
   c.avisoRenovacionEnviado = false;
   c.avisoRenovacionFecha = null;
   c.avisoRenovacionExpiracion = null;
+  c.avisoRenovacionContestado = false;
+  c.avisoRenovacionContestadoFecha = null;
+  c.avisoRenovacionContestadoExpiracion = null;
   try {
     if (btn) { btn.disabled = true; btn.textContent = 'Guardando renovacion...'; }
     if (pendingBtn) { pendingBtn.disabled = true; pendingBtn.textContent = 'Guardando paga mas tarde...'; }
@@ -1928,7 +2015,9 @@ function importExcel(event) {
         var importedExpiry = normalizeImportDate(row['Expiracion']);
         var avisoRaw = String(row['AvisoRenovacion'] || '').trim().toLowerCase();
         var avisoImported = avisoRaw === 'si' || avisoRaw === 'sí' || avisoRaw === 'true' || avisoRaw === '1';
-        var nc={id:rowId,name:row['Nombre']||'',user:row['Usuario']||'',pass:row['Contrasena']||'',service:svc,expiry:importedExpiry,notes:row['Notas']||'',apps:apps.length?apps:[],createdAt:row['Creado']||new Date().toISOString(),avisoRenovacionEnviado:avisoImported,avisoRenovacionFecha:row['FechaAviso']?normalizeImportDate(row['FechaAviso']):null,avisoRenovacionExpiracion:avisoImported?importedExpiry:null};
+        var contestadoRaw = String(row['ContestadoAviso'] || '').trim().toLowerCase();
+        var contestadoImported = contestadoRaw === 'si' || contestadoRaw === 'sí' || contestadoRaw === 'true' || contestadoRaw === '1';
+        var nc={id:rowId,name:row['Nombre']||'',user:row['Usuario']||'',pass:row['Contrasena']||'',service:svc,expiry:importedExpiry,notes:row['Notas']||'',apps:apps.length?apps:[],createdAt:row['Creado']||new Date().toISOString(),avisoRenovacionEnviado:avisoImported,avisoRenovacionFecha:row['FechaAviso']?normalizeImportDate(row['FechaAviso']):null,avisoRenovacionExpiracion:avisoImported?importedExpiry:null,avisoRenovacionContestado:avisoImported&&contestadoImported,avisoRenovacionContestadoFecha:row['FechaContestacion']?normalizeImportDate(row['FechaContestacion']):null,avisoRenovacionContestadoExpiracion:(avisoImported&&contestadoImported)?importedExpiry:null};
         var saved = await saveClientToStore(nc);
         if(existingIdx>=0) clients[existingIdx]=saved; else clients.push(saved);
         imported++;

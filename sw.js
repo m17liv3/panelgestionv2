@@ -1,4 +1,4 @@
-const CACHE_NAME = 'm17liv3-pwa-v1.2.7-edit-payments-fix';
+const CACHE_NAME = 'm17liv3-pwa-v1.2.8-aviso-contestado';
 const APP_SHELL = [
   './',
   './index.html',
