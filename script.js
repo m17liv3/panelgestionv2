@@ -1,4 +1,4 @@
-// google-authenticator-mfa-v1.2.9-imagen-fija-app
+// google-authenticator-mfa-v1.3.1-7-links-fijos-fix
 var CONFIG = window.M17_CONFIG || {};
 var ADMIN_USER = CONFIG.adminUser || 'admin';
 var ADMIN_PASS_HASH = CONFIG.adminPassHash || '';
@@ -2125,8 +2125,13 @@ function fixedAppImageUrl(slotKey, noCache) {
 
 function openFixedAppImage() {
   closeSheet('menuSheet','menuOverlay');
-  renderFixedImageSlots();
   openSheet('fixedImageSheet','fixedImageOverlay');
+  try {
+    renderFixedImageSlots();
+  } catch(e) {
+    console.error('Error al abrir Links fijos APP:', e);
+    setFixedImageStatus('Error al cargar los links fijos: ' + (e && e.message ? e.message : 'desconocido'), 'error');
+  }
 }
 
 function setFixedImageStatus(msg, type) {
@@ -2143,10 +2148,10 @@ function renderFixedImageSlots() {
     var link = fixedAppImageBaseUrl(slot.key);
     return '<div class="fixedSlotCard" data-slot="'+slot.key+'">' +
       '<div class="fixedSlotTop">' +
-        '<div><div class="fixedSlotTitle">'+slot.icon+' '+escapeHTML(slot.label)+'</div><div class="fixedSlotPath">'+escapeHTML(slot.path)+'</div></div>' +
+        '<div><div class="fixedSlotTitle">'+slot.icon+' '+esc(slot.label)+'</div><div class="fixedSlotPath">'+esc(slot.path)+'</div></div>' +
         '<button class="fixedSlotSmallBtn" onclick="loadFixedSlotImage(\''+slot.key+'\')">&#8634;</button>' +
       '</div>' +
-      '<div class="fixedSlotLink" id="fixed-link-'+slot.key+'" onclick="copyFixedSlotLink(\''+slot.key+'\')">'+escapeHTML(link || 'No se pudo generar el enlace')+'</div>' +
+      '<div class="fixedSlotLink" id="fixed-link-'+slot.key+'" onclick="copyFixedSlotLink(\''+slot.key+'\')">'+esc(link || 'No se pudo generar el enlace')+'</div>' +
       '<div class="fixedSlotActions">' +
         '<button onclick="copyFixedSlotLink(\''+slot.key+'\')">&#128203; Copiar link</button>' +
         '<button onclick="document.getElementById(\'fixed-file-'+slot.key+'\').click()">&#11014; Elegir imagen</button>' +
@@ -2155,7 +2160,7 @@ function renderFixedImageSlots() {
       '</div>' +
       '<input type="file" id="fixed-file-'+slot.key+'" accept="image/*" style="display:none" onchange="showSelectedFixedSlotName(\''+slot.key+'\')">' +
       '<div class="fixedSlotSelected" id="fixed-selected-'+slot.key+'">Ninguna imagen seleccionada</div>' +
-      '<div class="fixedSlotPreviewBox"><img id="fixed-preview-'+slot.key+'" alt="'+escapeHTML(slot.label)+'" src="'+escapeHTML(fixedAppImageUrl(slot.key, true))+'" onerror="this.style.display=\'none\'" onload="this.style.display=\'block\'"></div>' +
+      '<div class="fixedSlotPreviewBox"><img id="fixed-preview-'+slot.key+'" alt="'+esc(slot.label)+'" src="'+esc(fixedAppImageUrl(slot.key, true))+'" onerror="this.style.display=\'none\'" onload="this.style.display=\'block\'"></div>' +
     '</div>';
   }).join('');
   setFixedImageStatus('Tienes 7 enlaces fijos. El primero mantiene la ruta antigua y ahora será HORARIOS MUNDIAL.', 'ok');
