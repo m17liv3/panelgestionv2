@@ -1,4 +1,4 @@
-const CACHE_NAME = 'm17liv3-pwa-v1.2.8-aviso-contestado';
+const CACHE_NAME = 'm17liv3-pwa-v1.2.9-imagen-fija-app';
 const APP_SHELL = [
   './',
   './index.html',

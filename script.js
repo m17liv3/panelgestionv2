@@ -1,4 +1,4 @@
-// google-authenticator-mfa-v1.2.8-aviso-contestado
+// google-authenticator-mfa-v1.2.9-imagen-fija-app
 var CONFIG = window.M17_CONFIG || {};
 var ADMIN_USER = CONFIG.adminUser || 'admin';
 var ADMIN_PASS_HASH = CONFIG.adminPassHash || '';
@@ -2090,6 +2090,110 @@ function cartUpdatePreview(record) {
   if (prevEvento) prevEvento.style.display = imgUrl ? 'block' : 'none';
   if (prevImg) { prevImg.src = imgUrl; prevImg.style.display = imgUrl ? 'block' : 'none'; }
 }
+
+// ========== IMAGEN FIJA APP ==========
+var FIXED_IMAGE_BUCKET = CONFIG.fixedImageBucket || 'cartelera';
+var FIXED_IMAGE_PATH = CONFIG.fixedImagePath || 'imagen_actual.jpg';
+
+function fixedAppImageBaseUrl() {
+  try {
+    var sb = initSupabase();
+    if (!sb || !sb.storage) return '';
+    var result = sb.storage.from(FIXED_IMAGE_BUCKET).getPublicUrl(FIXED_IMAGE_PATH);
+    return result && result.data && result.data.publicUrl ? result.data.publicUrl : '';
+  } catch(e) { return ''; }
+}
+
+function fixedAppImageUrl(noCache) {
+  var url = fixedAppImageBaseUrl();
+  if (!url) return '';
+  return noCache ? (url + (url.indexOf('?') === -1 ? '?' : '&') + 'v=' + Date.now()) : url;
+}
+
+function openFixedAppImage() {
+  closeSheet('menuSheet','menuOverlay');
+  loadFixedAppImage();
+  openSheet('fixedImageSheet','fixedImageOverlay');
+}
+
+function setFixedImageStatus(msg, type) {
+  var el = document.getElementById('fixedImageStatus');
+  if (!el) return;
+  el.textContent = msg || '';
+  el.style.color = type === 'error' ? '#ff4d4d' : (type === 'ok' ? '#69ff47' : '#7AA3C8');
+}
+
+function loadFixedAppImage() {
+  var link = fixedAppImageBaseUrl();
+  var linkBox = document.getElementById('fixedImageLinkBox');
+  var preview = document.getElementById('fixedImagePreview');
+  if (!link) {
+    if (linkBox) linkBox.textContent = 'No se pudo generar el enlace. Revisa Supabase.';
+    if (preview) preview.removeAttribute('src');
+    setFixedImageStatus('No se pudo cargar Supabase Storage.', 'error');
+    return;
+  }
+  if (linkBox) linkBox.textContent = link;
+  if (preview) {
+    preview.onerror = function(){ setFixedImageStatus('Todavia no hay imagen subida o el bucket no esta configurado.', 'error'); };
+    preview.onload = function(){ setFixedImageStatus('Imagen actual cargada. El link fijo ya se puede usar en tu app Android.', 'ok'); };
+    preview.src = fixedAppImageUrl(true);
+  }
+}
+
+async function copyFixedAppImageLink() {
+  var link = fixedAppImageBaseUrl();
+  if (!link) { showToast('No hay link para copiar', 'error'); return; }
+  try {
+    await navigator.clipboard.writeText(link);
+    showToast('Link fijo copiado');
+  } catch(e) { showToast('No se pudo copiar', 'error'); }
+}
+
+async function uploadFixedAppImage() {
+  var fileInput = document.getElementById('fixed-img-file');
+  var file = fileInput && fileInput.files ? fileInput.files[0] : null;
+  if (!file) { showToast('Selecciona una imagen primero', 'error'); return; }
+  if (!file.type || file.type.indexOf('image/') !== 0) { showToast('El archivo debe ser una imagen', 'error'); return; }
+  var btn = document.getElementById('fixed-img-upload-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Subiendo...'; }
+  setFixedImageStatus('Subiendo y sustituyendo imagen...', '');
+  try {
+    var sb = initSupabase();
+    var res = await sb.storage.from(FIXED_IMAGE_BUCKET).upload(FIXED_IMAGE_PATH, file, {
+      cacheControl: '60',
+      upsert: true,
+      contentType: file.type || 'image/jpeg'
+    });
+    if (res.error) throw res.error;
+    if (fileInput) fileInput.value = '';
+    loadFixedAppImage();
+    showToast('Imagen sustituida correctamente');
+  } catch(e) {
+    var msg = e && e.message ? e.message : 'Error al subir imagen';
+    setFixedImageStatus('Error: ' + msg + '. Revisa que el bucket y las politicas SQL esten creados.', 'error');
+    showToast('Error al subir imagen', 'error');
+  }
+  if (btn) { btn.disabled = false; btn.textContent = 'Sustituir'; }
+}
+
+async function deleteFixedAppImage() {
+  if (!confirm('Borrar la imagen fija actual? El link seguira siendo el mismo, pero no mostrara imagen hasta subir una nueva.')) return;
+  try {
+    var sb = initSupabase();
+    var res = await sb.storage.from(FIXED_IMAGE_BUCKET).remove([FIXED_IMAGE_PATH]);
+    if (res.error) throw res.error;
+    var preview = document.getElementById('fixedImagePreview');
+    if (preview) preview.removeAttribute('src');
+    setFixedImageStatus('Imagen borrada. Puedes subir una nueva cuando quieras.', 'ok');
+    showToast('Imagen fija borrada');
+  } catch(e) {
+    setFixedImageStatus('Error al borrar: ' + (e && e.message ? e.message : 'desconocido'), 'error');
+    showToast('Error al borrar imagen', 'error');
+  }
+}
+// ========== FIN IMAGEN FIJA APP ==========
+
 // ========== CARTELERA ADMIN ==========
 var CART_BIN_ID = CONFIG.cartBinId || '';
 var CART_KEY = CONFIG.cartKey || '';

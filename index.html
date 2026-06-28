@@ -1,4 +1,4 @@
-<!-- google-authenticator-mfa-v1.2.5-refresh-button -->
+<!-- google-authenticator-mfa-v1.2.9-imagen-fija-app -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -155,6 +155,7 @@
     <div class="menuItem" onclick="openRaffles()"><span class="ico2">&#127873;</span> Sorteos clientes</div>
     <div class="menuItem" onclick="openIboPanel()"><span class="ico2">&#127760;</span> Panel APP IBO</div>
     <div class="menuItem" onclick="openMfaSecurity()"><span class="ico2">&#128274;</span> Seguridad Google Authenticator</div>
+    <div class="menuItem" onclick="openFixedAppImage()"><span class="ico2">&#128444;</span> Imagen fija APP</div>
     <div class="menuItem" onclick="openCartelera()"><span class="ico2">&#128249;</span> Cartelera del dia</div>
     <div class="menuItem" onclick="openMovieTemplates()"><span class="ico2">&#127916;</span> Plantillas Peliculas</div>
     <div class="menuItem" onclick="openSeriesTemplates()"><span class="ico2">&#127909;</span> Plantillas Series</div>
@@ -537,6 +538,40 @@
     </div>
     <button class="btnFull primary" onclick="startMfaEnrollmentFromSettings()">Añadir otro autenticador</button>
     <div id="mfaSecurityList" class="mfaFactorList"></div>
+  </div>
+</div>
+
+<!-- IMAGEN FIJA APP SHEET -->
+<div class="sheet-overlay" id="fixedImageOverlay" onclick="closeSheet('fixedImageSheet','fixedImageOverlay')"></div>
+<div class="sheet" id="fixedImageSheet" style="max-height:92vh;overflow-y:auto;">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <h3>&#128444; Imagen fija APP</h3>
+    <button class="sheet-close" onclick="closeSheet('fixedImageSheet','fixedImageOverlay')">x</button>
+  </div>
+  <div class="sheet-body" style="padding-bottom:30px;">
+    <div style="background:rgba(0,212,255,0.07);border:1px solid rgba(0,212,255,0.25);border-radius:12px;padding:14px 16px;margin-bottom:18px;">
+      <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#7AA3C8;margin-bottom:8px;">&#128279; Link fijo para tu app Android</div>
+      <div id="fixedImageLinkBox" style="font-size:13px;color:#00D4FF;word-break:break-all;padding:8px 12px;background:rgba(0,0,0,0.3);border-radius:8px;cursor:pointer;border:1px solid rgba(0,212,255,0.2);">Cargando...</div>
+      <button onclick="copyFixedAppImageLink()" style="margin-top:10px;width:100%;padding:10px;background:linear-gradient(135deg,#0099CC,#00D4FF);color:#001822;border:none;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;">&#128203; Copiar link fijo</button>
+      <div style="font-size:12px;color:#7AA3C8;line-height:1.5;margin-top:10px;">Este enlace no cambia. Cada vez que subas una imagen nueva, se sustituye la anterior en la misma ruta.</div>
+    </div>
+
+    <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#7AA3C8;margin-bottom:10px;">&#11014; Sustituir imagen actual</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+      <input type="file" id="fixed-img-file" accept="image/*" style="flex:1;min-width:0;background:rgba(255,255,255,0.04);border:1px solid rgba(0,212,255,0.15);border-radius:10px;color:#E8F4FF;font-size:13px;padding:8px 10px;cursor:pointer;">
+      <button onclick="uploadFixedAppImage()" id="fixed-img-upload-btn" style="padding:10px 16px;background:rgba(57,255,20,0.1);border:1px solid rgba(57,255,20,0.3);color:#39FF14;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer;white-space:nowrap;">&#8635; Sustituir</button>
+    </div>
+    <div id="fixedImageStatus" style="font-size:12px;color:#7AA3C8;line-height:1.5;margin-bottom:14px;">Selecciona una imagen y pulsa Sustituir.</div>
+
+    <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#7AA3C8;margin-bottom:10px;">&#128064; Imagen actual</div>
+    <div style="background:rgba(14,29,53,0.8);border:1px solid rgba(0,212,255,0.15);border-radius:12px;overflow:hidden;padding:10px;">
+      <img id="fixedImagePreview" src="" alt="Imagen fija APP" style="width:100%;max-height:360px;object-fit:contain;display:block;background:#000;border-radius:8px;">
+    </div>
+    <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;">
+      <button onclick="loadFixedAppImage()" style="flex:1;padding:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:#E8F4FF;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer;">&#8634; Recargar vista</button>
+      <button onclick="deleteFixedAppImage()" style="flex:1;padding:12px;background:rgba(255,71,87,0.1);border:1px solid rgba(255,71,87,0.3);color:#FF4757;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer;">&#128465; Borrar imagen</button>
+    </div>
   </div>
 </div>
 

@@ -14,6 +14,8 @@ window.M17_CONFIG = {
   supabaseKey: 'sb_publishable_HxThHPoZaGm8YgirIX4BQQ_1Sjs907O',
   supabaseTable: 'clientes',
   supabaseRenewalsTable: 'renovaciones',
+  fixedImageBucket: 'cartelera',
+  fixedImagePath: 'imagen_actual.jpg',
   mfaEnabled: true,
   mfaForceSetup: true
 };
