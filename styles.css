@@ -609,8 +609,12 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, 'S
 .paymentStatus { display:inline-block; padding:2px 7px; border-radius:999px; font-size:.68rem; font-weight:800; }
 .paymentStatus.paid { color:var(--green); background:rgba(105,255,71,0.12); }
 .paymentStatus.pending { color:var(--orange); background:rgba(255,170,0,0.12); }
-.paymentActions { margin-top:8px; display:flex; justify-content:flex-end; }
+.paymentActions { margin-top:8px; display:flex; justify-content:flex-end; gap:8px; flex-wrap:wrap; }
 @media (max-width: 420px) {
   .paymentNotice { align-items:flex-start; flex-direction:column; }
   .paymentNotice button { width:100%; }
 }
+
+.clientRenewalsBlock { margin-top: 10px; }
+.clientRenewalsBlock .paymentItem { margin-bottom: 8px; }
+#editRenewalSheet .formError { margin-top: 4px; }

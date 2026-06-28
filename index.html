@@ -247,8 +247,8 @@
     </div>
     <div class="renewPaymentBox">
       <div class="formGroup">
-        <label>Importe pagado</label>
-        <input type="text" id="renewAmount" inputmode="decimal" placeholder="Ej: 10 o 10,50"/>
+        <label>Importe</label>
+        <input type="text" id="renewAmount" inputmode="decimal" placeholder="Ej: 10 o 10,50. Si paga mas tarde puedes dejarlo en blanco"/>
       </div>
       <div class="formGroup">
         <label>Metodo de pago</label>
@@ -266,7 +266,8 @@
       </div>
       <div class="formError" id="renewPaymentError"></div>
     </div>
-    <button class="btnFull primary" id="renewConfirmBtn" onclick="doRenew()">&#8635; Confirmar Renovacion</button>
+    <button class="btnFull primary" id="renewConfirmBtn" onclick="doRenew(false)">&#8635; Confirmar Renovacion</button>
+    <button class="btnFull warning" id="renewPendingBtn" onclick="doRenew(true)">&#9203; Paga mas tarde</button>
     <button class="btnFull gray" onclick="closeSheet('renewSheet','renewOverlay')" style="margin-top:8px">Cancelar</button>
   </div>
 </div>
@@ -374,6 +375,8 @@
       <div class="paymentsStat"><span>Ultimos 30 dias</span><strong id="pay30Total">0,00 €</strong></div>
       <div class="paymentsStat"><span>Total registrado</span><strong id="payAllTotal">0,00 €</strong></div>
       <div class="paymentsStat"><span>Renovaciones mes</span><strong id="payMonthCount">0</strong></div>
+      <div class="paymentsStat"><span>Pendientes</span><strong id="payPendingCount">0</strong></div>
+      <div class="paymentsStat"><span>Total pendiente</span><strong id="payPendingTotal">0,00 €</strong></div>
     </div>
     <div class="raffleHistoryHeader">
       <span>Historial de renovaciones</span>
@@ -384,6 +387,68 @@
     </div>
     <button class="btnFull gray" onclick="exportPaymentsExcel()">&#11015; Exportar ingresos a Excel</button>
     <button class="btnFull gray" onclick="closeSheet('paymentsSheet','paymentsOverlay')" style="margin-top:8px">Cerrar</button>
+  </div>
+</div>
+
+
+<!-- EDIT RENEWAL / PAYMENT SHEET -->
+<div class="sheet-overlay" id="editRenewalOverlay" onclick="closeSheet('editRenewalSheet','editRenewalOverlay')"></div>
+<div class="sheet" id="editRenewalSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <h3>Editar ingreso / renovacion</h3>
+    <button class="sheet-close" onclick="closeSheet('editRenewalSheet','editRenewalOverlay')">x</button>
+  </div>
+  <div class="sheet-body">
+    <input type="hidden" id="editRenewalId"/>
+    <p id="editRenewalClient" style="color:var(--muted);font-size:.88rem;margin-bottom:14px"></p>
+    <div class="formRow2">
+      <div class="formGroup">
+        <label>Fecha anterior</label>
+        <input type="date" id="editRenewalPrevious"/>
+      </div>
+      <div class="formGroup">
+        <label>Fecha nueva</label>
+        <input type="date" id="editRenewalNew"/>
+      </div>
+    </div>
+    <div class="formRow2">
+      <div class="formGroup">
+        <label>Meses</label>
+        <input type="number" id="editRenewalMonths" min="0" max="24" step="1"/>
+      </div>
+      <div class="formGroup">
+        <label>Importe</label>
+        <input type="text" id="editRenewalAmount" inputmode="decimal" placeholder="Ej: 10 o 10,50"/>
+      </div>
+    </div>
+    <div class="formRow2">
+      <div class="formGroup">
+        <label>Metodo de pago</label>
+        <select id="editRenewalMethod">
+          <option value="Bizum">Bizum</option>
+          <option value="Efectivo">Efectivo</option>
+          <option value="Transferencia">Transferencia</option>
+          <option value="PayPal">PayPal</option>
+          <option value="Pendiente">Pendiente</option>
+          <option value="Otro">Otro</option>
+        </select>
+      </div>
+      <div class="formGroup">
+        <label>Estado</label>
+        <select id="editRenewalStatus">
+          <option value="pagado">Pagado</option>
+          <option value="pendiente">Pendiente de pago</option>
+        </select>
+      </div>
+    </div>
+    <div class="formGroup">
+      <label>Notas</label>
+      <input type="text" id="editRenewalNotes" placeholder="Opcional"/>
+    </div>
+    <div class="formError" id="editRenewalError"></div>
+    <button class="btnFull primary" id="editRenewalSaveBtn" onclick="saveEditedRenewal(this)">&#128190; Guardar cambios</button>
+    <button class="btnFull gray" onclick="closeSheet('editRenewalSheet','editRenewalOverlay')" style="margin-top:8px">Cancelar</button>
   </div>
 </div>
 
