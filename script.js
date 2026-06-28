@@ -1,4 +1,4 @@
-// google-authenticator-mfa-v1.2.5-ingresos-editables
+// google-authenticator-mfa-v1.2.7-editar-ingresos-fix
 var CONFIG = window.M17_CONFIG || {};
 var ADMIN_USER = CONFIG.adminUser || 'admin';
 var ADMIN_PASS_HASH = CONFIG.adminPassHash || '';
@@ -830,7 +830,10 @@ function pendingPaymentNoticeHtml(c, mode) {
   var info = (d ? d + ' · ' : '') + formatDate(r.previousExpiry) + ' → ' + formatDate(r.newExpiry);
   return '<div class="paymentNotice pendingPay'+(mode === 'view' ? ' view' : '')+'">' +
     '<div><strong>Pago pendiente'+amountTxt+'</strong><span>'+esc(info)+'</span></div>' +
-    '<button type="button" data-renewal-id="'+esc(r.id)+'" onclick="markRenewalAsPaid(this.dataset.renewalId, this)">Marcar pagado</button>' +
+    '<div class="paymentNoticeBtns">' +
+      '<button type="button" data-renewal-id="'+esc(r.id)+'" onclick="openEditRenewal(this.dataset.renewalId)">Editar</button>' +
+      '<button type="button" data-renewal-id="'+esc(r.id)+'" onclick="markRenewalAsPaid(this.dataset.renewalId, this)">Marcar pagado</button>' +
+    '</div>' +
   '</div>';
 }
 async function markRenewalAsPaid(renewalId, btn) {
@@ -902,7 +905,8 @@ async function updateRenewalInStore(renewalId, patch) {
 
     var result = await db.from(SUPABASE_RENEWALS_TABLE).update(payload).eq('id', renewalId).select('*').maybeSingle();
     if (result.error) throw result.error;
-    if (result.data) merged = renewalRowToItem(result.data);
+    if (!result.data) throw new Error('Supabase no devolvio la renovacion actualizada. Revisa permisos/RLS o pulsa actualizar y vuelve a entrar.');
+    merged = renewalRowToItem(result.data);
   }
 
   renewals[ix] = merged;
@@ -911,8 +915,10 @@ async function updateRenewalInStore(renewalId, patch) {
 }
 
 function openEditRenewal(renewalId) {
+  // Releer los ingresos antes de editar ayuda cuando vienes de otra pantalla o la PWA estaba en caché.
   var r = (renewals || []).find(function(x){ return String(x.id) === String(renewalId); });
-  if (!r) { alert('No se ha encontrado esta renovacion.'); return; }
+  if (!r) { alert('No se ha encontrado esta renovacion. Pulsa Recargar en Ingresos / renovaciones y prueba otra vez.'); return; }
+
   var idEl = document.getElementById('editRenewalId');
   var cEl = document.getElementById('editRenewalClient');
   var prevEl = document.getElementById('editRenewalPrevious');
@@ -923,27 +929,45 @@ function openEditRenewal(renewalId) {
   var statusEl = document.getElementById('editRenewalStatus');
   var notesEl = document.getElementById('editRenewalNotes');
   var errEl = document.getElementById('editRenewalError');
-  if (idEl) idEl.value = r.id || '';
+
+  if (!idEl || !amountEl || !statusEl) {
+    alert('No se ha cargado bien la ventana de edicion. Pulsa el boton actualizar de la app y vuelve a intentarlo.');
+    return;
+  }
+
+  idEl.value = r.id || '';
   if (cEl) cEl.textContent = 'Cliente: ' + (r.clientName || 'Cliente') + ' · Registrado: ' + (r.createdAt ? formatDateTimeEs(r.createdAt) : '-');
   if (prevEl) prevEl.value = r.previousExpiry || '';
   if (newEl) newEl.value = r.newExpiry || '';
   if (monthsEl) monthsEl.value = r.months || 0;
-  if (amountEl) { amountEl.value = (r.amount ? String(r.amount).replace('.', ',') : ''); amountEl.style.borderColor = ''; }
+  amountEl.value = (Number(r.amount || 0) ? String(r.amount).replace('.', ',') : '');
+  amountEl.style.borderColor = '';
   if (methodEl) {
     var method = r.paymentMethod || (isPaymentPending(r) ? 'Pendiente' : 'Bizum');
     var exists = Array.prototype.some.call(methodEl.options, function(o){ return o.value === method; });
     methodEl.value = exists ? method : 'Otro';
   }
-  if (statusEl) statusEl.value = isPaymentPending(r) ? 'pendiente' : 'pagado';
+  statusEl.value = isPaymentPending(r) ? 'pendiente' : 'pagado';
   if (notesEl) notesEl.value = r.notes || '';
   if (errEl) { errEl.textContent = ''; errEl.style.display = 'none'; }
+
+  // Mantener la ventana de ingresos debajo, pero subir la de edición por encima.
   openSheet('editRenewalSheet','editRenewalOverlay');
+  setTimeout(function(){
+    var sheet = document.getElementById('editRenewalSheet');
+    var overlay = document.getElementById('editRenewalOverlay');
+    if (overlay) { overlay.style.zIndex = '650'; overlay.style.display = 'block'; overlay.classList.add('active'); }
+    if (sheet) { sheet.style.zIndex = '651'; sheet.classList.add('open'); }
+    if (amountEl) amountEl.focus();
+  }, 80);
 }
 
 async function saveEditedRenewal(btn) {
-  var id = document.getElementById('editRenewalId').value;
+  var idEl = document.getElementById('editRenewalId');
+  var id = idEl ? idEl.value : '';
   var r = (renewals || []).find(function(x){ return String(x.id) === String(id); });
-  if (!r) return;
+  if (!r) { alert('No se ha encontrado esta renovacion. Pulsa Recargar y vuelve a intentarlo.'); return; }
+
   var errEl = document.getElementById('editRenewalError');
   var amountEl = document.getElementById('editRenewalAmount');
   var amount = parseEuroAmount(amountEl ? amountEl.value : '');
@@ -952,32 +976,45 @@ async function saveEditedRenewal(btn) {
     if (amountEl) { amountEl.style.borderColor = 'var(--red)'; amountEl.focus(); }
     return;
   }
-  var status = document.getElementById('editRenewalStatus').value || 'pagado';
-  var method = document.getElementById('editRenewalMethod').value || (status === 'pendiente' ? 'Pendiente' : 'Bizum');
+
+  var statusEl = document.getElementById('editRenewalStatus');
+  var methodEl = document.getElementById('editRenewalMethod');
+  var status = statusEl ? (statusEl.value || 'pagado') : 'pagado';
+  var method = methodEl ? (methodEl.value || '') : '';
+  if (!method) method = status === 'pendiente' ? 'Pendiente' : 'Bizum';
   var paidAt = status === 'pagado' ? (r.paymentPaidAt || new Date().toISOString()) : '';
+
   var patch = {
-    previousExpiry: document.getElementById('editRenewalPrevious').value || '',
-    newExpiry: document.getElementById('editRenewalNew').value || '',
-    months: parseInt(document.getElementById('editRenewalMonths').value || '0', 10) || 0,
+    previousExpiry: (document.getElementById('editRenewalPrevious') || {}).value || '',
+    newExpiry: (document.getElementById('editRenewalNew') || {}).value || '',
+    months: parseInt(((document.getElementById('editRenewalMonths') || {}).value || '0'), 10) || 0,
     amount: amount,
     paymentMethod: method,
     paymentStatus: status,
     paymentPaidAt: paidAt,
-    notes: document.getElementById('editRenewalNotes').value.trim()
+    notes: ((document.getElementById('editRenewalNotes') || {}).value || '').trim()
   };
+
   var oldText = btn ? btn.textContent : '';
   try {
+    if (errEl) { errEl.textContent = ''; errEl.style.display = 'none'; }
     if (btn) { btn.disabled = true; btn.textContent = 'Guardando...'; }
     var updated = await updateRenewalInStore(id, patch);
+
+    // Si el ingreso editado es el pago pendiente visible del cliente, refrescamos todo.
+    await loadRenewals(false);
     closeSheet('editRenewalSheet','editRenewalOverlay');
     renderPaymentsDashboard();
     renderCards();
+
     var sheet = document.getElementById('viewSheet');
     if (sheet && sheet.classList.contains('open') && updated.clientId) viewClient(updated.clientId);
-    if (typeof showToast === 'function') showToast('Ingreso actualizado');
+    if (typeof showToast === 'function') showToast('Ingreso actualizado correctamente');
+    else alert('Ingreso actualizado correctamente');
   } catch(ex) {
-    if (errEl) { errEl.textContent = 'Error al guardar: ' + ex.message; errEl.style.display = 'block'; }
-    else alert('Error al guardar: ' + ex.message);
+    var msg = ex && ex.message ? ex.message : 'No se pudo guardar el ingreso.';
+    if (errEl) { errEl.textContent = 'Error al guardar: ' + msg; errEl.style.display = 'block'; }
+    else alert('Error al guardar: ' + msg);
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = oldText || 'Guardar cambios'; }
   }
@@ -997,8 +1034,8 @@ function clientRenewalsHtml(c) {
         '<div class="paymentMeta">'+formatDate(r.previousExpiry)+' → '+formatDate(r.newExpiry)+'</div>' +
         (r.notes ? '<div class="paymentMeta">Notas: '+esc(r.notes)+'</div>' : '') +
         '<div class="paymentActions">' +
-          '<button data-renewal-id="'+esc(r.id)+'" onclick="openEditRenewal(this.dataset.renewalId)">Editar</button>' +
-          (pending ? '<button data-renewal-id="'+esc(r.id)+'" onclick="markRenewalAsPaid(this.dataset.renewalId, this)">Marcar pagado</button>' : '') +
+          '<button class="paymentEditBtn" data-renewal-id="'+esc(r.id)+'" onclick="openEditRenewal(this.dataset.renewalId)">&#9998; Editar ingreso</button>' +
+          (pending ? '<button data-renewal-id="'+esc(r.id)+'" onclick="markRenewalAsPaid(this.dataset.renewalId, this)">&#10003; Marcar pagado</button>' : '') +
         '</div>' +
       '</div>';
     }).join('') +
@@ -1062,8 +1099,8 @@ function renderPaymentsDashboard() {
       '<div class="paymentMeta">' + formatDate(r.previousExpiry) + ' → ' + formatDate(r.newExpiry) + '</div>' +
       (r.notes ? '<div class="paymentMeta">Notas: ' + esc(r.notes) + '</div>' : '') +
       '<div class="paymentActions">' +
-        '<button data-renewal-id="'+esc(r.id)+'" onclick="openEditRenewal(this.dataset.renewalId)">Editar</button>' +
-        (pending ? '<button data-renewal-id="'+esc(r.id)+'" onclick="markRenewalAsPaid(this.dataset.renewalId, this)">Marcar pagado</button>' : '') +
+        '<button class="paymentEditBtn" data-renewal-id="'+esc(r.id)+'" onclick="openEditRenewal(this.dataset.renewalId)">&#9998; Editar ingreso</button>' +
+        (pending ? '<button data-renewal-id="'+esc(r.id)+'" onclick="markRenewalAsPaid(this.dataset.renewalId, this)">&#10003; Marcar pagado</button>' : '') +
       '</div>' +
     '</div>';
   }).join('');

@@ -617,4 +617,19 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, 'S
 
 .clientRenewalsBlock { margin-top: 10px; }
 .clientRenewalsBlock .paymentItem { margin-bottom: 8px; }
-#editRenewalSheet .formError { margin-top: 4px; }
+
+
+
+/* Fix edición de ingresos / renovaciones */
+#editRenewalOverlay { z-index: 650 !important; }
+#editRenewalSheet { z-index: 651 !important; }
+#editRenewalSheet .sheet-header h3 { color: var(--green); }
+#editRenewalSheet .formError { margin-top: 8px; display:none; color: var(--red); font-size:.82rem; }
+.paymentEditBtn { border-color: rgba(0,229,255,0.45) !important; color: var(--cyan) !important; }
+.paymentNoticeBtns { display:flex; gap:7px; flex-wrap:wrap; justify-content:flex-end; }
+.paymentNoticeBtns button:first-child { border-color: rgba(0,229,255,.45); color: var(--cyan); }
+@media (max-width:520px){
+  .paymentNotice { align-items:flex-start; flex-direction:column; }
+  .paymentNoticeBtns { width:100%; justify-content:flex-start; }
+  .paymentNoticeBtns button { flex:1; }
+}
