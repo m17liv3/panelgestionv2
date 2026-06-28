@@ -2091,28 +2091,41 @@ function cartUpdatePreview(record) {
   if (prevImg) { prevImg.src = imgUrl; prevImg.style.display = imgUrl ? 'block' : 'none'; }
 }
 
-// ========== IMAGEN FIJA APP ==========
+// ========== LINKS FIJOS APP ==========
 var FIXED_IMAGE_BUCKET = CONFIG.fixedImageBucket || 'cartelera';
-var FIXED_IMAGE_PATH = CONFIG.fixedImagePath || 'imagen_actual.jpg';
+var FIXED_IMAGE_SLOTS = [
+  { key: 'horarios_mundial', label: 'HORARIOS MUNDIAL', path: (CONFIG.fixedImagePath || 'imagen_actual.jpg'), icon: '&#9917;' },
+  { key: 'pelicula_1', label: 'PELÍCULA RECOMENDADA 1', path: 'pelicula_recomendada_1.jpg', icon: '&#127916;' },
+  { key: 'pelicula_2', label: 'PELÍCULA RECOMENDADA 2', path: 'pelicula_recomendada_2.jpg', icon: '&#127916;' },
+  { key: 'pelicula_3', label: 'PELÍCULA RECOMENDADA 3', path: 'pelicula_recomendada_3.jpg', icon: '&#127916;' },
+  { key: 'serie_1', label: 'SERIE RECOMENDADA 1', path: 'serie_recomendada_1.jpg', icon: '&#127909;' },
+  { key: 'serie_2', label: 'SERIE RECOMENDADA 2', path: 'serie_recomendada_2.jpg', icon: '&#127909;' },
+  { key: 'serie_3', label: 'SERIE RECOMENDADA 3', path: 'serie_recomendada_3.jpg', icon: '&#127909;' }
+];
 
-function fixedAppImageBaseUrl() {
+function fixedSlotByKey(key) {
+  return FIXED_IMAGE_SLOTS.find(function(slot){ return slot.key === key; }) || FIXED_IMAGE_SLOTS[0];
+}
+
+function fixedAppImageBaseUrl(slotKey) {
   try {
+    var slot = fixedSlotByKey(slotKey || 'horarios_mundial');
     var sb = initSupabase();
     if (!sb || !sb.storage) return '';
-    var result = sb.storage.from(FIXED_IMAGE_BUCKET).getPublicUrl(FIXED_IMAGE_PATH);
+    var result = sb.storage.from(FIXED_IMAGE_BUCKET).getPublicUrl(slot.path);
     return result && result.data && result.data.publicUrl ? result.data.publicUrl : '';
   } catch(e) { return ''; }
 }
 
-function fixedAppImageUrl(noCache) {
-  var url = fixedAppImageBaseUrl();
+function fixedAppImageUrl(slotKey, noCache) {
+  var url = fixedAppImageBaseUrl(slotKey);
   if (!url) return '';
   return noCache ? (url + (url.indexOf('?') === -1 ? '?' : '&') + 'v=' + Date.now()) : url;
 }
 
 function openFixedAppImage() {
   closeSheet('menuSheet','menuOverlay');
-  loadFixedAppImage();
+  renderFixedImageSlots();
   openSheet('fixedImageSheet','fixedImageOverlay');
 }
 
@@ -2123,26 +2136,57 @@ function setFixedImageStatus(msg, type) {
   el.style.color = type === 'error' ? '#ff4d4d' : (type === 'ok' ? '#69ff47' : '#7AA3C8');
 }
 
+function renderFixedImageSlots() {
+  var wrap = document.getElementById('fixedImageSlotsWrap');
+  if (!wrap) return;
+  wrap.innerHTML = FIXED_IMAGE_SLOTS.map(function(slot){
+    var link = fixedAppImageBaseUrl(slot.key);
+    return '<div class="fixedSlotCard" data-slot="'+slot.key+'">' +
+      '<div class="fixedSlotTop">' +
+        '<div><div class="fixedSlotTitle">'+slot.icon+' '+escapeHTML(slot.label)+'</div><div class="fixedSlotPath">'+escapeHTML(slot.path)+'</div></div>' +
+        '<button class="fixedSlotSmallBtn" onclick="loadFixedSlotImage(\''+slot.key+'\')">&#8634;</button>' +
+      '</div>' +
+      '<div class="fixedSlotLink" id="fixed-link-'+slot.key+'" onclick="copyFixedSlotLink(\''+slot.key+'\')">'+escapeHTML(link || 'No se pudo generar el enlace')+'</div>' +
+      '<div class="fixedSlotActions">' +
+        '<button onclick="copyFixedSlotLink(\''+slot.key+'\')">&#128203; Copiar link</button>' +
+        '<button onclick="document.getElementById(\'fixed-file-'+slot.key+'\').click()">&#11014; Elegir imagen</button>' +
+        '<button onclick="uploadFixedSlotImage(\''+slot.key+'\')" id="fixed-upload-'+slot.key+'">&#8635; Sustituir</button>' +
+        '<button class="danger" onclick="deleteFixedSlotImage(\''+slot.key+'\')">&#128465; Borrar</button>' +
+      '</div>' +
+      '<input type="file" id="fixed-file-'+slot.key+'" accept="image/*" style="display:none" onchange="showSelectedFixedSlotName(\''+slot.key+'\')">' +
+      '<div class="fixedSlotSelected" id="fixed-selected-'+slot.key+'">Ninguna imagen seleccionada</div>' +
+      '<div class="fixedSlotPreviewBox"><img id="fixed-preview-'+slot.key+'" alt="'+escapeHTML(slot.label)+'" src="'+escapeHTML(fixedAppImageUrl(slot.key, true))+'" onerror="this.style.display=\'none\'" onload="this.style.display=\'block\'"></div>' +
+    '</div>';
+  }).join('');
+  setFixedImageStatus('Tienes 7 enlaces fijos. El primero mantiene la ruta antigua y ahora será HORARIOS MUNDIAL.', 'ok');
+}
+
 function loadFixedAppImage() {
-  var link = fixedAppImageBaseUrl();
-  var linkBox = document.getElementById('fixedImageLinkBox');
-  var preview = document.getElementById('fixedImagePreview');
-  if (!link) {
-    if (linkBox) linkBox.textContent = 'No se pudo generar el enlace. Revisa Supabase.';
-    if (preview) preview.removeAttribute('src');
-    setFixedImageStatus('No se pudo cargar Supabase Storage.', 'error');
-    return;
-  }
-  if (linkBox) linkBox.textContent = link;
-  if (preview) {
-    preview.onerror = function(){ setFixedImageStatus('Todavia no hay imagen subida o el bucket no esta configurado.', 'error'); };
-    preview.onload = function(){ setFixedImageStatus('Imagen actual cargada. El link fijo ya se puede usar en tu app Android.', 'ok'); };
-    preview.src = fixedAppImageUrl(true);
+  renderFixedImageSlots();
+}
+
+function loadFixedSlotImage(slotKey) {
+  var slot = fixedSlotByKey(slotKey);
+  var img = document.getElementById('fixed-preview-' + slot.key);
+  var linkEl = document.getElementById('fixed-link-' + slot.key);
+  if (linkEl) linkEl.textContent = fixedAppImageBaseUrl(slot.key) || 'No se pudo generar el enlace';
+  if (img) {
+    img.style.display = 'block';
+    img.onerror = function(){ this.style.display='none'; setFixedImageStatus('Todavía no hay imagen subida para ' + slot.label + '.', 'error'); };
+    img.onload = function(){ this.style.display='block'; setFixedImageStatus(slot.label + ' actualizada en pantalla.', 'ok'); };
+    img.src = fixedAppImageUrl(slot.key, true);
   }
 }
 
-async function copyFixedAppImageLink() {
-  var link = fixedAppImageBaseUrl();
+function showSelectedFixedSlotName(slotKey) {
+  var input = document.getElementById('fixed-file-' + slotKey);
+  var label = document.getElementById('fixed-selected-' + slotKey);
+  var file = input && input.files ? input.files[0] : null;
+  if (label) label.textContent = file ? ('Seleccionada: ' + file.name) : 'Ninguna imagen seleccionada';
+}
+
+async function copyFixedSlotLink(slotKey) {
+  var link = fixedAppImageBaseUrl(slotKey);
   if (!link) { showToast('No hay link para copiar', 'error'); return; }
   try {
     await navigator.clipboard.writeText(link);
@@ -2150,49 +2194,64 @@ async function copyFixedAppImageLink() {
   } catch(e) { showToast('No se pudo copiar', 'error'); }
 }
 
-async function uploadFixedAppImage() {
-  var fileInput = document.getElementById('fixed-img-file');
+async function copyFixedAppImageLink() {
+  await copyFixedSlotLink('horarios_mundial');
+}
+
+async function uploadFixedSlotImage(slotKey) {
+  var slot = fixedSlotByKey(slotKey);
+  var fileInput = document.getElementById('fixed-file-' + slot.key);
   var file = fileInput && fileInput.files ? fileInput.files[0] : null;
   if (!file) { showToast('Selecciona una imagen primero', 'error'); return; }
   if (!file.type || file.type.indexOf('image/') !== 0) { showToast('El archivo debe ser una imagen', 'error'); return; }
-  var btn = document.getElementById('fixed-img-upload-btn');
+  var btn = document.getElementById('fixed-upload-' + slot.key);
   if (btn) { btn.disabled = true; btn.textContent = 'Subiendo...'; }
-  setFixedImageStatus('Subiendo y sustituyendo imagen...', '');
+  setFixedImageStatus('Subiendo y sustituyendo ' + slot.label + '...', '');
   try {
     var sb = initSupabase();
-    var res = await sb.storage.from(FIXED_IMAGE_BUCKET).upload(FIXED_IMAGE_PATH, file, {
+    var res = await sb.storage.from(FIXED_IMAGE_BUCKET).upload(slot.path, file, {
       cacheControl: '60',
       upsert: true,
       contentType: file.type || 'image/jpeg'
     });
     if (res.error) throw res.error;
     if (fileInput) fileInput.value = '';
-    loadFixedAppImage();
-    showToast('Imagen sustituida correctamente');
+    showSelectedFixedSlotName(slot.key);
+    loadFixedSlotImage(slot.key);
+    showToast(slot.label + ' sustituida correctamente');
   } catch(e) {
     var msg = e && e.message ? e.message : 'Error al subir imagen';
-    setFixedImageStatus('Error: ' + msg + '. Revisa que el bucket y las politicas SQL esten creados.', 'error');
+    setFixedImageStatus('Error: ' + msg + '. Revisa el SQL de permisos para los 7 links fijos.', 'error');
     showToast('Error al subir imagen', 'error');
   }
-  if (btn) { btn.disabled = false; btn.textContent = 'Sustituir'; }
+  if (btn) { btn.disabled = false; btn.textContent = '↻ Sustituir'; }
 }
 
-async function deleteFixedAppImage() {
-  if (!confirm('Borrar la imagen fija actual? El link seguira siendo el mismo, pero no mostrara imagen hasta subir una nueva.')) return;
+async function uploadFixedAppImage() {
+  await uploadFixedSlotImage('horarios_mundial');
+}
+
+async function deleteFixedSlotImage(slotKey) {
+  var slot = fixedSlotByKey(slotKey);
+  if (!confirm('Borrar la imagen de ' + slot.label + '? El link seguirá siendo el mismo, pero no mostrará imagen hasta subir una nueva.')) return;
   try {
     var sb = initSupabase();
-    var res = await sb.storage.from(FIXED_IMAGE_BUCKET).remove([FIXED_IMAGE_PATH]);
+    var res = await sb.storage.from(FIXED_IMAGE_BUCKET).remove([slot.path]);
     if (res.error) throw res.error;
-    var preview = document.getElementById('fixedImagePreview');
-    if (preview) preview.removeAttribute('src');
-    setFixedImageStatus('Imagen borrada. Puedes subir una nueva cuando quieras.', 'ok');
-    showToast('Imagen fija borrada');
+    var preview = document.getElementById('fixed-preview-' + slot.key);
+    if (preview) { preview.removeAttribute('src'); preview.style.display = 'none'; }
+    setFixedImageStatus(slot.label + ' borrada. Puedes subir una nueva cuando quieras.', 'ok');
+    showToast('Imagen borrada');
   } catch(e) {
     setFixedImageStatus('Error al borrar: ' + (e && e.message ? e.message : 'desconocido'), 'error');
     showToast('Error al borrar imagen', 'error');
   }
 }
-// ========== FIN IMAGEN FIJA APP ==========
+
+async function deleteFixedAppImage() {
+  await deleteFixedSlotImage('horarios_mundial');
+}
+// ========== FIN LINKS FIJOS APP ==========
 
 // ========== CARTELERA ADMIN ==========
 var CART_BIN_ID = CONFIG.cartBinId || '';

@@ -1,0 +1,94 @@
+SQL STORAGE 7 LINKS FIJOS APP
+
+Ejecutar una sola vez en Supabase > SQL Editor.
+El primer enlace conserva la ruta antigua imagen_actual.jpg y se usa para HORARIOS MUNDIAL.
+
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'cartelera',
+  'cartelera',
+  true,
+  10485760,
+  array['image/jpeg','image/png','image/webp','image/gif']::text[]
+)
+on conflict (id) do update
+set public = true,
+    file_size_limit = excluded.file_size_limit,
+    allowed_mime_types = excluded.allowed_mime_types;
+
+drop policy if exists "cartelera_public_read" on storage.objects;
+create policy "cartelera_public_read"
+on storage.objects
+for select
+to public
+using (bucket_id = 'cartelera');
+
+drop policy if exists "cartelera_mfa_insert" on storage.objects;
+create policy "cartelera_mfa_insert"
+on storage.objects
+for insert
+to authenticated
+with check (
+  bucket_id = 'cartelera'
+  and name in (
+    'imagen_actual.jpg',
+    'pelicula_recomendada_1.jpg',
+    'pelicula_recomendada_2.jpg',
+    'pelicula_recomendada_3.jpg',
+    'serie_recomendada_1.jpg',
+    'serie_recomendada_2.jpg',
+    'serie_recomendada_3.jpg'
+  )
+  and (select auth.jwt()->>'aal') = 'aal2'
+);
+
+drop policy if exists "cartelera_mfa_update" on storage.objects;
+create policy "cartelera_mfa_update"
+on storage.objects
+for update
+to authenticated
+using (
+  bucket_id = 'cartelera'
+  and name in (
+    'imagen_actual.jpg',
+    'pelicula_recomendada_1.jpg',
+    'pelicula_recomendada_2.jpg',
+    'pelicula_recomendada_3.jpg',
+    'serie_recomendada_1.jpg',
+    'serie_recomendada_2.jpg',
+    'serie_recomendada_3.jpg'
+  )
+  and (select auth.jwt()->>'aal') = 'aal2'
+)
+with check (
+  bucket_id = 'cartelera'
+  and name in (
+    'imagen_actual.jpg',
+    'pelicula_recomendada_1.jpg',
+    'pelicula_recomendada_2.jpg',
+    'pelicula_recomendada_3.jpg',
+    'serie_recomendada_1.jpg',
+    'serie_recomendada_2.jpg',
+    'serie_recomendada_3.jpg'
+  )
+  and (select auth.jwt()->>'aal') = 'aal2'
+);
+
+drop policy if exists "cartelera_mfa_delete" on storage.objects;
+create policy "cartelera_mfa_delete"
+on storage.objects
+for delete
+to authenticated
+using (
+  bucket_id = 'cartelera'
+  and name in (
+    'imagen_actual.jpg',
+    'pelicula_recomendada_1.jpg',
+    'pelicula_recomendada_2.jpg',
+    'pelicula_recomendada_3.jpg',
+    'serie_recomendada_1.jpg',
+    'serie_recomendada_2.jpg',
+    'serie_recomendada_3.jpg'
+  )
+  and (select auth.jwt()->>'aal') = 'aal2'
+);
