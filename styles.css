@@ -787,3 +787,26 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, 'S
     align-items: start;
   }
 }
+
+
+/* Previsualizaciones de slots fijos dentro de plantillas */
+.movieTplFixedPreviewGrid {
+  display:grid;
+  grid-template-columns:1fr;
+  gap:12px;
+  margin-top:14px;
+}
+.movieTplFixedPreviewCard {
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 14px;
+  padding: 10px;
+}
+.movieTplFixedPreviewCard .fixedSlotPreviewBox img {
+  min-height: 160px;
+}
+@media (min-width: 760px) {
+  .movieTplFixedPreviewGrid {
+    grid-template-columns: repeat(3,1fr);
+  }
+}

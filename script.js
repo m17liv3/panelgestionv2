@@ -2517,7 +2517,7 @@ function openMovieTemplates() {
   closeSheet('menuSheet','menuOverlay');
   movieTplInit();
   openSheet('movieTplSheet','movieTplOverlay');
-  setTimeout(movieTplDraw, 80);
+  setTimeout(function(){ movieTplDraw(); movieTplRenderFixedPreviews(); }, 80);
 }
 
 function movieTplInit() {
@@ -2555,11 +2555,13 @@ function movieTplInit() {
   if (logoInput) logoInput.addEventListener('change', movieTplHandleLogoUpload);
 
   var downloadBtn = document.getElementById('tplDownloadBtn');
-  var uploadBtn = document.getElementById('tplUploadBtn');
-  var copyBtn = document.getElementById('tplCopyBtn');
+  var uploadBtn1 = document.getElementById('tplUploadFixed1Btn');
+  var uploadBtn2 = document.getElementById('tplUploadFixed2Btn');
+  var uploadBtn3 = document.getElementById('tplUploadFixed3Btn');
   if (downloadBtn) downloadBtn.addEventListener('click', movieTplDownloadJpeg);
-  if (uploadBtn) uploadBtn.addEventListener('click', movieTplUploadImgBB);
-  if (copyBtn) copyBtn.addEventListener('click', movieTplCopyLink);
+  if (uploadBtn1) uploadBtn1.addEventListener('click', function(){ movieTplUploadToFixed('pelicula_1', this); });
+  if (uploadBtn2) uploadBtn2.addEventListener('click', function(){ movieTplUploadToFixed('pelicula_2', this); });
+  if (uploadBtn3) uploadBtn3.addEventListener('click', function(){ movieTplUploadToFixed('pelicula_3', this); });
 
   movieTplFillInputsFromState();
   movieTplRestoreLogo();
@@ -3117,6 +3119,62 @@ async function movieTplCopyLink(){
     movieTplSetStatus('No se pudo copiar automaticamente. Copialo manualmente.', 'err');
   }
 }
+
+function movieTplRenderFixedPreviews(){
+  [
+    {slot:'pelicula_1', imgId:'tplFixedPreview1'},
+    {slot:'pelicula_2', imgId:'tplFixedPreview2'},
+    {slot:'pelicula_3', imgId:'tplFixedPreview3'}
+  ].forEach(function(item){
+    movieTplRefreshFixedPreview(item.slot, item.imgId);
+  });
+}
+
+function movieTplRefreshFixedPreview(slotKey, imgId){
+  var img = document.getElementById(imgId);
+  if(!img) return;
+  img.onerror = function(){ this.style.display = 'none'; };
+  img.onload = function(){ this.style.display = 'block'; };
+  img.src = fixedAppImageUrl(slotKey, true);
+}
+
+async function uploadBlobToFixedSlot(slotKey, blob, contentType){
+  var slot = fixedSlotByKey(slotKey);
+  var sb = initSupabase();
+  if (!sb || !sb.storage) throw new Error('Supabase no esta disponible');
+  var res = await sb.storage.from(FIXED_IMAGE_BUCKET).upload(slot.path, blob, {
+    cacheControl: '60',
+    upsert: true,
+    contentType: contentType || 'image/jpeg'
+  });
+  if (res.error) throw res.error;
+  return fixedAppImageBaseUrl(slotKey);
+}
+
+async function movieTplUploadToFixed(slotKey, btnEl){
+  var slot = fixedSlotByKey(slotKey);
+  if(!slot) return;
+  movieTplSetStatus('Generando imagen para ' + slot.label + '...', '');
+  movieTplDraw();
+  var blob;
+  try { blob = await movieTplCanvasToJpegBlob(); }
+  catch(err){ movieTplSetStatus('Error al generar la imagen. Puede ser CORS del poster.', 'err'); return; }
+  var oldText = btnEl ? btnEl.textContent : '';
+  if (btnEl) { btnEl.disabled = true; btnEl.textContent = 'Subiendo...'; }
+  try {
+    await uploadBlobToFixedSlot(slotKey, blob, 'image/jpeg');
+    movieTplSetStatus('Subida correctamente a ' + slot.label, 'ok');
+    movieTplRenderFixedPreviews();
+    try { loadFixedSlotImage(slotKey); } catch(e) {}
+    showToast(slot.label + ' sustituida correctamente');
+  } catch(err){
+    console.error(err);
+    movieTplSetStatus('Error al subir a ' + slot.label + ': ' + (err && err.message ? err.message : 'error desconocido'), 'err');
+    showToast('Error al sustituir ' + slot.label, 'error');
+  }
+  if (btnEl) { btnEl.disabled = false; btnEl.textContent = oldText || 'Subir'; }
+}
+
 // ========== FIN PLANTILLAS PELICULAS ADMIN ==========
 
 // ========== PLANTILLAS SERIES ADMIN ==========
@@ -3152,7 +3210,7 @@ function openSeriesTemplates() {
   closeSheet('menuSheet','menuOverlay');
   seriesTplInit();
   openSheet('seriesTplSheet','seriesTplOverlay');
-  setTimeout(seriesTplDraw, 80);
+  setTimeout(function(){ seriesTplDraw(); seriesTplRenderFixedPreviews(); }, 80);
 }
 
 function seriesTplInit() {
@@ -3190,11 +3248,13 @@ function seriesTplInit() {
   if (logoInput) logoInput.addEventListener('change', seriesTplHandleLogoUpload);
 
   var downloadBtn = document.getElementById('seriesTplDownloadBtn');
-  var uploadBtn = document.getElementById('seriesTplUploadBtn');
-  var copyBtn = document.getElementById('seriesTplCopyBtn');
+  var uploadBtn1 = document.getElementById('seriesTplUploadFixed1Btn');
+  var uploadBtn2 = document.getElementById('seriesTplUploadFixed2Btn');
+  var uploadBtn3 = document.getElementById('seriesTplUploadFixed3Btn');
   if (downloadBtn) downloadBtn.addEventListener('click', seriesTplDownloadJpeg);
-  if (uploadBtn) uploadBtn.addEventListener('click', seriesTplUploadImgBB);
-  if (copyBtn) copyBtn.addEventListener('click', seriesTplCopyLink);
+  if (uploadBtn1) uploadBtn1.addEventListener('click', function(){ seriesTplUploadToFixed('serie_1', this); });
+  if (uploadBtn2) uploadBtn2.addEventListener('click', function(){ seriesTplUploadToFixed('serie_2', this); });
+  if (uploadBtn3) uploadBtn3.addEventListener('click', function(){ seriesTplUploadToFixed('serie_3', this); });
 
   seriesTplFillInputsFromState();
   seriesTplRestoreLogo();
@@ -3791,6 +3851,49 @@ async function seriesTplCopyLink(){
     seriesTplSetStatus('No se pudo copiar automaticamente. Copialo manualmente.', 'err');
   }
 }
+
+function seriesTplRenderFixedPreviews(){
+  [
+    {slot:'serie_1', imgId:'seriesTplFixedPreview1'},
+    {slot:'serie_2', imgId:'seriesTplFixedPreview2'},
+    {slot:'serie_3', imgId:'seriesTplFixedPreview3'}
+  ].forEach(function(item){
+    seriesTplRefreshFixedPreview(item.slot, item.imgId);
+  });
+}
+
+function seriesTplRefreshFixedPreview(slotKey, imgId){
+  var img = document.getElementById(imgId);
+  if(!img) return;
+  img.onerror = function(){ this.style.display = 'none'; };
+  img.onload = function(){ this.style.display = 'block'; };
+  img.src = fixedAppImageUrl(slotKey, true);
+}
+
+async function seriesTplUploadToFixed(slotKey, btnEl){
+  var slot = fixedSlotByKey(slotKey);
+  if(!slot) return;
+  seriesTplSetStatus('Generando imagen para ' + slot.label + '...', '');
+  seriesTplDraw();
+  var blob;
+  try { blob = await seriesTplCanvasToJpegBlob(); }
+  catch(err){ seriesTplSetStatus('Error al generar la imagen. Puede ser CORS del poster.', 'err'); return; }
+  var oldText = btnEl ? btnEl.textContent : '';
+  if (btnEl) { btnEl.disabled = true; btnEl.textContent = 'Subiendo...'; }
+  try {
+    await uploadBlobToFixedSlot(slotKey, blob, 'image/jpeg');
+    seriesTplSetStatus('Subida correctamente a ' + slot.label, 'ok');
+    seriesTplRenderFixedPreviews();
+    try { loadFixedSlotImage(slotKey); } catch(e) {}
+    showToast(slot.label + ' sustituida correctamente');
+  } catch(err){
+    console.error(err);
+    seriesTplSetStatus('Error al subir a ' + slot.label + ': ' + (err && err.message ? err.message : 'error desconocido'), 'err');
+    showToast('Error al sustituir ' + slot.label, 'error');
+  }
+  if (btnEl) { btnEl.disabled = false; btnEl.textContent = oldText || 'Subir'; }
+}
+
 // ========== FIN PLANTILLAS SERIES ADMIN ==========
 
 
