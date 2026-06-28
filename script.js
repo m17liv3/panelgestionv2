@@ -2160,7 +2160,16 @@ function renderFixedImageSlots() {
       '</div>' +
       '<input type="file" id="fixed-file-'+slot.key+'" accept="image/*" style="display:none" onchange="showSelectedFixedSlotName(\''+slot.key+'\')">' +
       '<div class="fixedSlotSelected" id="fixed-selected-'+slot.key+'">Ninguna imagen seleccionada</div>' +
-      '<div class="fixedSlotPreviewBox"><img id="fixed-preview-'+slot.key+'" alt="'+esc(slot.label)+'" src="'+esc(fixedAppImageUrl(slot.key, true))+'" onerror="this.style.display=\'none\'" onload="this.style.display=\'block\'"></div>' +
+      '<div class="fixedSlotPreviewGrid">' +
+        '<div class="fixedSlotPreviewPanel">' +
+          '<div class="fixedSlotPreviewLabel">Imagen actual</div>' +
+          '<div class="fixedSlotPreviewBox"><img id="fixed-preview-'+slot.key+'" alt="'+esc(slot.label)+'" src="'+esc(fixedAppImageUrl(slot.key, true))+'" onerror="this.style.display=\'none\'" onload="this.style.display=\'block\'"></div>' +
+        '</div>' +
+        '<div class="fixedSlotPreviewPanel fixedSlotNewPreviewPanel" id="fixed-new-panel-'+slot.key+'" style="display:none">' +
+          '<div class="fixedSlotPreviewLabel new">Nueva imagen seleccionada</div>' +
+          '<div class="fixedSlotPreviewBox new"><img id="fixed-new-preview-'+slot.key+'" alt="Nueva '+esc(slot.label)+'" style="display:none"></div>' +
+        '</div>' +
+      '</div>' +
     '</div>';
   }).join('');
   setFixedImageStatus('Tienes 7 enlaces fijos. El primero mantiene la ruta antigua y ahora será HORARIOS MUNDIAL.', 'ok');
@@ -2183,11 +2192,60 @@ function loadFixedSlotImage(slotKey) {
   }
 }
 
+var FIXED_SLOT_OBJECT_URLS = {};
+
 function showSelectedFixedSlotName(slotKey) {
   var input = document.getElementById('fixed-file-' + slotKey);
   var label = document.getElementById('fixed-selected-' + slotKey);
+  var newPanel = document.getElementById('fixed-new-panel-' + slotKey);
+  var newPreview = document.getElementById('fixed-new-preview-' + slotKey);
   var file = input && input.files ? input.files[0] : null;
-  if (label) label.textContent = file ? ('Seleccionada: ' + file.name) : 'Ninguna imagen seleccionada';
+
+  if (FIXED_SLOT_OBJECT_URLS[slotKey]) {
+    try { URL.revokeObjectURL(FIXED_SLOT_OBJECT_URLS[slotKey]); } catch(e) {}
+    delete FIXED_SLOT_OBJECT_URLS[slotKey];
+  }
+
+  if (!file) {
+    if (label) label.textContent = 'Ninguna imagen seleccionada';
+    if (newPanel) newPanel.style.display = 'none';
+    if (newPreview) { newPreview.removeAttribute('src'); newPreview.style.display = 'none'; }
+    return;
+  }
+
+  var sizeMb = file.size ? (file.size / (1024 * 1024)).toFixed(2) : '0.00';
+  if (label) label.textContent = 'Seleccionada: ' + file.name + ' · ' + sizeMb + ' MB';
+
+  if (!file.type || file.type.indexOf('image/') !== 0) {
+    if (newPanel) newPanel.style.display = 'none';
+    if (newPreview) { newPreview.removeAttribute('src'); newPreview.style.display = 'none'; }
+    setFixedImageStatus('El archivo seleccionado no parece una imagen.', 'error');
+    return;
+  }
+
+  if (newPanel && newPreview) {
+    var objectUrl = URL.createObjectURL(file);
+    FIXED_SLOT_OBJECT_URLS[slotKey] = objectUrl;
+    newPreview.src = objectUrl;
+    newPreview.style.display = 'block';
+    newPanel.style.display = 'block';
+    setFixedImageStatus('Previsualización lista. Revisa la imagen y pulsa “Sustituir” para subirla.', 'ok');
+  }
+}
+
+function clearFixedSlotSelection(slotKey) {
+  var input = document.getElementById('fixed-file-' + slotKey);
+  if (input) input.value = '';
+  if (FIXED_SLOT_OBJECT_URLS[slotKey]) {
+    try { URL.revokeObjectURL(FIXED_SLOT_OBJECT_URLS[slotKey]); } catch(e) {}
+    delete FIXED_SLOT_OBJECT_URLS[slotKey];
+  }
+  var label = document.getElementById('fixed-selected-' + slotKey);
+  var newPanel = document.getElementById('fixed-new-panel-' + slotKey);
+  var newPreview = document.getElementById('fixed-new-preview-' + slotKey);
+  if (label) label.textContent = 'Ninguna imagen seleccionada';
+  if (newPanel) newPanel.style.display = 'none';
+  if (newPreview) { newPreview.removeAttribute('src'); newPreview.style.display = 'none'; }
 }
 
 async function copyFixedSlotLink(slotKey) {
@@ -2220,8 +2278,7 @@ async function uploadFixedSlotImage(slotKey) {
       contentType: file.type || 'image/jpeg'
     });
     if (res.error) throw res.error;
-    if (fileInput) fileInput.value = '';
-    showSelectedFixedSlotName(slot.key);
+    clearFixedSlotSelection(slot.key);
     loadFixedSlotImage(slot.key);
     showToast(slot.label + ' sustituida correctamente');
   } catch(e) {

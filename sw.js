@@ -1,4 +1,4 @@
-const CACHE_NAME = 'm17liv3-pwa-v1.3.1-7-links-fijos-fix';
+const CACHE_NAME = 'm17liv3-pwa-v1.3.2-7-links-preview';
 const APP_SHELL = [
   './',
   './index.html',
