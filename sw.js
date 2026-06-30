@@ -1,4 +1,4 @@
-const CACHE_NAME = 'm17liv3-pwa-v1.3.2-7-links-preview';
+const CACHE_NAME = 'm17liv3-new-client-payment-v1';
 const APP_SHELL = [
   './',
   './index.html',

@@ -1469,6 +1469,13 @@ function openNewClient() {
   document.getElementById('fExpiry').value='';
   document.getElementById('fService').value='TODO';
   document.getElementById('fNotes').value='';
+  var initialBox = document.getElementById('initialPaymentBox');
+  var savePendingBtn = document.getElementById('saveClientPendingBtn');
+  if (initialBox) initialBox.style.display = 'block';
+  if (savePendingBtn) savePendingBtn.style.display = 'block';
+  if (document.getElementById('fInitialAmount')) { document.getElementById('fInitialAmount').value=''; document.getElementById('fInitialAmount').style.borderColor=''; }
+  if (document.getElementById('fInitialPaymentMethod')) document.getElementById('fInitialPaymentMethod').value='Bizum';
+  if (document.getElementById('fInitialPaymentNotes')) document.getElementById('fInitialPaymentNotes').value='';
   document.getElementById('formError').style.display='none';
   buildAppsGrid(); updateAppRequirements();
   openSheet('clientSheet','clientOverlay');
@@ -1485,6 +1492,12 @@ function editClient(id) {
   document.getElementById('fExpiry').value=c.expiry||'';
   document.getElementById('fService').value=c.service||'TODO';
   document.getElementById('fNotes').value=c.notes||'';
+  var initialBox = document.getElementById('initialPaymentBox');
+  var savePendingBtn = document.getElementById('saveClientPendingBtn');
+  if (initialBox) initialBox.style.display = 'none';
+  if (savePendingBtn) savePendingBtn.style.display = 'none';
+  if (document.getElementById('fInitialAmount')) document.getElementById('fInitialAmount').value='';
+  if (document.getElementById('fInitialPaymentNotes')) document.getElementById('fInitialPaymentNotes').value='';
   document.getElementById('formError').style.display='none';
   buildAppsGrid();
   selectedApps=(c.apps||[]).map(function(a){return a.name;});
@@ -1506,7 +1519,8 @@ function editClient(id) {
   openSheet('clientSheet','clientOverlay');
 }
 
-async function saveClient() {
+async function saveClient(markInitialPending) {
+  markInitialPending = !!markInitialPending;
   var errEl = document.getElementById('formError');
   errEl.style.display='none';
   var name=document.getElementById('fName').value.trim();
@@ -1515,6 +1529,18 @@ async function saveClient() {
   var expiry=document.getElementById('fExpiry').value;
   var service=document.getElementById('fService').value;
   var notes=document.getElementById('fNotes').value.trim();
+  var id=document.getElementById('editId').value;
+  var creatingNew = !id;
+  var initialAmountEl = document.getElementById('fInitialAmount');
+  var initialMethodEl = document.getElementById('fInitialPaymentMethod');
+  var initialNotesEl = document.getElementById('fInitialPaymentNotes');
+  var initialAmount = creatingNew ? parseEuroAmount(initialAmountEl ? initialAmountEl.value : '') : 0;
+  if (creatingNew && isNaN(initialAmount)) {
+    errEl.textContent='Importe inicial no valido. Ejemplo: 25 o 25,00';
+    errEl.style.display='block';
+    if (initialAmountEl) { initialAmountEl.style.borderColor='var(--red)'; initialAmountEl.focus(); }
+    return;
+  }
   if(!name){errEl.textContent='El nombre es obligatorio.';errEl.style.display='block';return;}
   if(!user){errEl.textContent='El usuario es obligatorio.';errEl.style.display='block';return;}
   if(!pass){errEl.textContent='La contrasena es obligatoria.';errEl.style.display='block';return;}
@@ -1544,7 +1570,6 @@ async function saveClient() {
     }
     return obj;
   });
-  var id=document.getElementById('editId').value;
   try {
     var existingClient = id ? clients.find(function(x){ return x.id === id; }) : null;
     var clientObj = {
@@ -1579,8 +1604,32 @@ async function saveClient() {
     } else {
       clients.unshift(saved);
     }
+
+    var paymentMessage = '';
+    if (creatingNew && (markInitialPending || Number(initialAmount || 0) > 0)) {
+      try {
+        var initialItem = await saveRenewalToStore({
+          clientId: saved.id,
+          clientName: saved.name,
+          previousExpiry: '',
+          newExpiry: saved.expiry || '',
+          months: 0,
+          amount: Number(initialAmount || 0),
+          paymentMethod: markInitialPending ? 'Pendiente' : (initialMethodEl ? initialMethodEl.value : 'Bizum'),
+          paymentStatus: markInitialPending ? 'pendiente' : 'pagado',
+          paymentPaidAt: markInitialPending ? '' : new Date().toISOString(),
+          notes: initialNotesEl ? initialNotesEl.value.trim() : ''
+        });
+        if (!renewals.find(function(r){ return r.id === initialItem.id; })) renewals.unshift(initialItem);
+        paymentMessage = markInitialPending ? ' Pago pendiente registrado.' : ' Pago registrado: ' + euro(initialAmount);
+      } catch(payErr) {
+        console.error(payErr);
+        paymentMessage = ' Cliente guardado, pero el pago inicial no se pudo registrar. Revisa SQL renovaciones.';
+      }
+    }
+
     saveData(); closeSheet('clientSheet','clientOverlay'); renderCards();
-    if (typeof showToast === 'function') showToast('Cliente guardado');
+    if (typeof showToast === 'function') showToast('Cliente guardado.' + paymentMessage, paymentMessage.indexOf('no se pudo') >= 0 ? 'error' : undefined);
   } catch(ex) {
     errEl.textContent='Error al guardar: '+ex.message;
     errEl.style.display='block';

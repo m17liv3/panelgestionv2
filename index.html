@@ -229,8 +229,33 @@
       <label>Notas</label>
       <textarea id="fNotes" placeholder="Informacion adicional..."></textarea>
     </div>
+
+    <div class="renewPaymentBox" id="initialPaymentBox">
+      <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#7AA3C8;margin-bottom:10px;">&#128176; Pago al crear cliente</div>
+      <div class="formGroup">
+        <label>Importe pagado / pendiente</label>
+        <input type="text" id="fInitialAmount" inputmode="decimal" placeholder="Ej: 25 o 25,00"/>
+      </div>
+      <div class="formGroup">
+        <label>Metodo de pago</label>
+        <select id="fInitialPaymentMethod">
+          <option value="Bizum">Bizum</option>
+          <option value="Efectivo">Efectivo</option>
+          <option value="Transferencia">Transferencia</option>
+          <option value="PayPal">PayPal</option>
+          <option value="Otro">Otro</option>
+        </select>
+      </div>
+      <div class="formGroup">
+        <label>Notas del pago</label>
+        <input type="text" id="fInitialPaymentNotes" placeholder="Opcional"/>
+      </div>
+      <p class="movieTplNote" style="margin-top:0;">Si rellenas el importe y guardas, se registra como pagado. Si pulsa “Paga mas tarde”, aparece en Pendientes de pago.</p>
+    </div>
+
     <div class="formError" id="formError"></div>
-    <button class="btnFull primary" onclick="saveClient()">Guardar</button>
+    <button class="btnFull primary" onclick="saveClient(false)">Guardar</button>
+    <button class="btnFull warning" id="saveClientPendingBtn" onclick="saveClient(true)">&#9203; Paga mas tarde</button>
     <button class="btnFull gray" onclick="closeSheet('clientSheet','clientOverlay')" style="margin-top:8px">Cancelar</button>
   </div>
 </div>
