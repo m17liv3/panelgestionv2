@@ -810,3 +810,12 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, 'S
     grid-template-columns: repeat(3,1fr);
   }
 }
+
+
+/* Botón confirmar renovación bloqueado cuando el importe está vacío */
+button.disabledSoft,
+.btnFull.disabledSoft {
+  opacity: .45 !important;
+  cursor: not-allowed !important;
+  filter: grayscale(.35);
+}
