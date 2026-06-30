@@ -115,6 +115,8 @@
       <button onclick="openBackupCenter()">Exportar</button>
     </div>
 
+    <div class="autoAlerts" id="autoAlerts"></div>
+
     <div id="activeFilterBar" class="activeFilterBar">
       <span id="activeFilterLabel"></span>
       <button onclick="quickFilter('')">&#10005; Quitar filtro</button>
@@ -130,6 +132,8 @@
       <div class="pill" data-svc="TODO" onclick="setPillSvc(this,'TODO')">TODO</div>
       <div class="pill" data-svc="ESPANA" onclick="setPillSvc(this,'ESPANA')">ESPA&Ntilde;A</div>
     </div>
+
+    <div class="tagFilterBar" id="tagFilterBar"></div>
 
     <div id="cardsContainer"></div>
     <div class="empty" id="emptyState" style="display:none">
@@ -153,6 +157,7 @@
     <div class="menuItem" onclick="openDeleteAllClients()" style="color:var(--red)"><span class="ico2">&#128465;</span> Borrar todos los clientes</div>
     <div class="menuItem" onclick="openPayments()"><span class="ico2">&#128176;</span> Ingresos / renovaciones</div>
     <div class="menuItem" onclick="openFinanceBalance()"><span class="ico2">&#128202;</span> Balance / finanzas</div>
+    <div class="menuItem" onclick="openAlertsPanel()"><span class="ico2">&#128276;</span> Avisos automáticos</div>
     <div class="menuItem" onclick="openRaffles()"><span class="ico2">&#127873;</span> Sorteos clientes</div>
     <div class="menuItem" onclick="openIboPanel()"><span class="ico2">&#127760;</span> Panel APP IBO</div>
     <div class="menuItem" onclick="openMfaSecurity()"><span class="ico2">&#128274;</span> Seguridad Google Authenticator</div>
@@ -226,6 +231,12 @@
       </div>
       <div id="otraExtrasBox"></div>
     </div>
+    <div class="formGroup">
+      <label>Etiquetas del cliente</label>
+      <div class="clientTagsEditor" id="clientTagsEditor"></div>
+      <input type="text" id="fCustomTags" placeholder="Etiquetas extra separadas por coma"/>
+    </div>
+
     <div class="formGroup">
       <label>Notas</label>
       <textarea id="fNotes" placeholder="Informacion adicional..."></textarea>
@@ -472,6 +483,24 @@
 
 
 
+
+<!-- ALERTS PANEL SHEET -->
+<div class="sheet-overlay" id="alertsOverlay" onclick="closeSheet('alertsSheet','alertsOverlay')"></div>
+<div class="sheet" id="alertsSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <h3>&#128276; Avisos automáticos</h3>
+    <button class="sheet-close" onclick="closeSheet('alertsSheet','alertsOverlay')">x</button>
+  </div>
+  <div class="sheet-body">
+    <p style="color:var(--muted);font-size:.88rem;margin-bottom:12px">
+      Resumen rápido de cosas que requieren atención. Pulsa cualquier aviso para filtrar clientes.
+    </p>
+    <div id="alertsPanelContent"></div>
+    <button class="btnFull gray" onclick="closeSheet('alertsSheet','alertsOverlay')" style="margin-top:8px">Cerrar</button>
+  </div>
+</div>
+
 <!-- FINANCE BALANCE SHEET -->
 <div class="sheet-overlay" id="financeOverlay" onclick="closeSheet('financeSheet','financeOverlay')"></div>
 <div class="sheet" id="financeSheet">
@@ -513,6 +542,9 @@
       <div class="paymentsStat profit"><span>Beneficio año</span><strong id="finProfitYear">0,00 €</strong></div>
       <div class="paymentsStat"><span id="finMovementCountLabel">Movimientos año</span><strong id="finMovementCountMonth">0</strong></div>
     </div>
+
+    <div class="raffleHistoryHeader financeChartsHeader"><span>Gráficas del año</span></div>
+    <div class="financeCharts" id="financeCharts"></div>
 
     <div class="financeQuickActions">
       <button onclick="fillFinanceQuick('gastoProveedor')">&#128179; Gasto Panel K13 750€</button>

@@ -1006,3 +1006,207 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, 'S
     grid-template-columns: 1fr;
   }
 }
+
+
+/* Graficas Balance / Finanzas */
+.financeCharts {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin: 14px 0;
+}
+.financeChartCard {
+  border: 1px solid rgba(0,229,255,.15);
+  background: rgba(255,255,255,.035);
+  border-radius: 16px;
+  padding: 12px;
+}
+.financeChartTitle {
+  font-weight: 900;
+  color: var(--cyan);
+  margin-bottom: 10px;
+}
+.financeBarChart {
+  height: 180px;
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 6px;
+  align-items: end;
+}
+.financeBarCol {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.financeBarVal {
+  height: 24px;
+  font-size: .62rem;
+  color: var(--muted);
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  overflow: hidden;
+}
+.financeBarTrack {
+  width: 100%;
+  height: 112px;
+  display: flex;
+  align-items: flex-end;
+  border-radius: 10px;
+  background: rgba(255,255,255,.045);
+  overflow: hidden;
+}
+.financeBar {
+  width: 100%;
+  min-height: 4px;
+  border-radius: 10px 10px 0 0;
+  background: linear-gradient(180deg, var(--cyan), var(--green));
+}
+.financeBar.expense {
+  background: linear-gradient(180deg, #ffb84d, var(--red));
+}
+.financeBar.profit {
+  background: linear-gradient(180deg, var(--green), var(--cyan));
+}
+.financeBar.negative {
+  background: linear-gradient(180deg, #ff8a8a, var(--red));
+}
+.financeBarLabel {
+  font-size: .64rem;
+  color: var(--muted);
+}
+
+/* Etiquetas clientes */
+.clientTagsEditor,
+.clientTags,
+.tagFilterBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.tagPick,
+.clientTag,
+.tagFilterChip,
+.tagFilterClear {
+  border: 1px solid rgba(0,229,255,.22);
+  color: var(--cyan);
+  background: rgba(0,229,255,.06);
+  border-radius: 999px;
+  padding: 7px 10px;
+  font-size: .78rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+.tagPick.selected,
+.tagFilterChip.active {
+  color: #071018;
+  background: linear-gradient(90deg, var(--cyan), var(--green));
+  border-color: transparent;
+}
+.clientTags {
+  margin: 8px 0;
+}
+.clientTag {
+  padding: 5px 8px;
+  font-size: .72rem;
+}
+.tagFilterBar {
+  margin: 10px 0 12px;
+  align-items: center;
+}
+.tagFilterTitle {
+  color: var(--muted);
+  font-size: .78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+.tagFilterClear {
+  border-color: rgba(255,77,77,.4);
+  color: var(--red);
+  background: rgba(255,77,77,.08);
+}
+
+/* Avisos automáticos */
+.autoAlerts {
+  margin: 12px 0;
+}
+.autoAlertsTitle {
+  color: var(--cyan);
+  font-weight: 900;
+  margin: 0 0 8px;
+}
+.autoAlertsGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+.autoAlertCard {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  border: 1px solid rgba(255,170,0,.24);
+  background: rgba(255,170,0,.055);
+  color: var(--text);
+  border-radius: 14px;
+  padding: 10px;
+  cursor: pointer;
+}
+.autoAlertIcon {
+  font-size: 1.2rem;
+}
+.autoAlertText {
+  flex: 1;
+  min-width: 0;
+}
+.autoAlertText strong {
+  display: block;
+  font-size: .86rem;
+}
+.autoAlertText small {
+  display: block;
+  color: var(--muted);
+  margin-top: 2px;
+  font-size: .75rem;
+}
+.autoAlertCount {
+  min-width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.09);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  color: var(--orange);
+}
+@media (min-width: 720px) {
+  .financeCharts {
+    grid-template-columns: 1fr;
+  }
+  .autoAlertsGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+
+/* Refuerzo visual de mejoras */
+.financeChartsHeader {
+  margin-top: 14px;
+}
+.clientTagsEditor {
+  border: 1px dashed rgba(0,229,255,.18);
+  background: rgba(0,229,255,.035);
+  border-radius: 14px;
+  padding: 10px;
+}
+#fCustomTags {
+  margin-top: 8px;
+}
+.autoAlertsGrid.alwaysVisible .autoAlertCard {
+  border-color: rgba(0,229,255,.18);
+  background: rgba(0,229,255,.045);
+}

@@ -27,6 +27,8 @@ var renewMonths = 1;
 var messageTargetId = null;
 var filterSvc = '';
 var filterSt = '';
+var activeTagFilter = '';
+var CLIENT_TAG_OPTIONS = ['VIP','Buen pagador','Pendiente revisar','No renovar','Problemático','Familia / amigo'];
 var hasSelectedClientFilter = false;
 var showFilters = false;
 var raffles = [];
@@ -80,6 +82,102 @@ function parseAppsFromDb(value) {
   }
 }
 
+
+// ========== ETIQUETAS CLIENTES ==========
+function normalizeClientTags(value) {
+  if (!value) return [];
+  var arr = Array.isArray(value) ? value : String(value).split(/[,|]/);
+  var seen = {};
+  return arr.map(function(t){ return String(t || '').trim(); })
+    .filter(Boolean)
+    .filter(function(t){
+      var k = t.toLowerCase();
+      if (seen[k]) return false;
+      seen[k] = true;
+      return true;
+    });
+}
+
+function clientTagsHtml(c) {
+  var tags = normalizeClientTags(c && c.tags);
+  if (!tags.length) return '';
+  return '<div class="clientTags">' + tags.map(function(t){
+    return '<button type="button" class="clientTag" onclick="setTagFilter(\''+esc(t).replace(/'/g, "\\'")+'\')">'+esc(t)+'</button>';
+  }).join('') + '</div>';
+}
+
+function renderClientTagsInput(tags) {
+  var box = document.getElementById('clientTagsEditor');
+  var custom = document.getElementById('fCustomTags');
+  if (!box) return;
+  tags = normalizeClientTags(tags);
+  var lower = tags.map(function(t){ return t.toLowerCase(); });
+  box.innerHTML = CLIENT_TAG_OPTIONS.map(function(t){
+    var selected = lower.indexOf(t.toLowerCase()) >= 0;
+    return '<button type="button" class="tagPick '+(selected?'selected':'')+'" data-tag="'+esc(t)+'" onclick="toggleClientTagPick(this)">'+esc(t)+'</button>';
+  }).join('');
+  var extras = tags.filter(function(t){
+    return CLIENT_TAG_OPTIONS.map(function(x){return x.toLowerCase();}).indexOf(t.toLowerCase()) < 0;
+  });
+  if (custom) custom.value = extras.join(', ');
+}
+
+function toggleClientTagPick(btn) {
+  if (!btn) return;
+  btn.classList.toggle('selected');
+}
+
+function getSelectedClientTags() {
+  var tags = [];
+  document.querySelectorAll('#clientTagsEditor .tagPick.selected').forEach(function(btn){
+    tags.push(btn.dataset.tag || btn.textContent || '');
+  });
+  var custom = document.getElementById('fCustomTags');
+  if (custom && custom.value) tags = tags.concat(custom.value.split(','));
+  return normalizeClientTags(tags);
+}
+
+function setTagFilter(tag) {
+  activeTagFilter = tag || '';
+  hasSelectedClientFilter = true;
+  renderTagFilterBar();
+  renderCards();
+  var sc = document.getElementById('mainScroll');
+  if (sc) sc.scrollTo({top: 200, behavior: 'smooth'});
+}
+
+function clearTagFilter() {
+  activeTagFilter = '';
+  renderTagFilterBar();
+  renderCards();
+}
+
+function allClientTags() {
+  var tags = [];
+  (clients || []).forEach(function(c){ tags = tags.concat(normalizeClientTags(c.tags)); });
+  return normalizeClientTags(tags).sort(function(a,b){ return a.localeCompare(b); });
+}
+
+function renderTagFilterBar() {
+  var box = document.getElementById('tagFilterBar');
+  if (!box) return;
+  var tags = allClientTags();
+  if (!tags.length) {
+    box.innerHTML = '';
+    box.style.display = 'none';
+    return;
+  }
+  box.style.display = 'flex';
+  box.innerHTML =
+    '<span class="tagFilterTitle">Etiquetas</span>' +
+    tags.map(function(t){
+      return '<button class="tagFilterChip '+(activeTagFilter===t?'active':'')+'" onclick="setTagFilter(\''+esc(t).replace(/'/g, "\\'")+'\')">'+esc(t)+'</button>';
+    }).join('') +
+    (activeTagFilter ? '<button class="tagFilterClear" onclick="clearTagFilter()">Quitar etiqueta</button>' : '');
+}
+// ========== FIN ETIQUETAS CLIENTES ==========
+
+
 function dbRowToClient(row) {
   return {
     id: row.id,
@@ -89,6 +187,7 @@ function dbRowToClient(row) {
     service: row.servicio || 'TODO',
     expiry: row.expiracion || '',
     notes: row.notas || '',
+    tags: normalizeClientTags(row.etiquetas || row.tags || ''),
     apps: parseAppsFromDb(row.apps),
     avisoRenovacionEnviado: !!row.aviso_renovacion_enviado,
     avisoRenovacionFecha: row.aviso_renovacion_fecha || '',
@@ -110,6 +209,7 @@ function clientToDbPayload(c) {
     expiracion: c.expiry || null,
     apps: JSON.stringify(c.apps || []),
     notas: c.notes || '',
+    etiquetas: normalizeClientTags(c.tags || []),
     aviso_renovacion_enviado: !!c.avisoRenovacionEnviado,
     aviso_renovacion_fecha: c.avisoRenovacionFecha || null,
     aviso_renovacion_expiracion: c.avisoRenovacionExpiracion || null,
@@ -191,6 +291,8 @@ function showAppAfterLogin() {
   renderCards();
   updateStats();
   updateBackupReminder();
+  renderTagFilterBar();
+  renderAutoAlerts();
 }
 
 
@@ -760,7 +862,7 @@ function buildClientExportRows() {
   return clients.map(function(c){
     var svc = c.service === 'ESPANA' ? 'ESPAÑA' : c.service;
     var appsStr=(c.apps||[]).map(function(a){var s=a.name;if(a.customName) s+=' ('+a.customName+')';if(a.mac) s+=' MAC:'+a.mac;if(a.code) s+=' CODE:'+a.code;return s;}).join(' | ');
-    return {'ID':c.id,'Nombre':c.name,'Usuario':c.user,'Contrasena':c.pass,'Servicio':svc,'Expiracion':c.expiry,'Apps':appsStr,'Notas':c.notes,'AvisoRenovacion':isRenewalNoticeCurrent(c)?'SI':'NO','FechaAviso':c.avisoRenovacionFecha?String(c.avisoRenovacionFecha).split('T')[0]:'','ContestadoAviso':clientHasAnsweredRenewalNotice(c)?'SI':'NO','FechaContestacion':c.avisoRenovacionContestadoFecha?String(c.avisoRenovacionContestadoFecha).split('T')[0]:'','Creado':c.createdAt?String(c.createdAt).split('T')[0]:''};
+    return {'ID':c.id,'Nombre':c.name,'Usuario':c.user,'Contrasena':c.pass,'Servicio':svc,'Expiracion':c.expiry,'Apps':appsStr,'Etiquetas':normalizeClientTags(c.tags).join(', '),'Notas':c.notes,'AvisoRenovacion':isRenewalNoticeCurrent(c)?'SI':'NO','FechaAviso':c.avisoRenovacionFecha?String(c.avisoRenovacionFecha).split('T')[0]:'','ContestadoAviso':clientHasAnsweredRenewalNotice(c)?'SI':'NO','FechaContestacion':c.avisoRenovacionContestadoFecha?String(c.avisoRenovacionContestadoFecha).split('T')[0]:'','Creado':c.createdAt?String(c.createdAt).split('T')[0]:''};
   });
 }
 
@@ -1661,6 +1763,47 @@ function financePeriodFilter() {
   };
 }
 
+
+function financeMonthlyTotals(year) {
+  var rows = [];
+  for (var i = 1; i <= 12; i++) {
+    var key = year + '-' + pad2(i);
+    var inMonth = function(dateValue){ return financeMonthKeyFromDate(dateValue) === key; };
+    var clientIncome = financeSumPaidRenewals(function(r){ return inMonth(financeRenewalDate(r)); });
+    var otherIncome = financeSumMovements('ingreso', function(m){ return inMonth(m.date); });
+    var expense = financeSumMovements('gasto', function(m){ return inMonth(m.date); });
+    var income = clientIncome + otherIncome;
+    var profit = income - expense;
+    rows.push({month: FINANCE_MONTH_NAMES[i-1].slice(0,3), income: income, expense: expense, profit: profit});
+  }
+  return rows;
+}
+
+function financeBarsChartHtml(title, rows, key, className) {
+  var max = rows.reduce(function(acc, r){ return Math.max(acc, Math.abs(Number(r[key] || 0))); }, 1);
+  return '<div class="financeChartCard">' +
+    '<div class="financeChartTitle">'+title+'</div>' +
+    '<div class="financeBarChart">' +
+      rows.map(function(r){
+        var val = Number(r[key] || 0);
+        var h = Math.max(4, Math.round((Math.abs(val) / max) * 100));
+        return '<div class="financeBarCol" title="'+r.month+' · '+euro(val)+'">' +
+          '<div class="financeBarVal">'+(val ? euro(val) : '')+'</div>' +
+          '<div class="financeBarTrack"><div class="financeBar '+className+(val < 0 ? ' negative':'')+'" style="height:'+h+'%"></div></div>' +
+          '<div class="financeBarLabel">'+r.month+'</div>' +
+        '</div>';
+      }).join('') +
+    '</div>' +
+  '</div>';
+}
+
+function financeChartsHtml(year) {
+  var rows = financeMonthlyTotals(year);
+  return financeBarsChartHtml('Ingresos por mes', rows, 'income', 'income') +
+         financeBarsChartHtml('Gastos por mes', rows, 'expense', 'expense') +
+         financeBarsChartHtml('Beneficio por mes', rows, 'profit', 'profit');
+}
+
 function financeMonthSummaryHtml(year) {
   var rows = [];
   for (var i = 1; i <= 12; i++) {
@@ -1734,6 +1877,11 @@ function renderFinanceDashboard() {
     summaryBox.style.display = p.isYearView ? 'grid' : 'none';
     summaryBox.innerHTML = p.isYearView ? financeMonthSummaryHtml(p.selectedYear) : '';
   }
+  var chartBox = document.getElementById('financeCharts');
+  if (chartBox) {
+    chartBox.style.display = p.isYearView ? 'grid' : 'none';
+    chartBox.innerHTML = p.isYearView ? financeChartsHtml(p.selectedYear) : '';
+  }
 
   if (!box) return;
   var list = (financeMovements || []).filter(function(m){ return p.inPeriod(m.date); });
@@ -1793,6 +1941,7 @@ async function openFinanceBalance() {
 
   await loadRenewals(false);
   await loadFinanceMovements(false);
+  setTimeout(ensureFinanceEnhancementsVisible, 120);
 }
 
 function buildFinanceExportRows() {
@@ -1903,6 +2052,89 @@ function resetClientView() {
   renderCards();
 }
 
+
+// ========== AVISOS AUTOMATICOS ==========
+
+function getAutoAlertItems() {
+  var soonNoNotice = (clients || []).filter(function(c){ return getStatus(c.expiry)==='warn' && !clientHasRenewalNotice(c); });
+  var pendingPay = (clients || []).filter(function(c){ return clientHasPendingPayment(c); });
+  var noAnswer = (clients || []).filter(function(c){ return clientHasUnansweredRenewalNotice(c); });
+  var expired = (clients || []).filter(function(c){ return getStatus(c.expiry)==='exp'; });
+  var noRenewExpired = expired.filter(function(c){ return normalizeClientTags(c.tags).map(function(t){return t.toLowerCase();}).indexOf('no renovar') >= 0; });
+
+  return [
+    {icon:'⏰', title:'Caducan pronto sin aviso', count:soonNoNotice.length, text:'Clientes que caducan pronto y todavía no están marcados como avisados.', action:"quickFilter('warn_no_advised')"},
+    {icon:'💸', title:'Pagos pendientes', count:pendingPay.length, text:'Clientes con importes pendientes de cobrar.', action:"quickFilter('paypend')"},
+    {icon:'👀', title:'Avisados sin contestar', count:noAnswer.length, text:'Clientes avisados que todavía no han contestado.', action:"quickFilter('noanswer')"},
+    {icon:'⚠️', title:'Clientes caducados', count:expired.length, text:'Clientes que ya han pasado la fecha de expiración.', action:"quickFilter('exp')"},
+    {icon:'🚫', title:'No renovar caducados', count:noRenewExpired.length, text:'Caducados marcados con etiqueta No renovar.', action:"quickFilter('exp_tag_no_renew')"}
+  ];
+}
+
+function openAlertsPanel() {
+  closeSheet('menuSheet','menuOverlay');
+  renderAutoAlerts();
+  renderAlertsPanelContent();
+  openSheet('alertsSheet','alertsOverlay');
+}
+
+function renderAlertsPanelContent() {
+  var box = document.getElementById('alertsPanelContent');
+  if (!box) return;
+  var items = getAutoAlertItems();
+
+  box.innerHTML =
+    '<div class="autoAlertsGrid alwaysVisible">' +
+      items.map(function(it){
+        return '<button class="autoAlertCard" onclick="closeSheet(&quot;alertsSheet&quot;,&quot;alertsOverlay&quot;);'+it.action+'">' +
+          '<span class="autoAlertIcon">'+it.icon+'</span>' +
+          '<span class="autoAlertText"><strong>'+it.title+'</strong><small>'+it.text+'</small></span>' +
+          '<span class="autoAlertCount">'+it.count+'</span>' +
+        '</button>';
+      }).join('') +
+    '</div>' +
+    '<div class="emptyMini" style="margin-top:10px">Aunque un contador esté a 0, el aviso quedará preparado para cuando aparezcan clientes en ese estado.</div>';
+}
+
+function renderAutoAlerts() {
+  var box = document.getElementById('autoAlerts');
+  if (!box) return;
+
+  var soonNoNotice = (clients || []).filter(function(c){ return getStatus(c.expiry)==='warn' && !clientHasRenewalNotice(c); });
+  var pendingPay = (clients || []).filter(function(c){ return clientHasPendingPayment(c); });
+  var noAnswer = (clients || []).filter(function(c){ return clientHasUnansweredRenewalNotice(c); });
+  var expired = (clients || []).filter(function(c){ return getStatus(c.expiry)==='exp'; });
+  var noRenewExpired = expired.filter(function(c){ return normalizeClientTags(c.tags).map(function(t){return t.toLowerCase();}).indexOf('no renovar') >= 0; });
+
+  var items = [];
+  if (soonNoNotice.length) items.push({icon:'⏰', title:'Caducan pronto sin aviso', count:soonNoNotice.length, text:'Clientes para avisar antes de que caduquen.', action:"quickFilter('warn_no_advised')"});
+  if (pendingPay.length) items.push({icon:'💸', title:'Pagos pendientes', count:pendingPay.length, text:'Clientes con importes pendientes de cobrar.', action:"quickFilter('paypend')"});
+  if (noAnswer.length) items.push({icon:'👀', title:'Avisados sin contestar', count:noAnswer.length, text:'Clientes avisados que todavía no han contestado.', action:"quickFilter('noanswer')"});
+  if (expired.length) items.push({icon:'⚠️', title:'Clientes caducados', count:expired.length, text:'Clientes que ya han pasado la fecha de expiración.', action:"quickFilter('exp')"});
+  if (noRenewExpired.length) items.push({icon:'🚫', title:'No renovar caducados', count:noRenewExpired.length, text:'Caducados marcados con etiqueta No renovar.', action:"quickFilter('exp_tag_no_renew')"});
+
+  if (!items.length) {
+    box.style.display = 'block';
+    box.innerHTML = '<div class="autoAlertsTitle">🔔 Avisos automáticos</div><div class="emptyMini">Todo al día. No hay avisos importantes ahora mismo.</div>';
+    return;
+  }
+
+  box.style.display = 'block';
+  box.innerHTML =
+    '<div class="autoAlertsTitle">🔔 Avisos automáticos</div>' +
+    '<div class="autoAlertsGrid">' +
+      items.map(function(it){
+        return '<button class="autoAlertCard" onclick="'+it.action+'">' +
+          '<span class="autoAlertIcon">'+it.icon+'</span>' +
+          '<span class="autoAlertText"><strong>'+it.title+'</strong><small>'+it.text+'</small></span>' +
+          '<span class="autoAlertCount">'+it.count+'</span>' +
+        '</button>';
+      }).join('') +
+    '</div>';
+}
+// ========== FIN AVISOS AUTOMATICOS ==========
+
+
 function quickFilter(st) {
   filterSt = st;
   hasSelectedClientFilter = true;
@@ -1918,6 +2150,8 @@ function quickFilter(st) {
     if (st === 'advised') lbl.textContent = 'Mostrando: Clientes avisados';
     if (st === 'answered') lbl.textContent = 'Mostrando: Avisados que han contestado';
     if (st === 'noanswer') lbl.textContent = 'Mostrando: Avisados sin contestar';
+    if (st === 'warn_no_advised') lbl.textContent = 'Mostrando: Expiran pronto sin aviso enviado';
+    if (st === 'exp_tag_no_renew') lbl.textContent = 'Mostrando: Expirados marcados como No renovar';
   }
   renderCards();
   document.getElementById('mainScroll').scrollTo({top: 200, behavior: 'smooth'});
@@ -1972,16 +2206,18 @@ function renderCards() {
     if (container) container.innerHTML = '';
     if (empty) {
       empty.style.display = 'block';
-      empty.innerHTML = '<div class="ico">&#128064;</div><div>Selecciona un filtro para ver clientes</div><small style="display:block;margin-top:8px;color:var(--muted);font-size:12px">Pulsa Total, Activos, Expiran pronto, Pendientes de pago, Avisados, Contestados o Sin contestar.</small>';
+      empty.innerHTML = '<div class="ico">&#128064;</div><div>Selecciona un filtro para ver clientes</div><small style="display:block;margin-top:8px;color:var(--muted);font-size:12px">Pulsa Total, Activos, Expiran pronto, Pendientes de pago, Avisados, Contestados, Sin contestar o una etiqueta.</small>';
     }
     return;
   }
   if (search) hasSelectedClientFilter = true;
   var filtered = clients.filter(function(c) {
-    var ms = !search || c.name.toLowerCase().indexOf(search)>=0 || (c.user||'').toLowerCase().indexOf(search)>=0;
+    var tagText = normalizeClientTags(c.tags).join(' ').toLowerCase();
+    var ms = !search || c.name.toLowerCase().indexOf(search)>=0 || (c.user||'').toLowerCase().indexOf(search)>=0 || tagText.indexOf(search)>=0;
     var mv = !filterSvc || c.service===filterSvc;
-    var mt = !filterSt || (filterSt==='paypend' ? clientHasPendingPayment(c) : (filterSt==='advised' ? clientHasRenewalNotice(c) : (filterSt==='answered' ? clientHasAnsweredRenewalNotice(c) : (filterSt==='noanswer' ? clientHasUnansweredRenewalNotice(c) : (filterSt==='ok' ? (getStatus(c.expiry)==='ok'||getStatus(c.expiry)==='warn') : getStatus(c.expiry)===filterSt)))));
-    return ms && mv && mt;
+    var mt = !filterSt || (filterSt==='paypend' ? clientHasPendingPayment(c) : (filterSt==='advised' ? clientHasRenewalNotice(c) : (filterSt==='answered' ? clientHasAnsweredRenewalNotice(c) : (filterSt==='noanswer' ? clientHasUnansweredRenewalNotice(c) : (filterSt==='warn_no_advised' ? (getStatus(c.expiry)==='warn' && !clientHasRenewalNotice(c)) : (filterSt==='exp_tag_no_renew' ? (getStatus(c.expiry)==='exp' && normalizeClientTags(c.tags).map(function(t){return t.toLowerCase();}).indexOf('no renovar')>=0) : (filterSt==='ok' ? (getStatus(c.expiry)==='ok'||getStatus(c.expiry)==='warn') : getStatus(c.expiry)===filterSt)))))));
+    var mtag = !activeTagFilter || normalizeClientTags(c.tags).indexOf(activeTagFilter) >= 0;
+    return ms && mv && mt && mtag;
   });
   filtered = sortClientsByExpiryAsc(filtered);
   container.innerHTML = '';
@@ -2026,6 +2262,7 @@ function renderCards() {
         '</div>' +
       '</div>' +
       '<div class="clientCard-expiry">Expira: <span>' + formatDate(c.expiry) + '</span></div>' +
+      clientTagsHtml(c) +
       renewalNoticeHtml(c, 'card') +
       pendingPaymentNoticeHtml(c, 'card') +
       '<div class="clientCard-actions">' +
@@ -2129,6 +2366,7 @@ function openNewClient() {
   document.getElementById('fExpiry').value='';
   document.getElementById('fService').value='TODO';
   document.getElementById('fNotes').value='';
+  renderClientTagsInput([]);
   var initialBox = document.getElementById('initialPaymentBox');
   var savePendingBtn = document.getElementById('saveClientPendingBtn');
   if (initialBox) initialBox.style.display = 'block';
@@ -2152,6 +2390,7 @@ function editClient(id) {
   document.getElementById('fExpiry').value=c.expiry||'';
   document.getElementById('fService').value=c.service||'TODO';
   document.getElementById('fNotes').value=c.notes||'';
+  renderClientTagsInput(c.tags||[]);
   var initialBox = document.getElementById('initialPaymentBox');
   var savePendingBtn = document.getElementById('saveClientPendingBtn');
   if (initialBox) initialBox.style.display = 'none';
@@ -2189,6 +2428,7 @@ async function saveClient(markInitialPending) {
   var expiry=document.getElementById('fExpiry').value;
   var service=document.getElementById('fService').value;
   var notes=document.getElementById('fNotes').value.trim();
+  var tags=getSelectedClientTags();
   var id=document.getElementById('editId').value;
   var creatingNew = !id;
   var initialAmountEl = document.getElementById('fInitialAmount');
@@ -2240,6 +2480,7 @@ async function saveClient(markInitialPending) {
       expiry:expiry,
       service:service,
       notes:notes,
+      tags:tags,
       apps:appsData,
       createdAt: existingClient && existingClient.createdAt ? existingClient.createdAt : new Date().toISOString(),
       avisoRenovacionEnviado: existingClient ? !!existingClient.avisoRenovacionEnviado : false,
@@ -2304,6 +2545,7 @@ function viewClient(id) {
   var html='';
   html+='<div class="viewRow"><div class="vlabel">Servicio</div><div class="vval"><span class="badge '+(c.service==='TODO'?'badgeTodo':'badgeEs')+'">'+svcLabel+'</span></div></div>';
   html+='<div class="viewRow"><div class="vlabel">Expiracion</div><div class="vval">'+formatDate(c.expiry)+' '+statusBadge(c.expiry)+(clientHasPendingPayment(c)?' <span class="badge badgePayPending">Pago pendiente</span>':'')+(clientHasRenewalNotice(c)?' <span class="badge badgeAdvised">Avisado</span>':'')+renewalReplyBadgeHtml(c)+'</div></div>';
+  if (normalizeClientTags(c.tags).length) html+='<div class="viewRow"><div class="vlabel">Etiquetas</div><div class="vval">'+clientTagsHtml(c)+'</div></div>';
   html+=renewalNoticeHtml(c, 'view');
   html+=pendingPaymentNoticeHtml(c, 'view');
   html+='<div class="viewRow"><div class="vlabel">Usuario</div><div style="display:flex;align-items:center;gap:8px"><span style="font-family:monospace;color:var(--cyan)">'+esc(c.user||'-')+'</span>'+(c.user?'<button class="btnCopy" data-copy="'+esc(c.user)+'" onclick="copyText(this.dataset.copy,this)">Copiar</button>':'')+'</div></div>';
@@ -2990,7 +3232,7 @@ function importExcel(event) {
         var avisoImported = avisoRaw === 'si' || avisoRaw === 'sí' || avisoRaw === 'true' || avisoRaw === '1';
         var contestadoRaw = String(row['ContestadoAviso'] || '').trim().toLowerCase();
         var contestadoImported = contestadoRaw === 'si' || contestadoRaw === 'sí' || contestadoRaw === 'true' || contestadoRaw === '1';
-        var nc={id:rowId,name:row['Nombre']||'',user:row['Usuario']||'',pass:row['Contrasena']||'',service:svc,expiry:importedExpiry,notes:row['Notas']||'',apps:apps.length?apps:[],createdAt:row['Creado']||new Date().toISOString(),avisoRenovacionEnviado:avisoImported,avisoRenovacionFecha:row['FechaAviso']?normalizeImportDate(row['FechaAviso']):null,avisoRenovacionExpiracion:avisoImported?importedExpiry:null,avisoRenovacionContestado:avisoImported&&contestadoImported,avisoRenovacionContestadoFecha:row['FechaContestacion']?normalizeImportDate(row['FechaContestacion']):null,avisoRenovacionContestadoExpiracion:(avisoImported&&contestadoImported)?importedExpiry:null};
+        var nc={id:rowId,name:row['Nombre']||'',user:row['Usuario']||'',pass:row['Contrasena']||'',service:svc,expiry:importedExpiry,notes:row['Notas']||'',tags:normalizeClientTags(row['Etiquetas']||''),apps:apps.length?apps:[],createdAt:row['Creado']||new Date().toISOString(),avisoRenovacionEnviado:avisoImported,avisoRenovacionFecha:row['FechaAviso']?normalizeImportDate(row['FechaAviso']):null,avisoRenovacionExpiracion:avisoImported?importedExpiry:null,avisoRenovacionContestado:avisoImported&&contestadoImported,avisoRenovacionContestadoFecha:row['FechaContestacion']?normalizeImportDate(row['FechaContestacion']):null,avisoRenovacionContestadoExpiracion:(avisoImported&&contestadoImported)?importedExpiry:null};
         var saved = await saveClientToStore(nc);
         if(existingIdx>=0) clients[existingIdx]=saved; else clients.push(saved);
         imported++;
@@ -5176,4 +5418,24 @@ document.addEventListener('DOMContentLoaded', function(){
 
 document.addEventListener('DOMContentLoaded', function(){
   setTimeout(cleanupDuplicateMessageTemplateButtons, 900);
+});
+
+
+function ensureFinanceEnhancementsVisible() {
+  try {
+    var chartBox = document.getElementById('financeCharts');
+    var header = document.querySelector('.financeChartsHeader');
+    if (chartBox && !chartBox.innerHTML.trim() && typeof financeChartsHtml === 'function') {
+      var y = document.getElementById('financeYear');
+      var year = y ? y.value : String(new Date().getFullYear());
+      chartBox.innerHTML = financeChartsHtml(year);
+    }
+    if (header) header.style.display = '';
+  } catch(e) {}
+}
+
+document.addEventListener('DOMContentLoaded', function(){
+  setTimeout(function(){
+    try { renderTagFilterBar(); renderAutoAlerts(); } catch(e) {}
+  }, 900);
 });
