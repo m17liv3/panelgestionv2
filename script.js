@@ -1919,6 +1919,65 @@ function resetMessageTemplatesToDefault() {
 
   if (typeof showToast === 'function') showToast('Textos originales restaurados. Pulsa Guardar plantillas para sincronizar.');
 }
+
+function ensureMessageTemplateEditorUi() {
+  try {
+    var messageSheet = document.getElementById('messageSheet');
+    if (messageSheet) {
+      var body = messageSheet.querySelector('.sheet-body');
+      if (body && !document.getElementById('openMessageTemplateEditorBtn')) {
+        var closeBtn = body.querySelector('button[onclick*="closeSheet"][onclick*="messageSheet"]');
+        var btn = document.createElement('button');
+        btn.className = 'btnFull primary';
+        btn.id = 'openMessageTemplateEditorBtn';
+        btn.style.marginTop = '12px';
+        btn.innerHTML = '&#9998; Editar plantillas de mensajes';
+        btn.onclick = function(){ openMessageTemplateEditor(); };
+        if (closeBtn && closeBtn.parentNode === body) body.insertBefore(btn, closeBtn);
+        else body.appendChild(btn);
+      }
+      var info = document.getElementById('messageInfo');
+      if (info) info.textContent = 'Pulsa el tipo de mensaje para copiarlo. También puedes editar las plantillas y guardarlas para todos los clientes.';
+    }
+
+    if (!document.getElementById('messageTemplateSheet')) {
+      var overlay = document.createElement('div');
+      overlay.className = 'sheet-overlay';
+      overlay.id = 'messageTemplateOverlay';
+      overlay.onclick = function(){ closeSheet('messageTemplateSheet','messageTemplateOverlay'); };
+
+      var sheet = document.createElement('div');
+      sheet.className = 'sheet';
+      sheet.id = 'messageTemplateSheet';
+      sheet.innerHTML =
+        '<div class="sheet-handle"></div>' +
+        '<div class="sheet-header">' +
+          '<h3>&#9998; Editar plantillas Msg</h3>' +
+          '<button class="sheet-close" onclick="closeSheet(&quot;messageTemplateSheet&quot;,&quot;messageTemplateOverlay&quot;)">x</button>' +
+        '</div>' +
+        '<div class="sheet-body">' +
+          '<div class="messageTemplateHelp">' +
+            'Puedes cambiar los textos y se aplicarán a todos los clientes. Mantén las variables entre llaves para que la app ponga los datos de cada cliente.' +
+            '<div class="messageTemplateVars">{saludo} · {nombre} · {app} · {usuario} · {password} · {expiracion} · {servicio} · {fecha_hoy}</div>' +
+          '</div>' +
+          '<div class="formGroup"><label>Datos de acceso</label><textarea id="msgTplAccess" class="msgTemplateTextarea" rows="9"></textarea></div>' +
+          '<div class="formGroup"><label>Aviso de caducidad</label><textarea id="msgTplExpiry" class="msgTemplateTextarea" rows="8"></textarea></div>' +
+          '<div class="formGroup"><label>Renovación OK</label><textarea id="msgTplRenewed" class="msgTemplateTextarea" rows="7"></textarea></div>' +
+          '<div class="formGroup"><label>Cliente caducado</label><textarea id="msgTplExpired" class="msgTemplateTextarea" rows="7"></textarea></div>' +
+          '<div class="formError" id="messageTemplateError"></div>' +
+          '<button class="btnFull primary" id="messageTemplateSaveBtn" onclick="saveMessageTemplates(this)">&#128190; Guardar plantillas</button>' +
+          '<button class="btnFull gray" onclick="resetMessageTemplatesToDefault()" style="margin-top:8px">&#8634; Restaurar textos originales</button>' +
+          '<button class="btnFull gray" onclick="closeSheet(&quot;messageTemplateSheet&quot;,&quot;messageTemplateOverlay&quot;)" style="margin-top:8px">Cerrar</button>' +
+        '</div>';
+
+      document.body.appendChild(overlay);
+      document.body.appendChild(sheet);
+    }
+  } catch(e) {
+    console.warn('No se pudo preparar el editor de plantillas de mensajes', e);
+  }
+}
+
 // ========== FIN PLANTILLAS EDITABLES DE MENSAJES ==========
 
 
@@ -1938,6 +1997,7 @@ function buildClientMessage(c, type) {
 
 function openClientMessages(id) {
   messageTargetId = id;
+  ensureMessageTemplateEditorUi();
   var c = getClientById(id);
   if (!c) return;
   var title = document.getElementById('messageSheetTitle');
@@ -1945,6 +2005,7 @@ function openClientMessages(id) {
   if (title) title.textContent = 'Mensajes · ' + c.name;
   if (info) info.textContent = 'Pulsa el tipo de mensaje para copiarlo. Si quieres cambiar el texto para todos los clientes, entra en “Editar plantillas de mensajes”.';
   openSheet('messageSheet','messageOverlay');
+  setTimeout(ensureMessageTemplateEditorUi, 80);
 }
 
 function copyMessageText(txt, btn) {
@@ -4497,3 +4558,7 @@ setInterval(function(){
   var paymentsSheet = document.getElementById('paymentsSheet');
   if (paymentsSheet && paymentsSheet.classList.contains('open')) ensurePaymentDeleteButtons();
 }, 1200);
+
+document.addEventListener('DOMContentLoaded', function(){
+  setTimeout(ensureMessageTemplateEditorUi, 700);
+});

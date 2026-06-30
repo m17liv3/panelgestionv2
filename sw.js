@@ -1,4 +1,4 @@
-const CACHE_NAME = 'm17liv3-renew-amount-required-v4-borrar-force-mensajes-editables';
+const CACHE_NAME = 'm17liv3-renew-amount-required-v4-borrar-force-mensajes-editables-mensajes-editables-force';
 const APP_SHELL = [
   './',
   './index.html',
