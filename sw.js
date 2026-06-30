@@ -1,4 +1,4 @@
-const CACHE_NAME = 'm17liv3-new-client-payment-v1';
+const CACHE_NAME = 'm17liv3-renew-amount-required-v4';
 const APP_SHELL = [
   './',
   './index.html',

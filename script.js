@@ -1882,56 +1882,25 @@ function openRenew(id) {
   var methodEl = document.getElementById('renewPaymentMethod');
   var notesEl = document.getElementById('renewPaymentNotes');
   var errEl = document.getElementById('renewPaymentError');
-
+  var btn = document.getElementById('renewConfirmBtn');
   if (amountEl) {
     amountEl.value = '';
     amountEl.style.borderColor = '';
-    if (!amountEl.dataset.renewValidationBound) {
-      amountEl.addEventListener('input', refreshRenewButtonsState);
-      amountEl.addEventListener('change', refreshRenewButtonsState);
-      amountEl.dataset.renewValidationBound = '1';
-    }
+    amountEl.oninput = function(){
+      if (String(amountEl.value || '').trim() !== '') {
+        amountEl.style.borderColor = '';
+        if (errEl) { errEl.textContent = ''; errEl.style.display = 'none'; }
+      }
+      if (btn) { btn.disabled = false; btn.innerHTML = '&#8635; Confirmar Renovacion'; }
+    };
   }
-
+  if (btn) { btn.disabled = false; btn.innerHTML = '&#8635; Confirmar Renovacion'; }
   if (methodEl) methodEl.value = 'Bizum';
   if (notesEl) notesEl.value = '';
   if (errEl) { errEl.textContent = ''; errEl.style.display = 'none'; }
-
   updateRenewHint(c);
   openSheet('renewSheet','renewOverlay');
-  setTimeout(refreshRenewButtonsState, 50);
 }
-
-function renewAmountHasWrittenValue() {
-  var amountEl = document.getElementById('renewAmount');
-  return !!amountEl && String(amountEl.value || '').trim() !== '';
-}
-
-function refreshRenewButtonsState() {
-  var amountEl = document.getElementById('renewAmount');
-  var btn = document.getElementById('renewConfirmBtn');
-  var errEl = document.getElementById('renewPaymentError');
-  var hasAmount = renewAmountHasWrittenValue();
-
-  if (btn) {
-    btn.disabled = !hasAmount;
-    btn.setAttribute('aria-disabled', hasAmount ? 'false' : 'true');
-    btn.title = hasAmount ? '' : 'Para confirmar escribe una cantidad o 0. Si paga despues, usa Paga mas tarde.';
-    btn.classList.toggle('disabledSoft', !hasAmount);
-  }
-
-  if (amountEl && hasAmount) amountEl.style.borderColor = '';
-  if (errEl) {
-    if (!hasAmount) {
-      errEl.textContent = 'Para confirmar debes escribir un importe. Si es gratis, escribe 0. Si te pagara despues, pulsa “Paga mas tarde”.';
-      errEl.style.display = 'block';
-    } else {
-      errEl.textContent = '';
-      errEl.style.display = 'none';
-    }
-  }
-}
-
 function changeRenewMonths(delta) {
   renewMonths = Math.max(1, Math.min(24, renewMonths + delta));
   document.getElementById('renewMonthsVal').textContent = renewMonths;
@@ -1955,26 +1924,29 @@ async function doRenew(markAsPending) {
   var errEl = document.getElementById('renewPaymentError');
   var btn = document.getElementById('renewConfirmBtn');
   var pendingBtn = document.getElementById('renewPendingBtn');
-  var rawAmountValue = amountEl ? String(amountEl.value || '').trim() : '';
+  var rawAmount = amountEl ? String(amountEl.value || '').trim() : '';
 
-  if (!markAsPending && rawAmountValue === '') {
+  // IMPORTANTE: el importe vacio NO confirma como pagado.
+  // Debe usarse "Paga mas tarde" o escribir una cantidad. Para gratis, escribir 0.
+  if (!markAsPending && rawAmount === '') {
     if (errEl) {
-      errEl.textContent = 'No puedes confirmar la renovacion con el importe vacio. Escribe una cantidad o 0 si es gratis. Si te pagara despues, pulsa “Paga mas tarde”.';
+      errEl.textContent = 'Importe obligatorio: escribe una cantidad o 0 si es gratis. Si te pagara despues, pulsa “Paga mas tarde”.';
       errEl.style.display = 'block';
     }
     if (amountEl) { amountEl.style.borderColor = 'var(--red)'; amountEl.focus(); }
-    refreshRenewButtonsState();
+    if (btn) { btn.disabled = false; btn.innerHTML = '&#8635; Confirmar Renovacion'; }
     return;
   }
 
-  var amount = parseEuroAmount(rawAmountValue);
+  var amount = parseEuroAmount(rawAmount);
   if (isNaN(amount)) {
-    if (errEl) { errEl.textContent = 'Importe no valido. Ejemplo: 10 o 10,50'; errEl.style.display = 'block'; }
+    if (errEl) { errEl.textContent = 'Importe no valido. Ejemplo: 10, 10,50 o 0'; errEl.style.display = 'block'; }
     if (amountEl) { amountEl.style.borderColor = 'var(--red)'; amountEl.focus(); }
+    if (btn) { btn.disabled = false; btn.innerHTML = '&#8635; Confirmar Renovacion'; }
     return;
   }
-
-  if (markAsPending && rawAmountValue === '') amount = 0;
+  if (errEl) { errEl.textContent = ''; errEl.style.display = 'none'; }
+  if (amountEl) amountEl.style.borderColor = '';
   var previousExpiry = c.expiry || '';
   var base=c.expiry?new Date(c.expiry):new Date();
   base.setMonth(base.getMonth()+renewMonths);
@@ -4291,14 +4263,3 @@ if('serviceWorker' in navigator){
 }
 // ========== FIN MODO APP INSTALABLE PWA ==========
 
-
-
-// Validación extra para Renovar suscripción
-document.addEventListener('DOMContentLoaded', function(){
-  var amountEl = document.getElementById('renewAmount');
-  if (amountEl && !amountEl.dataset.renewValidationGlobalBound) {
-    amountEl.addEventListener('input', refreshRenewButtonsState);
-    amountEl.addEventListener('change', refreshRenewButtonsState);
-    amountEl.dataset.renewValidationGlobalBound = '1';
-  }
-});
