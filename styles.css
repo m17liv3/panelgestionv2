@@ -810,3 +810,16 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, 'S
     grid-template-columns: repeat(3,1fr);
   }
 }
+
+
+/* Botón para borrar registros de ingresos / renovaciones */
+.paymentActions .paymentDeleteBtn,
+.paymentNotice .paymentDeleteBtn {
+  border-color: rgba(255,77,77,.65) !important;
+  color: var(--red) !important;
+  background: rgba(255,77,77,.08) !important;
+}
+.paymentActions .paymentDeleteBtn:hover,
+.paymentNotice .paymentDeleteBtn:hover {
+  background: rgba(255,77,77,.16) !important;
+}

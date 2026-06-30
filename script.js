@@ -904,6 +904,7 @@ function pendingPaymentNoticeHtml(c, mode) {
     '<div class="paymentNoticeBtns">' +
       '<button type="button" data-renewal-id="'+esc(r.id)+'" onclick="openEditRenewal(this.dataset.renewalId)">Editar</button>' +
       '<button type="button" data-renewal-id="'+esc(r.id)+'" onclick="markRenewalAsPaid(this.dataset.renewalId, this)">Marcar pagado</button>' +
+      '<button type="button" class="paymentDeleteBtn" data-renewal-id="'+esc(r.id)+'" onclick="deleteRenewalFromStore(this.dataset.renewalId, this)">Borrar</button>' +
     '</div>' +
   '</div>';
 }
@@ -984,6 +985,47 @@ async function updateRenewalInStore(renewalId, patch) {
   if (!USE_SUPABASE) localStorage.setItem('m17_renewals', JSON.stringify(renewals));
   return merged;
 }
+
+async function deleteRenewalFromStore(renewalId, btn) {
+  var r = (renewals || []).find(function(x){ return String(x.id) === String(renewalId); });
+  if (!r) { alert('No se ha encontrado este registro. Pulsa Recargar y vuelve a intentarlo.'); return; }
+
+  var details = (r.clientName || 'Cliente') + ' · ' + euro(r.amount) + ' · ' + (r.createdAt ? formatDateTimeEs(r.createdAt) : 'sin fecha');
+  var ok = confirm('¿Borrar este ingreso / renovación del historial?\n\n' + details + '\n\nEsto quitará este importe de los totales y de los pendientes de pago.');
+  if (!ok) return;
+
+  var oldText = btn ? btn.textContent : '';
+  try {
+    if (btn) { btn.disabled = true; btn.textContent = 'Borrando...'; }
+
+    if (USE_SUPABASE) {
+      var db = initSupabase();
+      var result = await db.from(SUPABASE_RENEWALS_TABLE).delete().eq('id', renewalId);
+      if (result.error) throw result.error;
+    }
+
+    renewals = (renewals || []).filter(function(x){ return String(x.id) !== String(renewalId); });
+    if (!USE_SUPABASE) localStorage.setItem('m17_renewals', JSON.stringify(renewals));
+
+    renderPaymentsDashboard();
+    renderCards();
+
+    var viewSheet = document.getElementById('viewSheet');
+    if (viewSheet && viewSheet.classList.contains('open') && r.clientId) viewClient(r.clientId);
+
+    var editSheet = document.getElementById('editRenewalSheet');
+    if (editSheet && editSheet.classList.contains('open')) closeSheet('editRenewalSheet','editRenewalOverlay');
+
+    if (typeof showToast === 'function') showToast('Registro borrado del historial');
+    else alert('Registro borrado del historial');
+  } catch(ex) {
+    var msg = ex && ex.message ? ex.message : 'No se pudo borrar el registro.';
+    if (typeof showToast === 'function') showToast('Error al borrar: ' + msg, 'error');
+    else alert('Error al borrar: ' + msg);
+    if (btn) { btn.disabled = false; btn.textContent = oldText || 'Borrar'; }
+  }
+}
+
 
 function openEditRenewal(renewalId) {
   // Releer los ingresos antes de editar ayuda cuando vienes de otra pantalla o la PWA estaba en caché.
@@ -1107,6 +1149,7 @@ function clientRenewalsHtml(c) {
         '<div class="paymentActions">' +
           '<button class="paymentEditBtn" data-renewal-id="'+esc(r.id)+'" onclick="openEditRenewal(this.dataset.renewalId)">&#9998; Editar ingreso</button>' +
           (pending ? '<button data-renewal-id="'+esc(r.id)+'" onclick="markRenewalAsPaid(this.dataset.renewalId, this)">&#10003; Marcar pagado</button>' : '') +
+          '<button class="paymentDeleteBtn" data-renewal-id="'+esc(r.id)+'" onclick="deleteRenewalFromStore(this.dataset.renewalId, this)">&#128465; Borrar</button>' +
         '</div>' +
       '</div>';
     }).join('') +
@@ -1172,6 +1215,7 @@ function renderPaymentsDashboard() {
       '<div class="paymentActions">' +
         '<button class="paymentEditBtn" data-renewal-id="'+esc(r.id)+'" onclick="openEditRenewal(this.dataset.renewalId)">&#9998; Editar ingreso</button>' +
         (pending ? '<button data-renewal-id="'+esc(r.id)+'" onclick="markRenewalAsPaid(this.dataset.renewalId, this)">&#10003; Marcar pagado</button>' : '') +
+        '<button class="paymentDeleteBtn" data-renewal-id="'+esc(r.id)+'" onclick="deleteRenewalFromStore(this.dataset.renewalId, this)">&#128465; Borrar</button>' +
       '</div>' +
     '</div>';
   }).join('');
