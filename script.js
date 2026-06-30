@@ -102,7 +102,7 @@ function clientTagsHtml(c) {
   var tags = normalizeClientTags(c && c.tags);
   if (!tags.length) return '';
   return '<div class="clientTags">' + tags.map(function(t){
-    return '<button type="button" class="clientTag" onclick="setTagFilter(\''+esc(t).replace(/'/g, "\\'")+'\')">'+esc(t)+'</button>';
+    return '<button type="button" class="clientTag" onclick="setTagFilter(&quot;'+esc(t)+'&quot;)">'+esc(t)+'</button>';
   }).join('') + '</div>';
 }
 
@@ -163,15 +163,15 @@ function renderTagFilterBar() {
   if (!box) return;
   var tags = allClientTags();
   if (!tags.length) {
-    box.innerHTML = '';
-    box.style.display = 'none';
+    box.innerHTML = '<span class="tagFilterTitle">Etiquetas</span><span class="tagFilterEmpty">Aún no hay etiquetas creadas</span>';
+    box.style.display = 'flex';
     return;
   }
   box.style.display = 'flex';
   box.innerHTML =
     '<span class="tagFilterTitle">Etiquetas</span>' +
     tags.map(function(t){
-      return '<button class="tagFilterChip '+(activeTagFilter===t?'active':'')+'" onclick="setTagFilter(\''+esc(t).replace(/'/g, "\\'")+'\')">'+esc(t)+'</button>';
+      return '<button class="tagFilterChip '+(activeTagFilter===t?'active':'')+'" onclick="setTagFilter(&quot;'+esc(t)+'&quot;)">'+esc(t)+'</button>';
     }).join('') +
     (activeTagFilter ? '<button class="tagFilterClear" onclick="clearTagFilter()">Quitar etiqueta</button>' : '');
 }
@@ -1878,10 +1878,12 @@ function renderFinanceDashboard() {
     summaryBox.innerHTML = p.isYearView ? financeMonthSummaryHtml(p.selectedYear) : '';
   }
   var chartBox = document.getElementById('financeCharts');
+  var chartHeader = document.querySelector('.financeChartsHeader');
   if (chartBox) {
     chartBox.style.display = p.isYearView ? 'grid' : 'none';
     chartBox.innerHTML = p.isYearView ? financeChartsHtml(p.selectedYear) : '';
   }
+  if (chartHeader) chartHeader.style.display = p.isYearView ? '' : 'none';
 
   if (!box) return;
   var list = (financeMovements || []).filter(function(m){ return p.inPeriod(m.date); });
@@ -1941,7 +1943,6 @@ async function openFinanceBalance() {
 
   await loadRenewals(false);
   await loadFinanceMovements(false);
-  setTimeout(ensureFinanceEnhancementsVisible, 120);
 }
 
 function buildFinanceExportRows() {
@@ -2054,7 +2055,6 @@ function resetClientView() {
 
 
 // ========== AVISOS AUTOMATICOS ==========
-
 function getAutoAlertItems() {
   var soonNoNotice = (clients || []).filter(function(c){ return getStatus(c.expiry)==='warn' && !clientHasRenewalNotice(c); });
   var pendingPay = (clients || []).filter(function(c){ return clientHasPendingPayment(c); });
@@ -2063,12 +2063,34 @@ function getAutoAlertItems() {
   var noRenewExpired = expired.filter(function(c){ return normalizeClientTags(c.tags).map(function(t){return t.toLowerCase();}).indexOf('no renovar') >= 0; });
 
   return [
-    {icon:'⏰', title:'Caducan pronto sin aviso', count:soonNoNotice.length, text:'Clientes que caducan pronto y todavía no están marcados como avisados.', action:"quickFilter('warn_no_advised')"},
-    {icon:'💸', title:'Pagos pendientes', count:pendingPay.length, text:'Clientes con importes pendientes de cobrar.', action:"quickFilter('paypend')"},
-    {icon:'👀', title:'Avisados sin contestar', count:noAnswer.length, text:'Clientes avisados que todavía no han contestado.', action:"quickFilter('noanswer')"},
-    {icon:'⚠️', title:'Clientes caducados', count:expired.length, text:'Clientes que ya han pasado la fecha de expiración.', action:"quickFilter('exp')"},
-    {icon:'🚫', title:'No renovar caducados', count:noRenewExpired.length, text:'Caducados marcados con etiqueta No renovar.', action:"quickFilter('exp_tag_no_renew')"}
+    {icon:'⏰', title:'Caducan pronto sin aviso', count:soonNoNotice.length, text:'Clientes que caducan pronto y todavía no están marcados como avisados.', filter:'warn_no_advised'},
+    {icon:'💸', title:'Pagos pendientes', count:pendingPay.length, text:'Clientes con importes pendientes de cobrar.', filter:'paypend'},
+    {icon:'👀', title:'Avisados sin contestar', count:noAnswer.length, text:'Clientes avisados que todavía no han contestado.', filter:'noanswer'},
+    {icon:'⚠️', title:'Clientes caducados', count:expired.length, text:'Clientes que ya han pasado la fecha de expiración.', filter:'exp'},
+    {icon:'🚫', title:'No renovar caducados', count:noRenewExpired.length, text:'Caducados marcados con etiqueta No renovar.', filter:'exp_tag_no_renew'}
   ];
+}
+
+function renderAutoAlertCards(items, onlyWithCount) {
+  var visible = onlyWithCount ? items.filter(function(it){ return it.count > 0; }) : items;
+  if (!visible.length && onlyWithCount) {
+    return '<div class="emptyMini">Todo al día. No hay avisos importantes ahora mismo.</div>';
+  }
+  return '<div class="autoAlertsGrid">' + visible.map(function(it){
+    return '<button class="autoAlertCard" onclick="quickFilter(&quot;'+it.filter+'&quot;)">' +
+      '<span class="autoAlertIcon">'+it.icon+'</span>' +
+      '<span class="autoAlertText"><strong>'+it.title+'</strong><small>'+it.text+'</small></span>' +
+      '<span class="autoAlertCount">'+it.count+'</span>' +
+    '</button>';
+  }).join('') + '</div>';
+}
+
+function renderAutoAlerts() {
+  var box = document.getElementById('autoAlerts');
+  if (!box) return;
+  var items = getAutoAlertItems();
+  box.style.display = 'block';
+  box.innerHTML = '<div class="autoAlertsTitle">🔔 Avisos automáticos</div>' + renderAutoAlertCards(items, true);
 }
 
 function openAlertsPanel() {
@@ -2081,56 +2103,8 @@ function openAlertsPanel() {
 function renderAlertsPanelContent() {
   var box = document.getElementById('alertsPanelContent');
   if (!box) return;
-  var items = getAutoAlertItems();
-
-  box.innerHTML =
-    '<div class="autoAlertsGrid alwaysVisible">' +
-      items.map(function(it){
-        return '<button class="autoAlertCard" onclick="closeSheet(&quot;alertsSheet&quot;,&quot;alertsOverlay&quot;);'+it.action+'">' +
-          '<span class="autoAlertIcon">'+it.icon+'</span>' +
-          '<span class="autoAlertText"><strong>'+it.title+'</strong><small>'+it.text+'</small></span>' +
-          '<span class="autoAlertCount">'+it.count+'</span>' +
-        '</button>';
-      }).join('') +
-    '</div>' +
+  box.innerHTML = renderAutoAlertCards(getAutoAlertItems(), false) +
     '<div class="emptyMini" style="margin-top:10px">Aunque un contador esté a 0, el aviso quedará preparado para cuando aparezcan clientes en ese estado.</div>';
-}
-
-function renderAutoAlerts() {
-  var box = document.getElementById('autoAlerts');
-  if (!box) return;
-
-  var soonNoNotice = (clients || []).filter(function(c){ return getStatus(c.expiry)==='warn' && !clientHasRenewalNotice(c); });
-  var pendingPay = (clients || []).filter(function(c){ return clientHasPendingPayment(c); });
-  var noAnswer = (clients || []).filter(function(c){ return clientHasUnansweredRenewalNotice(c); });
-  var expired = (clients || []).filter(function(c){ return getStatus(c.expiry)==='exp'; });
-  var noRenewExpired = expired.filter(function(c){ return normalizeClientTags(c.tags).map(function(t){return t.toLowerCase();}).indexOf('no renovar') >= 0; });
-
-  var items = [];
-  if (soonNoNotice.length) items.push({icon:'⏰', title:'Caducan pronto sin aviso', count:soonNoNotice.length, text:'Clientes para avisar antes de que caduquen.', action:"quickFilter('warn_no_advised')"});
-  if (pendingPay.length) items.push({icon:'💸', title:'Pagos pendientes', count:pendingPay.length, text:'Clientes con importes pendientes de cobrar.', action:"quickFilter('paypend')"});
-  if (noAnswer.length) items.push({icon:'👀', title:'Avisados sin contestar', count:noAnswer.length, text:'Clientes avisados que todavía no han contestado.', action:"quickFilter('noanswer')"});
-  if (expired.length) items.push({icon:'⚠️', title:'Clientes caducados', count:expired.length, text:'Clientes que ya han pasado la fecha de expiración.', action:"quickFilter('exp')"});
-  if (noRenewExpired.length) items.push({icon:'🚫', title:'No renovar caducados', count:noRenewExpired.length, text:'Caducados marcados con etiqueta No renovar.', action:"quickFilter('exp_tag_no_renew')"});
-
-  if (!items.length) {
-    box.style.display = 'block';
-    box.innerHTML = '<div class="autoAlertsTitle">🔔 Avisos automáticos</div><div class="emptyMini">Todo al día. No hay avisos importantes ahora mismo.</div>';
-    return;
-  }
-
-  box.style.display = 'block';
-  box.innerHTML =
-    '<div class="autoAlertsTitle">🔔 Avisos automáticos</div>' +
-    '<div class="autoAlertsGrid">' +
-      items.map(function(it){
-        return '<button class="autoAlertCard" onclick="'+it.action+'">' +
-          '<span class="autoAlertIcon">'+it.icon+'</span>' +
-          '<span class="autoAlertText"><strong>'+it.title+'</strong><small>'+it.text+'</small></span>' +
-          '<span class="autoAlertCount">'+it.count+'</span>' +
-        '</button>';
-      }).join('') +
-    '</div>';
 }
 // ========== FIN AVISOS AUTOMATICOS ==========
 
@@ -2206,7 +2180,7 @@ function renderCards() {
     if (container) container.innerHTML = '';
     if (empty) {
       empty.style.display = 'block';
-      empty.innerHTML = '<div class="ico">&#128064;</div><div>Selecciona un filtro para ver clientes</div><small style="display:block;margin-top:8px;color:var(--muted);font-size:12px">Pulsa Total, Activos, Expiran pronto, Pendientes de pago, Avisados, Contestados, Sin contestar o una etiqueta.</small>';
+      empty.innerHTML = '<div class="ico">&#128064;</div><div>Selecciona un filtro para ver clientes</div><small style="display:block;margin-top:8px;color:var(--muted);font-size:12px">Pulsa Total, Activos, Expiran pronto, Pendientes de pago, Avisados, Contestados o Sin contestar.</small>';
     }
     return;
   }
@@ -5421,21 +5395,10 @@ document.addEventListener('DOMContentLoaded', function(){
 });
 
 
-function ensureFinanceEnhancementsVisible() {
-  try {
-    var chartBox = document.getElementById('financeCharts');
-    var header = document.querySelector('.financeChartsHeader');
-    if (chartBox && !chartBox.innerHTML.trim() && typeof financeChartsHtml === 'function') {
-      var y = document.getElementById('financeYear');
-      var year = y ? y.value : String(new Date().getFullYear());
-      chartBox.innerHTML = financeChartsHtml(year);
-    }
-    if (header) header.style.display = '';
-  } catch(e) {}
+function finalEnhancementsBoot() {
+  try { renderTagFilterBar(); } catch(e) {}
+  try { renderAutoAlerts(); } catch(e) {}
 }
-
 document.addEventListener('DOMContentLoaded', function(){
-  setTimeout(function(){
-    try { renderTagFilterBar(); renderAutoAlerts(); } catch(e) {}
-  }, 900);
+  setTimeout(finalEnhancementsBoot, 800);
 });
