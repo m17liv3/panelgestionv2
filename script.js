@@ -2498,12 +2498,44 @@ function resetMessageTemplatesToDefault() {
   if (typeof showToast === 'function') showToast('Textos originales restaurados. Pulsa Guardar plantillas para sincronizar.');
 }
 
+
+function cleanupDuplicateMessageTemplateButtons() {
+  try {
+    var messageSheet = document.getElementById('messageSheet');
+    if (!messageSheet) return;
+    var body = messageSheet.querySelector('.sheet-body');
+    if (!body) return;
+
+    var buttons = Array.prototype.slice.call(body.querySelectorAll('button')).filter(function(btn){
+      return (btn.id === 'openMessageTemplateEditorBtn') ||
+        (String(btn.getAttribute('onclick') || '').indexOf('openMessageTemplateEditor') >= 0) ||
+        (String(btn.textContent || '').indexOf('Editar plantillas de mensajes') >= 0);
+    });
+
+    if (buttons.length <= 1) {
+      if (buttons[0]) buttons[0].id = 'openMessageTemplateEditorBtn';
+      return;
+    }
+
+    buttons.forEach(function(btn, index){
+      if (index === 0) {
+        btn.id = 'openMessageTemplateEditorBtn';
+        btn.onclick = function(){ openMessageTemplateEditor(); };
+      } else {
+        btn.remove();
+      }
+    });
+  } catch(e) {
+    console.warn('No se pudieron limpiar botones duplicados de Msg', e);
+  }
+}
+
 function ensureMessageTemplateEditorUi() {
   try {
     var messageSheet = document.getElementById('messageSheet');
     if (messageSheet) {
       var body = messageSheet.querySelector('.sheet-body');
-      if (body && !document.getElementById('openMessageTemplateEditorBtn')) {
+      if (body && !body.querySelector('#openMessageTemplateEditorBtn, button[onclick*="openMessageTemplateEditor"]')) {
         var closeBtn = body.querySelector('button[onclick*="closeSheet"][onclick*="messageSheet"]');
         var btn = document.createElement('button');
         btn.className = 'btnFull primary';
@@ -2551,6 +2583,7 @@ function ensureMessageTemplateEditorUi() {
       document.body.appendChild(overlay);
       document.body.appendChild(sheet);
     }
+    cleanupDuplicateMessageTemplateButtons();
   } catch(e) {
     console.warn('No se pudo preparar el editor de plantillas de mensajes', e);
   }
@@ -2583,7 +2616,7 @@ function openClientMessages(id) {
   if (title) title.textContent = 'Mensajes · ' + c.name;
   if (info) info.textContent = 'Pulsa el tipo de mensaje para copiarlo. Si quieres cambiar el texto para todos los clientes, entra en “Editar plantillas de mensajes”.';
   openSheet('messageSheet','messageOverlay');
-  setTimeout(ensureMessageTemplateEditorUi, 80);
+  setTimeout(function(){ ensureMessageTemplateEditorUi(); cleanupDuplicateMessageTemplateButtons(); }, 80);
 }
 
 function copyMessageText(txt, btn) {
@@ -5139,4 +5172,8 @@ setInterval(function(){
 
 document.addEventListener('DOMContentLoaded', function(){
   setTimeout(ensureMessageTemplateEditorUi, 700);
+});
+
+document.addEventListener('DOMContentLoaded', function(){
+  setTimeout(cleanupDuplicateMessageTemplateButtons, 900);
 });
