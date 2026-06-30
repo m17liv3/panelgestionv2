@@ -28,7 +28,7 @@ var messageTargetId = null;
 var filterSvc = '';
 var filterSt = '';
 var activeTagFilter = '';
-var CLIENT_TAG_OPTIONS = ['VIP','Buen pagador','Pendiente revisar','No renovar','Problemático','Familia / amigo'];
+var CLIENT_TAG_OPTIONS = ['CONTESTA RÁPIDO Y PAGA','NO CONTESTA AL RENOVAR'];
 var hasSelectedClientFilter = false;
 var showFilters = false;
 var raffles = [];
@@ -2060,14 +2060,14 @@ function getAutoAlertItems() {
   var pendingPay = (clients || []).filter(function(c){ return clientHasPendingPayment(c); });
   var noAnswer = (clients || []).filter(function(c){ return clientHasUnansweredRenewalNotice(c); });
   var expired = (clients || []).filter(function(c){ return getStatus(c.expiry)==='exp'; });
-  var noRenewExpired = expired.filter(function(c){ return normalizeClientTags(c.tags).map(function(t){return t.toLowerCase();}).indexOf('no renovar') >= 0; });
+  var noRenewExpired = (clients || []).filter(function(c){ return normalizeClientTags(c.tags).map(function(t){return t.toLowerCase();}).indexOf('no contesta al renovar') >= 0; });
 
   return [
     {icon:'⏰', title:'Caducan pronto sin aviso', count:soonNoNotice.length, text:'Clientes que caducan pronto y todavía no están marcados como avisados.', filter:'warn_no_advised'},
     {icon:'💸', title:'Pagos pendientes', count:pendingPay.length, text:'Clientes con importes pendientes de cobrar.', filter:'paypend'},
     {icon:'👀', title:'Avisados sin contestar', count:noAnswer.length, text:'Clientes avisados que todavía no han contestado.', filter:'noanswer'},
     {icon:'⚠️', title:'Clientes caducados', count:expired.length, text:'Clientes que ya han pasado la fecha de expiración.', filter:'exp'},
-    {icon:'🚫', title:'No renovar caducados', count:noRenewExpired.length, text:'Caducados marcados con etiqueta No renovar.', filter:'exp_tag_no_renew'}
+    {icon:'📵', title:'No contesta al renovar', count:noRenewExpired.length, text:'Clientes marcados porque no suelen contestar al renovar.', filter:'tag_no_contesta_renovar'}
   ];
 }
 
@@ -2125,7 +2125,7 @@ function quickFilter(st) {
     if (st === 'answered') lbl.textContent = 'Mostrando: Avisados que han contestado';
     if (st === 'noanswer') lbl.textContent = 'Mostrando: Avisados sin contestar';
     if (st === 'warn_no_advised') lbl.textContent = 'Mostrando: Expiran pronto sin aviso enviado';
-    if (st === 'exp_tag_no_renew') lbl.textContent = 'Mostrando: Expirados marcados como No renovar';
+    if (st === 'tag_no_contesta_renovar') lbl.textContent = 'Mostrando: No contesta al renovar';
   }
   renderCards();
   document.getElementById('mainScroll').scrollTo({top: 200, behavior: 'smooth'});
@@ -2189,7 +2189,7 @@ function renderCards() {
     var tagText = normalizeClientTags(c.tags).join(' ').toLowerCase();
     var ms = !search || c.name.toLowerCase().indexOf(search)>=0 || (c.user||'').toLowerCase().indexOf(search)>=0 || tagText.indexOf(search)>=0;
     var mv = !filterSvc || c.service===filterSvc;
-    var mt = !filterSt || (filterSt==='paypend' ? clientHasPendingPayment(c) : (filterSt==='advised' ? clientHasRenewalNotice(c) : (filterSt==='answered' ? clientHasAnsweredRenewalNotice(c) : (filterSt==='noanswer' ? clientHasUnansweredRenewalNotice(c) : (filterSt==='warn_no_advised' ? (getStatus(c.expiry)==='warn' && !clientHasRenewalNotice(c)) : (filterSt==='exp_tag_no_renew' ? (getStatus(c.expiry)==='exp' && normalizeClientTags(c.tags).map(function(t){return t.toLowerCase();}).indexOf('no renovar')>=0) : (filterSt==='ok' ? (getStatus(c.expiry)==='ok'||getStatus(c.expiry)==='warn') : getStatus(c.expiry)===filterSt)))))));
+    var mt = !filterSt || (filterSt==='paypend' ? clientHasPendingPayment(c) : (filterSt==='advised' ? clientHasRenewalNotice(c) : (filterSt==='answered' ? clientHasAnsweredRenewalNotice(c) : (filterSt==='noanswer' ? clientHasUnansweredRenewalNotice(c) : (filterSt==='warn_no_advised' ? (getStatus(c.expiry)==='warn' && !clientHasRenewalNotice(c)) : (filterSt==='tag_no_contesta_renovar' ? (normalizeClientTags(c.tags).map(function(t){return t.toLowerCase();}).indexOf('no contesta al renovar')>=0) : (filterSt==='ok' ? (getStatus(c.expiry)==='ok'||getStatus(c.expiry)==='warn') : getStatus(c.expiry)===filterSt)))))));
     var mtag = !activeTagFilter || normalizeClientTags(c.tags).indexOf(activeTagFilter) >= 0;
     return ms && mv && mt && mtag;
   });

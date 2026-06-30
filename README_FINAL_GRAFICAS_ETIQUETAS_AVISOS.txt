@@ -11,3 +11,8 @@ Incluye:
 
 SQL necesario una sola vez:
 SQL_ETIQUETAS_CLIENTES.txt
+
+
+Etiquetas finales:
+- CONTESTA RÁPIDO Y PAGA
+- NO CONTESTA AL RENOVAR
