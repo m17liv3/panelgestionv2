@@ -152,6 +152,7 @@
     <div class="menuItem" onclick="document.getElementById('importInput').click()"><span class="ico2">&#11014;</span> Importar desde Excel</div>
     <div class="menuItem" onclick="openDeleteAllClients()" style="color:var(--red)"><span class="ico2">&#128465;</span> Borrar todos los clientes</div>
     <div class="menuItem" onclick="openPayments()"><span class="ico2">&#128176;</span> Ingresos / renovaciones</div>
+    <div class="menuItem" onclick="openFinanceBalance()"><span class="ico2">&#128202;</span> Balance / finanzas</div>
     <div class="menuItem" onclick="openRaffles()"><span class="ico2">&#127873;</span> Sorteos clientes</div>
     <div class="menuItem" onclick="openIboPanel()"><span class="ico2">&#127760;</span> Panel APP IBO</div>
     <div class="menuItem" onclick="openMfaSecurity()"><span class="ico2">&#128274;</span> Seguridad Google Authenticator</div>
@@ -466,6 +467,111 @@
     </div>
     <button class="btnFull gray" onclick="exportPaymentsExcel()">&#11015; Exportar ingresos a Excel</button>
     <button class="btnFull gray" onclick="closeSheet('paymentsSheet','paymentsOverlay')" style="margin-top:8px">Cerrar</button>
+  </div>
+</div>
+
+
+
+<!-- FINANCE BALANCE SHEET -->
+<div class="sheet-overlay" id="financeOverlay" onclick="closeSheet('financeSheet','financeOverlay')"></div>
+<div class="sheet" id="financeSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <h3>&#128202; Balance / finanzas</h3>
+    <button class="sheet-close" onclick="closeSheet('financeSheet','financeOverlay')">x</button>
+  </div>
+  <div class="sheet-body">
+    <div class="financeIntro">
+      Controla ingresos de clientes, ingresos externos y gastos del servicio.
+    </div>
+
+    <div class="financeFilters">
+      <div class="formGroup">
+        <label>Mes</label>
+        <select id="financeMonth" onchange="renderFinanceDashboard()"></select>
+      </div>
+      <div class="formGroup">
+        <label>Año</label>
+        <select id="financeYear" onchange="renderFinanceDashboard()"></select>
+      </div>
+    </div>
+
+    <div class="paymentsStatsGrid financeStatsGrid">
+      <div class="paymentsStat"><span>Ingresos clientes mes</span><strong id="finClientIncomeMonth">0,00 €</strong></div>
+      <div class="paymentsStat"><span>Otros ingresos mes</span><strong id="finOtherIncomeMonth">0,00 €</strong></div>
+      <div class="paymentsStat expense"><span>Gastos mes</span><strong id="finExpenseMonth">0,00 €</strong></div>
+      <div class="paymentsStat profit"><span>Beneficio mes</span><strong id="finProfitMonth">0,00 €</strong></div>
+      <div class="paymentsStat"><span>Ingresos año</span><strong id="finIncomeYear">0,00 €</strong></div>
+      <div class="paymentsStat expense"><span>Gastos año</span><strong id="finExpenseYear">0,00 €</strong></div>
+      <div class="paymentsStat profit"><span>Beneficio año</span><strong id="finProfitYear">0,00 €</strong></div>
+      <div class="paymentsStat"><span>Movimientos mes</span><strong id="finMovementCountMonth">0</strong></div>
+    </div>
+
+    <div class="financeQuickActions">
+      <button onclick="fillFinanceQuick('gastoProveedor')">&#128179; Gasto Panel K13 750€</button>
+      <button onclick="fillFinanceQuick('ingresoPeliculas')">&#127916; Ingreso Jordan Pelis / Series 120€</button>
+    </div>
+
+    <div class="financeFormBox">
+      <h4>Añadir ingreso / gasto</h4>
+      <div class="formRow2">
+        <div class="formGroup">
+          <label>Tipo</label>
+          <select id="financeType">
+            <option value="ingreso">Ingreso</option>
+            <option value="gasto">Gasto</option>
+          </select>
+        </div>
+        <div class="formGroup">
+          <label>Importe</label>
+          <input type="text" id="financeAmount" inputmode="decimal" placeholder="Ej: 750 o 120"/>
+        </div>
+      </div>
+
+      <div class="formRow2">
+        <div class="formGroup">
+          <label>Fecha</label>
+          <input type="date" id="financeDate"/>
+        </div>
+        <div class="formGroup">
+          <label>Categoría</label>
+          <select id="financeCategory">
+            <option value="Panel K13">Panel K13</option>
+            <option value="Jordan Pelis / Series">Jordan Pelis / Series</option>
+            <option value="Proveedor">Proveedor</option>
+            <option value="Peliculas">Películas</option>
+            <option value="Servicio">Servicio</option>
+            <option value="Extra">Extra</option>
+            <option value="Otro">Otro</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="formGroup">
+        <label>Concepto</label>
+        <input type="text" id="financeConcept" placeholder="Ej: Recarga créditos proveedor"/>
+      </div>
+
+      <div class="formGroup">
+        <label>Notas</label>
+        <input type="text" id="financeNotes" placeholder="Opcional"/>
+      </div>
+
+      <div class="formError" id="financeError"></div>
+      <button class="btnFull primary" id="financeSaveBtn" onclick="saveFinanceMovement(this)">&#128190; Guardar movimiento</button>
+    </div>
+
+    <div class="raffleHistoryHeader">
+      <span>Historial ingresos / gastos</span>
+      <button onclick="loadFinanceMovements(true)">&#8634; Recargar</button>
+    </div>
+
+    <div class="paymentsHistory financeHistory" id="financeHistory">
+      <div class="emptyMini">Todavía no hay movimientos registrados.</div>
+    </div>
+
+    <button class="btnFull gray" onclick="exportFinanceExcel()">&#11015; Exportar balance a Excel</button>
+    <button class="btnFull gray" onclick="closeSheet('financeSheet','financeOverlay')" style="margin-top:8px">Cerrar</button>
   </div>
 </div>
 

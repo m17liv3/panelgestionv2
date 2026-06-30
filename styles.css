@@ -884,3 +884,65 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, 'S
   border-color: var(--cyan);
   box-shadow: 0 0 0 2px rgba(0,229,255,.08);
 }
+
+
+/* Balance / Finanzas */
+.financeIntro {
+  color: var(--muted);
+  font-size: .88rem;
+  line-height: 1.45;
+  margin-bottom: 12px;
+  border: 1px solid rgba(0,229,255,.16);
+  background: rgba(0,229,255,.055);
+  padding: 12px;
+  border-radius: 14px;
+}
+.financeFilters {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.financeStatsGrid .paymentsStat.expense strong,
+.paymentAmount.expense {
+  color: var(--red);
+}
+.financeStatsGrid .paymentsStat.profit strong {
+  color: var(--green);
+}
+.financeQuickActions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin: 14px 0;
+}
+.financeQuickActions button {
+  border: 1px solid rgba(0,229,255,.28);
+  color: var(--cyan);
+  background: rgba(0,229,255,.06);
+  border-radius: 12px;
+  padding: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.financeFormBox {
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.035);
+  border-radius: 16px;
+  padding: 12px;
+  margin: 14px 0;
+}
+.financeFormBox h4 {
+  margin: 0 0 10px;
+  color: var(--text);
+}
+.financeItem.financeExpense {
+  border-color: rgba(255,77,77,.25);
+}
+.financeItem.financeIncome {
+  border-color: rgba(57,255,20,.22);
+}
+@media (min-width: 720px) {
+  .financeQuickActions {
+    grid-template-columns: 1fr 1fr;
+  }
+}

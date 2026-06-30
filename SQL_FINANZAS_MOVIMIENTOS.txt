@@ -1,0 +1,49 @@
+-- M17LIV3 - Balance / Finanzas
+-- Ejecutar una sola vez en Supabase SQL Editor.
+
+create table if not exists public.finanzas_movimientos (
+  id uuid primary key default gen_random_uuid(),
+  owner_id uuid default auth.uid(),
+  tipo text not null check (tipo in ('ingreso','gasto')),
+  concepto text not null,
+  categoria text,
+  importe numeric(10,2) not null default 0,
+  fecha date not null default current_date,
+  notas text,
+  created_at timestamptz default now()
+);
+
+alter table public.finanzas_movimientos enable row level security;
+
+grant usage on schema public to authenticated;
+grant select, insert, update, delete on public.finanzas_movimientos to authenticated;
+
+drop policy if exists "finanzas_select_owner" on public.finanzas_movimientos;
+drop policy if exists "finanzas_insert_owner" on public.finanzas_movimientos;
+drop policy if exists "finanzas_update_owner" on public.finanzas_movimientos;
+drop policy if exists "finanzas_delete_owner" on public.finanzas_movimientos;
+
+create policy "finanzas_select_owner"
+on public.finanzas_movimientos
+for select
+to authenticated
+using (owner_id = (select auth.uid()) and (select auth.jwt()->>'aal') = 'aal2');
+
+create policy "finanzas_insert_owner"
+on public.finanzas_movimientos
+for insert
+to authenticated
+with check (owner_id = (select auth.uid()) and (select auth.jwt()->>'aal') = 'aal2');
+
+create policy "finanzas_update_owner"
+on public.finanzas_movimientos
+for update
+to authenticated
+using (owner_id = (select auth.uid()) and (select auth.jwt()->>'aal') = 'aal2')
+with check (owner_id = (select auth.uid()) and (select auth.jwt()->>'aal') = 'aal2');
+
+create policy "finanzas_delete_owner"
+on public.finanzas_movimientos
+for delete
+to authenticated
+using (owner_id = (select auth.uid()) and (select auth.jwt()->>'aal') = 'aal2');

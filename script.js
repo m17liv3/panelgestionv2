@@ -33,6 +33,8 @@ var raffles = [];
 var lastRaffleResult = null;
 var SUPABASE_RAFFLES_TABLE = CONFIG.supabaseRafflesTable || 'sorteos';
 var SUPABASE_RENEWALS_TABLE = CONFIG.supabaseRenewalsTable || 'renovaciones';
+var SUPABASE_FINANCE_TABLE = CONFIG.supabaseFinanceTable || 'finanzas_movimientos';
+var financeMovements = [];
 var SUPABASE_MESSAGE_TEMPLATES_TABLE = CONFIG.supabaseMessageTemplatesTable || 'message_templates';
 var renewals = [];
 var BACKUP_LAST_KEY = 'm17_last_backup_at';
@@ -1281,6 +1283,436 @@ function ensurePaymentDeleteButtons() {
 }
 
 // ========== FIN RENOVACIONES E INGRESOS ==========
+
+
+// ========== BALANCE / FINANZAS ==========
+var FINANCE_MONTH_NAMES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+function financeRowToItem(row) {
+  return {
+    id: row.id || '',
+    type: row.tipo || 'ingreso',
+    concept: row.concepto || '',
+    category: row.categoria || '',
+    amount: Number(row.importe || 0),
+    date: row.fecha || '',
+    notes: row.notas || '',
+    createdAt: row.created_at || ''
+  };
+}
+
+function financeTodayIso() {
+  return new Date().toISOString().split('T')[0];
+}
+
+function financeMonthKeyFromDate(value) {
+  if (!value) return '';
+  var d = new Date(value);
+  if (isNaN(d.getTime())) return '';
+  return d.getFullYear() + '-' + pad2(d.getMonth() + 1);
+}
+
+function financeSelectedMonthKey() {
+  var y = document.getElementById('financeYear');
+  var m = document.getElementById('financeMonth');
+  if (!y || !m) {
+    var now = new Date();
+    return now.getFullYear() + '-' + pad2(now.getMonth() + 1);
+  }
+  return y.value + '-' + pad2(Number(m.value || 1));
+}
+
+function initFinanceSelectors() {
+  var monthEl = document.getElementById('financeMonth');
+  var yearEl = document.getElementById('financeYear');
+  if (!monthEl || !yearEl) return;
+
+  var now = new Date();
+  if (!monthEl.options.length) {
+    monthEl.innerHTML = FINANCE_MONTH_NAMES.map(function(name, i){
+      return '<option value="'+(i+1)+'">'+name+'</option>';
+    }).join('');
+  }
+
+  if (!yearEl.options.length) {
+    var currentYear = now.getFullYear();
+    var years = [];
+    for (var y = currentYear - 2; y <= currentYear + 2; y++) years.push(y);
+    yearEl.innerHTML = years.map(function(y){ return '<option value="'+y+'">'+y+'</option>'; }).join('');
+  }
+
+  monthEl.value = String(now.getMonth() + 1);
+  yearEl.value = String(now.getFullYear());
+}
+
+async function loadFinanceMovements(showMsg) {
+  try {
+    if (!USE_SUPABASE) {
+      try { financeMovements = JSON.parse(localStorage.getItem('m17_finance_movements') || '[]'); } catch(e) { financeMovements = []; }
+      renderFinanceDashboard();
+      return financeMovements;
+    }
+
+    var db = initSupabase();
+    var result = await db.from(SUPABASE_FINANCE_TABLE).select('*').order('fecha', { ascending: false }).order('created_at', { ascending: false }).limit(1000);
+    if (result.error) throw result.error;
+
+    financeMovements = (result.data || []).map(financeRowToItem);
+    renderFinanceDashboard();
+    if (showMsg && typeof showToast === 'function') showToast('Balance actualizado');
+    return financeMovements;
+  } catch(ex) {
+    console.error(ex);
+    var box = document.getElementById('financeHistory');
+    if (box) box.innerHTML = '<div class="emptyMini" style="color:var(--orange)">No se han podido cargar los movimientos. Revisa que hayas ejecutado el SQL de finanzas.</div>';
+    if (showMsg && typeof showToast === 'function') showToast('Error al cargar balance: ' + ex.message, 'error');
+    return [];
+  }
+}
+
+function buildFinancePayloadFromForm() {
+  var type = (document.getElementById('financeType') || {}).value || 'ingreso';
+  var concept = ((document.getElementById('financeConcept') || {}).value || '').trim();
+  var category = (document.getElementById('financeCategory') || {}).value || 'Otro';
+  var amountRaw = ((document.getElementById('financeAmount') || {}).value || '').trim();
+  var amount = parseEuroAmount(amountRaw);
+  var date = (document.getElementById('financeDate') || {}).value || financeTodayIso();
+  var notes = ((document.getElementById('financeNotes') || {}).value || '').trim();
+
+  if (!concept) throw new Error('Escribe un concepto.');
+  if (amountRaw === '' || isNaN(amount)) throw new Error('Importe no válido. Ejemplo: 750 o 120.');
+  if (!date) throw new Error('Selecciona una fecha.');
+
+  return {
+    type: type,
+    concept: concept,
+    category: category,
+    amount: amount,
+    date: date,
+    notes: notes
+  };
+}
+
+function clearFinanceForm() {
+  var ids = ['financeAmount','financeConcept','financeNotes'];
+  ids.forEach(function(id){ var el = document.getElementById(id); if (el) el.value = ''; });
+  var type = document.getElementById('financeType');
+  var cat = document.getElementById('financeCategory');
+  var date = document.getElementById('financeDate');
+  var err = document.getElementById('financeError');
+  if (type) type.value = 'ingreso';
+  if (cat) cat.value = 'Otro';
+  if (date) date.value = financeTodayIso();
+  if (err) { err.textContent = ''; err.style.display = 'none'; }
+}
+
+function fillFinanceQuick(kind) {
+  clearFinanceForm();
+  var type = document.getElementById('financeType');
+  var amount = document.getElementById('financeAmount');
+  var concept = document.getElementById('financeConcept');
+  var category = document.getElementById('financeCategory');
+  var notes = document.getElementById('financeNotes');
+  var date = document.getElementById('financeDate');
+  if (date) date.value = financeTodayIso();
+
+  if (kind === 'gastoProveedor') {
+    if (type) type.value = 'gasto';
+    if (amount) amount.value = '750';
+    if (concept) concept.value = 'Gasto Panel K13';
+    if (category) category.value = 'Panel K13';
+    if (notes) notes.value = 'Recarga del Panel K13';
+  } else if (kind === 'ingresoPeliculas') {
+    if (type) type.value = 'ingreso';
+    if (amount) amount.value = '120';
+    if (concept) concept.value = 'Ingreso Jordan Pelis / Series';
+    if (category) category.value = 'Jordan Pelis / Series';
+    if (notes) notes.value = 'Ingreso mensual aproximado Jordan Pelis / Series';
+  }
+}
+
+async function saveFinanceMovement(btn) {
+  var err = document.getElementById('financeError');
+  var oldText = btn ? btn.textContent : '';
+  try {
+    if (err) { err.textContent = ''; err.style.display = 'none'; }
+    var item = buildFinancePayloadFromForm();
+    if (btn) { btn.disabled = true; btn.textContent = 'Guardando...'; }
+
+    var saved;
+    if (USE_SUPABASE) {
+      var db = initSupabase();
+      var payload = {
+        tipo: item.type,
+        concepto: item.concept,
+        categoria: item.category,
+        importe: item.amount,
+        fecha: item.date,
+        notas: item.notes
+      };
+      var result = await db.from(SUPABASE_FINANCE_TABLE).insert(payload).select('*').single();
+      if (result.error) throw result.error;
+      saved = financeRowToItem(result.data);
+    } else {
+      saved = Object.assign({}, item, { id: genId(), createdAt: new Date().toISOString() });
+      financeMovements.unshift(saved);
+      localStorage.setItem('m17_finance_movements', JSON.stringify(financeMovements));
+    }
+
+    if (!financeMovements.find(function(x){ return String(x.id) === String(saved.id); })) financeMovements.unshift(saved);
+    clearFinanceForm();
+    renderFinanceDashboard();
+    if (typeof showToast === 'function') showToast('Movimiento guardado');
+  } catch(ex) {
+    var msg = ex && ex.message ? ex.message : 'No se pudo guardar.';
+    if (err) { err.textContent = msg; err.style.display = 'block'; }
+    else alert(msg);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = oldText || 'Guardar movimiento'; }
+  }
+}
+
+async function deleteFinanceMovement(id, btn) {
+  var item = (financeMovements || []).find(function(x){ return String(x.id) === String(id); });
+  if (!item) return;
+  var ok = confirm('¿Borrar este movimiento?\n\n' + item.concept + ' · ' + euro(item.amount));
+  if (!ok) return;
+
+  var oldText = btn ? btn.textContent : '';
+  try {
+    if (btn) { btn.disabled = true; btn.textContent = 'Borrando...'; }
+    if (USE_SUPABASE) {
+      var db = initSupabase();
+      var result = await db.from(SUPABASE_FINANCE_TABLE).delete().eq('id', id);
+      if (result.error) throw result.error;
+    }
+
+    financeMovements = (financeMovements || []).filter(function(x){ return String(x.id) !== String(id); });
+    if (!USE_SUPABASE) localStorage.setItem('m17_finance_movements', JSON.stringify(financeMovements));
+    renderFinanceDashboard();
+    if (typeof showToast === 'function') showToast('Movimiento borrado');
+  } catch(ex) {
+    if (typeof showToast === 'function') showToast('Error al borrar: ' + ex.message, 'error'); else alert('Error al borrar: ' + ex.message);
+    if (btn) { btn.disabled = false; btn.textContent = oldText || 'Borrar'; }
+  }
+}
+
+async function editFinanceMovement(id) {
+  var item = (financeMovements || []).find(function(x){ return String(x.id) === String(id); });
+  if (!item) return;
+
+  var concept = prompt('Concepto:', item.concept || '');
+  if (concept === null) return;
+  concept = concept.trim();
+  if (!concept) { alert('El concepto no puede estar vacío.'); return; }
+
+  var amountInput = prompt('Importe:', String(item.amount || 0).replace('.', ','));
+  if (amountInput === null) return;
+  var amount = parseEuroAmount(amountInput);
+  if (isNaN(amount)) { alert('Importe no válido.'); return; }
+
+  var type = prompt('Tipo: ingreso o gasto', item.type || 'ingreso');
+  if (type === null) return;
+  type = String(type || '').toLowerCase().trim();
+  if (type !== 'ingreso' && type !== 'gasto') { alert('Tipo no válido. Usa ingreso o gasto.'); return; }
+
+  var date = prompt('Fecha YYYY-MM-DD:', item.date || financeTodayIso());
+  if (date === null) return;
+  date = String(date || '').trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) { alert('Fecha no válida. Usa formato YYYY-MM-DD.'); return; }
+
+  var category = prompt('Categoría:', item.category || 'Otro');
+  if (category === null) return;
+
+  var notes = prompt('Notas:', item.notes || '');
+  if (notes === null) return;
+
+  try {
+    if (USE_SUPABASE) {
+      var db = initSupabase();
+      var result = await db.from(SUPABASE_FINANCE_TABLE).update({
+        tipo: type,
+        concepto: concept,
+        categoria: category || 'Otro',
+        importe: amount,
+        fecha: date,
+        notas: notes || ''
+      }).eq('id', id).select('*').maybeSingle();
+      if (result.error) throw result.error;
+      if (result.data) {
+        var updated = financeRowToItem(result.data);
+        var ix = financeMovements.findIndex(function(x){ return String(x.id) === String(id); });
+        if (ix >= 0) financeMovements[ix] = updated;
+      }
+    } else {
+      Object.assign(item, { type: type, concept: concept, category: category || 'Otro', amount: amount, date: date, notes: notes || '' });
+      localStorage.setItem('m17_finance_movements', JSON.stringify(financeMovements));
+    }
+    renderFinanceDashboard();
+    if (typeof showToast === 'function') showToast('Movimiento editado');
+  } catch(ex) {
+    if (typeof showToast === 'function') showToast('Error al editar: ' + ex.message, 'error'); else alert('Error al editar: ' + ex.message);
+  }
+}
+
+function financePaidRenewals() {
+  return (renewals || []).filter(function(r){ return isPaymentPaid(r); });
+}
+
+function financeRenewalDate(r) {
+  return r.createdAt || r.paymentPaidAt || '';
+}
+
+function financeSumPaidRenewals(filterFn) {
+  return financePaidRenewals().filter(filterFn || function(){ return true; }).reduce(function(acc, r){ return acc + Number(r.amount || 0); }, 0);
+}
+
+function financeSumMovements(type, filterFn) {
+  return (financeMovements || []).filter(function(m){
+    return (!type || m.type === type) && (!filterFn || filterFn(m));
+  }).reduce(function(acc, m){ return acc + Number(m.amount || 0); }, 0);
+}
+
+function renderFinanceDashboard() {
+  var box = document.getElementById('financeHistory');
+  var selectedMonth = financeSelectedMonthKey();
+  var selectedYear = selectedMonth.slice(0,4);
+
+  var inSelectedMonth = function(dateValue){ return financeMonthKeyFromDate(dateValue) === selectedMonth; };
+  var inSelectedYear = function(dateValue){ return String(dateValue || '').slice(0,4) === selectedYear; };
+
+  var clientIncomeMonth = financeSumPaidRenewals(function(r){ return inSelectedMonth(financeRenewalDate(r)); });
+  var clientIncomeYear = financeSumPaidRenewals(function(r){ return inSelectedYear(financeRenewalDate(r)); });
+
+  var otherIncomeMonth = financeSumMovements('ingreso', function(m){ return inSelectedMonth(m.date); });
+  var otherIncomeYear = financeSumMovements('ingreso', function(m){ return inSelectedYear(m.date); });
+  var expenseMonth = financeSumMovements('gasto', function(m){ return inSelectedMonth(m.date); });
+  var expenseYear = financeSumMovements('gasto', function(m){ return inSelectedYear(m.date); });
+
+  var incomeMonth = clientIncomeMonth + otherIncomeMonth;
+  var incomeYear = clientIncomeYear + otherIncomeYear;
+  var profitMonth = incomeMonth - expenseMonth;
+  var profitYear = incomeYear - expenseYear;
+
+  var set = function(id, val){ var el = document.getElementById(id); if (el) el.textContent = val; };
+  set('finClientIncomeMonth', euro(clientIncomeMonth));
+  set('finOtherIncomeMonth', euro(otherIncomeMonth));
+  set('finExpenseMonth', euro(expenseMonth));
+  set('finProfitMonth', euro(profitMonth));
+  set('finIncomeYear', euro(incomeYear));
+  set('finExpenseYear', euro(expenseYear));
+  set('finProfitYear', euro(profitYear));
+  set('finMovementCountMonth', String((financeMovements || []).filter(function(m){ return inSelectedMonth(m.date); }).length));
+
+  ['finProfitMonth','finProfitYear'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.style.color = (id === 'finProfitMonth' ? profitMonth : profitYear) >= 0 ? 'var(--green)' : 'var(--red)';
+  });
+
+  if (!box) return;
+  var list = (financeMovements || []).filter(function(m){ return inSelectedMonth(m.date); });
+  list.sort(function(a,b){ return String(b.date || '').localeCompare(String(a.date || '')); });
+
+  if (!list.length) {
+    box.innerHTML = '<div class="emptyMini">No hay ingresos/gastos externos para el mes seleccionado.</div>';
+    return;
+  }
+
+  box.innerHTML = list.map(function(m){
+    var isExpense = m.type === 'gasto';
+    return '<div class="paymentItem financeItem '+(isExpense?'financeExpense':'financeIncome')+'">' +
+      '<div class="paymentItemTop">' +
+        '<div class="paymentName">'+esc(m.concept || m.concepto || m.category || 'Movimiento')+'</div>' +
+        '<div class="'+(isExpense?'paymentAmount expense':'paymentAmount')+'">'+(isExpense?'- ':'+ ')+euro(m.amount)+'</div>' +
+      '</div>' +
+      '<div class="paymentMeta">'+(isExpense?'Gasto':'Ingreso')+' · '+formatDate(m.date)+' · '+esc(m.category || 'Otro')+'</div>' +
+      (m.notes ? '<div class="paymentMeta">Notas: '+esc(m.notes)+'</div>' : '') +
+      '<div class="paymentActions">' +
+        '<button onclick="editFinanceMovement(\''+esc(m.id)+'\')">&#9998; Editar</button>' +
+        '<button class="paymentDeleteBtn" onclick="deleteFinanceMovement(\''+esc(m.id)+'\', this)">&#128465; Borrar</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+async function openFinanceBalance() {
+  closeSheet('menuSheet','menuOverlay');
+  initFinanceSelectors();
+  var d = document.getElementById('financeDate');
+  if (d && !d.value) d.value = financeTodayIso();
+  openSheet('financeSheet','financeOverlay');
+
+  var box = document.getElementById('financeHistory');
+  if (box) box.innerHTML = '<div class="emptyMini">Cargando balance...</div>';
+
+  await loadRenewals(false);
+  await loadFinanceMovements(false);
+}
+
+function buildFinanceExportRows() {
+  var rows = [];
+  (renewals || []).forEach(function(r){
+    if (!isPaymentPaid(r)) return;
+    rows.push({
+      'Tipo': 'Ingreso cliente',
+      'Concepto': 'Renovación ' + (r.clientName || ''),
+      'Categoría': 'Renovaciones',
+      'Importe': Number(r.amount || 0),
+      'Fecha': financeRenewalDate(r) ? String(financeRenewalDate(r)).split('T')[0] : '',
+      'Notas': r.notes || ''
+    });
+  });
+  (financeMovements || []).forEach(function(m){
+    rows.push({
+      'Tipo': m.type === 'gasto' ? 'Gasto' : 'Ingreso externo',
+      'Concepto': m.concept || '',
+      'Categoría': m.category || '',
+      'Importe': m.type === 'gasto' ? -Number(m.amount || 0) : Number(m.amount || 0),
+      'Fecha': m.date || '',
+      'Notas': m.notes || ''
+    });
+  });
+  return rows;
+}
+
+function buildFinanceSummaryRows() {
+  var years = {};
+  buildFinanceExportRows().forEach(function(row){
+    var year = String(row.Fecha || '').slice(0,4) || 'Sin fecha';
+    if (!years[year]) years[year] = {year: year, income: 0, expense: 0};
+    var amt = Number(row.Importe || 0);
+    if (amt >= 0) years[year].income += amt;
+    else years[year].expense += Math.abs(amt);
+  });
+  return Object.keys(years).sort().map(function(y){
+    var item = years[y];
+    return {
+      'Año': item.year,
+      'Ingresos': item.income,
+      'Gastos': item.expense,
+      'Beneficio': item.income - item.expense
+    };
+  });
+}
+
+async function exportFinanceExcel() {
+  try {
+    await loadRenewals(false);
+    await loadFinanceMovements(false);
+    var rows = buildFinanceExportRows();
+    if (!rows.length) { alert('Todavía no hay datos de balance para exportar.'); return; }
+
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), 'Balance');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(buildFinanceSummaryRows()), 'Resumen anual');
+    XLSX.writeFile(wb, 'M17LIV3_balance_' + new Date().toISOString().split('T')[0] + '.xlsx');
+    if (typeof showToast === 'function') showToast('Balance exportado');
+  } catch(ex) {
+    if (typeof showToast === 'function') showToast('Error al exportar balance: ' + ex.message, 'error'); else alert('Error al exportar balance: ' + ex.message);
+  }
+}
+// ========== FIN BALANCE / FINANZAS ==========
+
 
 // ========== PANEL APP IBO ==========
 var IBO_PANEL_URL = 'https://damaplay.top/panelr/m17live/';
