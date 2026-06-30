@@ -1322,9 +1322,68 @@ function financeSelectedMonthKey() {
   return y.value + '-' + pad2(Number(m.value || 1));
 }
 
+function financeCurrentViewMode() {
+  var el = document.getElementById('financeViewMode');
+  return el ? (el.value || 'year') : 'year';
+}
+
+function setFinanceViewMode(mode) {
+  var el = document.getElementById('financeViewMode');
+  if (el) el.value = mode || 'year';
+}
+
+function setFinanceFilterToDate(dateValue) {
+  if (!dateValue) return;
+  var d = new Date(dateValue);
+  if (isNaN(d.getTime())) return;
+  var monthEl = document.getElementById('financeMonth');
+  var yearEl = document.getElementById('financeYear');
+  if (monthEl) monthEl.value = String(d.getMonth() + 1);
+  if (yearEl) {
+    var year = String(d.getFullYear());
+    var exists = Array.prototype.some.call(yearEl.options || [], function(o){ return String(o.value) === year; });
+    if (!exists) {
+      var opt = document.createElement('option');
+      opt.value = year;
+      opt.textContent = year;
+      yearEl.appendChild(opt);
+    }
+    yearEl.value = year;
+  }
+}
+
+
+function ensureFinanceYearRange() {
+  var yearEl = document.getElementById('financeYear');
+  if (!yearEl) return;
+
+  var currentYear = new Date().getFullYear();
+  var selected = yearEl.value || String(currentYear);
+
+  for (var y = currentYear - 5; y <= currentYear + 25; y++) {
+    var exists = Array.prototype.some.call(yearEl.options || [], function(o){
+      return String(o.value) === String(y);
+    });
+    if (!exists) {
+      var opt = document.createElement('option');
+      opt.value = String(y);
+      opt.textContent = String(y);
+      yearEl.appendChild(opt);
+    }
+  }
+
+  var opts = Array.prototype.slice.call(yearEl.options || []);
+  opts.sort(function(a,b){ return Number(a.value) - Number(b.value); });
+  yearEl.innerHTML = '';
+  opts.forEach(function(o){ yearEl.appendChild(o); });
+
+  if (selected) yearEl.value = selected;
+}
+
 function initFinanceSelectors() {
   var monthEl = document.getElementById('financeMonth');
   var yearEl = document.getElementById('financeYear');
+  var viewEl = document.getElementById('financeViewMode');
   if (!monthEl || !yearEl) return;
 
   var now = new Date();
@@ -1337,12 +1396,14 @@ function initFinanceSelectors() {
   if (!yearEl.options.length) {
     var currentYear = now.getFullYear();
     var years = [];
-    for (var y = currentYear - 2; y <= currentYear + 2; y++) years.push(y);
+    for (var y = currentYear - 5; y <= currentYear + 25; y++) years.push(y);
     yearEl.innerHTML = years.map(function(y){ return '<option value="'+y+'">'+y+'</option>'; }).join('');
   }
 
   monthEl.value = String(now.getMonth() + 1);
   yearEl.value = String(now.getFullYear());
+  if (viewEl) viewEl.value = 'year';
+  ensureFinanceYearRange();
 }
 
 async function loadFinanceMovements(showMsg) {
@@ -1460,9 +1521,16 @@ async function saveFinanceMovement(btn) {
     }
 
     if (!financeMovements.find(function(x){ return String(x.id) === String(saved.id); })) financeMovements.unshift(saved);
+
+    // Mostramos el movimiento en su año automáticamente. Si estás en vista mensual,
+    // también se cambia al mes correspondiente.
+    setFinanceFilterToDate(saved.date || item.date);
+
     clearFinanceForm();
+    var d = document.getElementById('financeDate');
+    if (d) d.value = saved.date || item.date || financeTodayIso();
     renderFinanceDashboard();
-    if (typeof showToast === 'function') showToast('Movimiento guardado');
+    if (typeof showToast === 'function') showToast('Movimiento guardado y mostrado en su año');
   } catch(ex) {
     var msg = ex && ex.message ? ex.message : 'No se pudo guardar.';
     if (err) { err.textContent = msg; err.style.display = 'block'; }
@@ -1573,48 +1641,119 @@ function financeSumMovements(type, filterFn) {
   }).reduce(function(acc, m){ return acc + Number(m.amount || 0); }, 0);
 }
 
-function renderFinanceDashboard() {
-  var box = document.getElementById('financeHistory');
+function financePeriodFilter() {
   var selectedMonth = financeSelectedMonthKey();
   var selectedYear = selectedMonth.slice(0,4);
+  var viewMode = financeCurrentViewMode();
+  var isYearView = viewMode === 'year';
 
   var inSelectedMonth = function(dateValue){ return financeMonthKeyFromDate(dateValue) === selectedMonth; };
   var inSelectedYear = function(dateValue){ return String(dateValue || '').slice(0,4) === selectedYear; };
 
-  var clientIncomeMonth = financeSumPaidRenewals(function(r){ return inSelectedMonth(financeRenewalDate(r)); });
-  var clientIncomeYear = financeSumPaidRenewals(function(r){ return inSelectedYear(financeRenewalDate(r)); });
+  return {
+    selectedMonth: selectedMonth,
+    selectedYear: selectedYear,
+    viewMode: viewMode,
+    isYearView: isYearView,
+    inPeriod: isYearView ? inSelectedYear : inSelectedMonth,
+    inYear: inSelectedYear,
+    label: isYearView ? 'año' : 'mes'
+  };
+}
 
-  var otherIncomeMonth = financeSumMovements('ingreso', function(m){ return inSelectedMonth(m.date); });
-  var otherIncomeYear = financeSumMovements('ingreso', function(m){ return inSelectedYear(m.date); });
-  var expenseMonth = financeSumMovements('gasto', function(m){ return inSelectedMonth(m.date); });
-  var expenseYear = financeSumMovements('gasto', function(m){ return inSelectedYear(m.date); });
+function financeMonthSummaryHtml(year) {
+  var rows = [];
+  for (var i = 1; i <= 12; i++) {
+    var key = year + '-' + pad2(i);
+    var inMonth = function(dateValue){ return financeMonthKeyFromDate(dateValue) === key; };
 
-  var incomeMonth = clientIncomeMonth + otherIncomeMonth;
+    var clientIncome = financeSumPaidRenewals(function(r){ return inMonth(financeRenewalDate(r)); });
+    var otherIncome = financeSumMovements('ingreso', function(m){ return inMonth(m.date); });
+    var expense = financeSumMovements('gasto', function(m){ return inMonth(m.date); });
+    var profit = clientIncome + otherIncome - expense;
+    var hasAny = clientIncome || otherIncome || expense;
+
+    rows.push(
+      '<div class="financeMonthCard '+(hasAny?'hasData':'')+'">' +
+        '<div class="financeMonthTitle">'+FINANCE_MONTH_NAMES[i-1]+'</div>' +
+        '<div class="financeMonthLine"><span>Clientes</span><strong>'+euro(clientIncome)+'</strong></div>' +
+        '<div class="financeMonthLine"><span>Otros</span><strong>'+euro(otherIncome)+'</strong></div>' +
+        '<div class="financeMonthLine expense"><span>Gastos</span><strong>'+euro(expense)+'</strong></div>' +
+        '<div class="financeMonthLine profit '+(profit < 0 ? 'negative' : '')+'"><span>Beneficio</span><strong>'+euro(profit)+'</strong></div>' +
+      '</div>'
+    );
+  }
+  return rows.join('');
+}
+
+function renderFinanceDashboard() {
+  var box = document.getElementById('financeHistory');
+  var summaryBox = document.getElementById('financeMonthlySummary');
+  var p = financePeriodFilter();
+
+  var monthGroup = document.getElementById('financeMonthGroup');
+  if (monthGroup) monthGroup.style.display = p.isYearView ? 'none' : '';
+
+  var setText = function(id, txt){ var el = document.getElementById(id); if (el) el.textContent = txt; };
+  setText('finClientIncomeLabel', 'Ingresos clientes ' + p.label);
+  setText('finOtherIncomeLabel', 'Otros ingresos ' + p.label);
+  setText('finExpenseLabel', 'Gastos ' + p.label);
+  setText('finProfitLabel', 'Beneficio ' + p.label);
+  setText('finMovementCountLabel', 'Movimientos ' + p.label);
+  setText('financeHistoryTitle', p.isYearView ? 'Historial ingresos / gastos del año' : 'Historial ingresos / gastos del mes');
+
+  var clientIncomePeriod = financeSumPaidRenewals(function(r){ return p.inPeriod(financeRenewalDate(r)); });
+  var clientIncomeYear = financeSumPaidRenewals(function(r){ return p.inYear(financeRenewalDate(r)); });
+
+  var otherIncomePeriod = financeSumMovements('ingreso', function(m){ return p.inPeriod(m.date); });
+  var otherIncomeYear = financeSumMovements('ingreso', function(m){ return p.inYear(m.date); });
+  var expensePeriod = financeSumMovements('gasto', function(m){ return p.inPeriod(m.date); });
+  var expenseYear = financeSumMovements('gasto', function(m){ return p.inYear(m.date); });
+
+  var incomePeriod = clientIncomePeriod + otherIncomePeriod;
   var incomeYear = clientIncomeYear + otherIncomeYear;
-  var profitMonth = incomeMonth - expenseMonth;
+  var profitPeriod = incomePeriod - expensePeriod;
   var profitYear = incomeYear - expenseYear;
 
   var set = function(id, val){ var el = document.getElementById(id); if (el) el.textContent = val; };
-  set('finClientIncomeMonth', euro(clientIncomeMonth));
-  set('finOtherIncomeMonth', euro(otherIncomeMonth));
-  set('finExpenseMonth', euro(expenseMonth));
-  set('finProfitMonth', euro(profitMonth));
+  set('finClientIncomeMonth', euro(clientIncomePeriod));
+  set('finOtherIncomeMonth', euro(otherIncomePeriod));
+  set('finExpenseMonth', euro(expensePeriod));
+  set('finProfitMonth', euro(profitPeriod));
   set('finIncomeYear', euro(incomeYear));
   set('finExpenseYear', euro(expenseYear));
   set('finProfitYear', euro(profitYear));
-  set('finMovementCountMonth', String((financeMovements || []).filter(function(m){ return inSelectedMonth(m.date); }).length));
+  set('finMovementCountMonth', String((financeMovements || []).filter(function(m){ return p.inPeriod(m.date); }).length));
 
   ['finProfitMonth','finProfitYear'].forEach(function(id){
     var el = document.getElementById(id);
-    if (el) el.style.color = (id === 'finProfitMonth' ? profitMonth : profitYear) >= 0 ? 'var(--green)' : 'var(--red)';
+    if (el) el.style.color = (id === 'finProfitMonth' ? profitPeriod : profitYear) >= 0 ? 'var(--green)' : 'var(--red)';
   });
 
+  if (summaryBox) {
+    summaryBox.style.display = p.isYearView ? 'grid' : 'none';
+    summaryBox.innerHTML = p.isYearView ? financeMonthSummaryHtml(p.selectedYear) : '';
+  }
+
   if (!box) return;
-  var list = (financeMovements || []).filter(function(m){ return inSelectedMonth(m.date); });
+  var list = (financeMovements || []).filter(function(m){ return p.inPeriod(m.date); });
   list.sort(function(a,b){ return String(b.date || '').localeCompare(String(a.date || '')); });
 
   if (!list.length) {
-    box.innerHTML = '<div class="emptyMini">No hay ingresos/gastos externos para el mes seleccionado.</div>';
+    var otherPeriods = (financeMovements || []).map(function(m){
+      return p.isYearView ? String(m.date || '').slice(0,4) : financeMonthKeyFromDate(m.date);
+    }).filter(Boolean);
+    var uniquePeriods = Array.from(new Set(otherPeriods)).sort().reverse();
+
+    if (uniquePeriods.length) {
+      box.innerHTML = '<div class="emptyMini">No hay ingresos/gastos externos para esta vista. Hay movimientos en: ' +
+        uniquePeriods.slice(0,8).map(function(k){
+          return p.isYearView ? k : (k.slice(5,7) + '/' + k.slice(0,4));
+        }).join(', ') +
+        '. Cambia los filtros de arriba para verlos.</div>';
+    } else {
+      box.innerHTML = '<div class="emptyMini">No hay ingresos/gastos externos registrados.</div>';
+    }
     return;
   }
 
@@ -1638,6 +1777,13 @@ function renderFinanceDashboard() {
 async function openFinanceBalance() {
   closeSheet('menuSheet','menuOverlay');
   initFinanceSelectors();
+  ensureFinanceYearRange();
+  setFinanceViewMode('year');
+  var now = new Date();
+  var monthEl = document.getElementById('financeMonth');
+  var yearEl = document.getElementById('financeYear');
+  if (monthEl) monthEl.value = String(now.getMonth() + 1);
+  if (yearEl) yearEl.value = String(now.getFullYear());
   var d = document.getElementById('financeDate');
   if (d && !d.value) d.value = financeTodayIso();
   openSheet('financeSheet','financeOverlay');

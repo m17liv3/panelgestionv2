@@ -1,4 +1,4 @@
-const CACHE_NAME = 'm17liv3-renew-amount-required-v4-borrar-force-mensajes-editables-mensajes-editables-force-balance-finanzas-balance-finanzas-k13-jordan';
+const CACHE_NAME = 'm17liv3-renew-amount-required-v4-borrar-force-mensajes-editables-mensajes-editables-force-balance-finanzas-balance-finanzas-k13-jordan-finance-date-fix-finanzas-mas-anos-balance-ano-completo';
 const APP_SHELL = [
   './',
   './index.html',

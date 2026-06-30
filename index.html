@@ -485,8 +485,15 @@
       Controla ingresos de clientes, ingresos externos y gastos del servicio.
     </div>
 
-    <div class="financeFilters">
+    <div class="financeFilters financeFilters3">
       <div class="formGroup">
+        <label>Vista</label>
+        <select id="financeViewMode" onchange="renderFinanceDashboard()">
+          <option value="year">Año completo</option>
+          <option value="month">Mes seleccionado</option>
+        </select>
+      </div>
+      <div class="formGroup" id="financeMonthGroup">
         <label>Mes</label>
         <select id="financeMonth" onchange="renderFinanceDashboard()"></select>
       </div>
@@ -497,14 +504,14 @@
     </div>
 
     <div class="paymentsStatsGrid financeStatsGrid">
-      <div class="paymentsStat"><span>Ingresos clientes mes</span><strong id="finClientIncomeMonth">0,00 €</strong></div>
-      <div class="paymentsStat"><span>Otros ingresos mes</span><strong id="finOtherIncomeMonth">0,00 €</strong></div>
-      <div class="paymentsStat expense"><span>Gastos mes</span><strong id="finExpenseMonth">0,00 €</strong></div>
-      <div class="paymentsStat profit"><span>Beneficio mes</span><strong id="finProfitMonth">0,00 €</strong></div>
+      <div class="paymentsStat"><span id="finClientIncomeLabel">Ingresos clientes año</span><strong id="finClientIncomeMonth">0,00 €</strong></div>
+      <div class="paymentsStat"><span id="finOtherIncomeLabel">Otros ingresos año</span><strong id="finOtherIncomeMonth">0,00 €</strong></div>
+      <div class="paymentsStat expense"><span id="finExpenseLabel">Gastos año</span><strong id="finExpenseMonth">0,00 €</strong></div>
+      <div class="paymentsStat profit"><span id="finProfitLabel">Beneficio año</span><strong id="finProfitMonth">0,00 €</strong></div>
       <div class="paymentsStat"><span>Ingresos año</span><strong id="finIncomeYear">0,00 €</strong></div>
       <div class="paymentsStat expense"><span>Gastos año</span><strong id="finExpenseYear">0,00 €</strong></div>
       <div class="paymentsStat profit"><span>Beneficio año</span><strong id="finProfitYear">0,00 €</strong></div>
-      <div class="paymentsStat"><span>Movimientos mes</span><strong id="finMovementCountMonth">0</strong></div>
+      <div class="paymentsStat"><span id="finMovementCountLabel">Movimientos año</span><strong id="finMovementCountMonth">0</strong></div>
     </div>
 
     <div class="financeQuickActions">
@@ -561,8 +568,13 @@
       <button class="btnFull primary" id="financeSaveBtn" onclick="saveFinanceMovement(this)">&#128190; Guardar movimiento</button>
     </div>
 
+    <div class="raffleHistoryHeader financeMonthlyHeader">
+      <span>Resumen por meses</span>
+    </div>
+    <div class="financeMonthlySummary" id="financeMonthlySummary"></div>
+
     <div class="raffleHistoryHeader">
-      <span>Historial ingresos / gastos</span>
+      <span id="financeHistoryTitle">Historial ingresos / gastos</span>
       <button onclick="loadFinanceMovements(true)">&#8634; Recargar</button>
     </div>
 

@@ -946,3 +946,63 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, 'S
     grid-template-columns: 1fr 1fr;
   }
 }
+
+
+/* Balance por año completo */
+.financeFilters3 {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+.financeMonthlyHeader {
+  margin-top: 14px;
+}
+.financeMonthlySummary {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin: 8px 0 14px;
+}
+.financeMonthCard {
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.035);
+  border-radius: 14px;
+  padding: 12px;
+}
+.financeMonthCard.hasData {
+  border-color: rgba(0,229,255,.20);
+  background: rgba(0,229,255,.045);
+}
+.financeMonthTitle {
+  font-weight: 900;
+  color: var(--cyan);
+  margin-bottom: 8px;
+}
+.financeMonthLine {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: .82rem;
+  color: var(--muted);
+  margin-top: 5px;
+}
+.financeMonthLine strong {
+  color: var(--text);
+}
+.financeMonthLine.expense strong {
+  color: var(--red);
+}
+.financeMonthLine.profit strong {
+  color: var(--green);
+}
+.financeMonthLine.profit.negative strong {
+  color: var(--red);
+}
+@media (min-width: 720px) {
+  .financeMonthlySummary {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+@media (max-width: 540px) {
+  .financeFilters3 {
+    grid-template-columns: 1fr;
+  }
+}
