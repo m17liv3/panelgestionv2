@@ -1889,6 +1889,35 @@ function openRenew(id) {
   updateRenewHint(c);
   openSheet('renewSheet','renewOverlay');
 }
+
+function renewAmountHasValue() {
+  var amountEl = document.getElementById('renewAmount');
+  if (!amountEl) return false;
+  return String(amountEl.value || '').trim() !== '';
+}
+
+function refreshRenewButtonsState() {
+  var amountEl = document.getElementById('renewAmount');
+  var errEl = document.getElementById('renewPaymentError');
+  var btn = document.getElementById('renewConfirmBtn');
+  var hasValue = renewAmountHasValue();
+  if (btn) {
+    btn.disabled = !hasValue;
+    btn.style.opacity = hasValue ? '1' : '.55';
+    btn.style.cursor = hasValue ? '' : 'not-allowed';
+  }
+  if (amountEl) amountEl.style.borderColor = '';
+  if (errEl) {
+    if (!hasValue) {
+      errEl.textContent = 'Para confirmar la renovacion debes indicar un importe. Si el cliente no paga nada, escribe 0. Si te pagara despues, usa “Paga mas tarde”.';
+      errEl.style.display = 'block';
+    } else {
+      errEl.textContent = '';
+      errEl.style.display = 'none';
+    }
+  }
+}
+
 function changeRenewMonths(delta) {
   renewMonths = Math.max(1, Math.min(24, renewMonths + delta));
   document.getElementById('renewMonthsVal').textContent = renewMonths;
@@ -1912,12 +1941,23 @@ async function doRenew(markAsPending) {
   var errEl = document.getElementById('renewPaymentError');
   var btn = document.getElementById('renewConfirmBtn');
   var pendingBtn = document.getElementById('renewPendingBtn');
-  var amount = parseEuroAmount(amountEl ? amountEl.value : '');
+  var rawAmountValue = amountEl ? String(amountEl.value || '').trim() : '';
+
+  if (!markAsPending && rawAmountValue === '') {
+    if (errEl) { errEl.textContent = 'No puedes confirmar la renovacion con el importe vacio. Escribe una cantidad o 0 si es gratis. Si te pagara despues, pulsa “Paga mas tarde”.'; errEl.style.display = 'block'; }
+    if (amountEl) { amountEl.style.borderColor = 'var(--red)'; amountEl.focus(); }
+    refreshRenewButtonsState();
+    return;
+  }
+
+  var amount = parseEuroAmount(rawAmountValue);
   if (isNaN(amount)) {
     if (errEl) { errEl.textContent = 'Importe no valido. Ejemplo: 10 o 10,50'; errEl.style.display = 'block'; }
     if (amountEl) { amountEl.style.borderColor = 'var(--red)'; amountEl.focus(); }
     return;
   }
+
+  if (markAsPending && rawAmountValue === '') amount = 0;
   var previousExpiry = c.expiry || '';
   var base=c.expiry?new Date(c.expiry):new Date();
   base.setMonth(base.getMonth()+renewMonths);
