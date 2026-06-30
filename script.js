@@ -1228,6 +1228,7 @@ function renderPaymentsDashboard() {
       '</div>' +
     '</div>';
   }).join('');
+  ensurePaymentDeleteButtons();
 }
 
 async function openPayments() {
@@ -1236,6 +1237,7 @@ async function openPayments() {
   var box = document.getElementById('paymentsHistory');
   if (box) box.innerHTML = '<div class="emptyMini">Cargando ingresos...</div>';
   await loadRenewals(false);
+  setTimeout(ensurePaymentDeleteButtons, 100);
 }
 
 async function exportPaymentsExcel() {
@@ -1251,6 +1253,32 @@ async function exportPaymentsExcel() {
     if (typeof showToast === 'function') showToast('Error al exportar ingresos: ' + ex.message, 'error'); else alert('Error al exportar ingresos: ' + ex.message);
   }
 }
+
+function ensurePaymentDeleteButtons() {
+  try {
+    document.querySelectorAll('.paymentEditBtn[data-renewal-id]').forEach(function(editBtn){
+      var renewalId = editBtn.getAttribute('data-renewal-id') || '';
+      if (!renewalId) return;
+      var actions = editBtn.closest('.paymentActions') || editBtn.parentElement;
+      if (!actions) return;
+      var existing = actions.querySelector('.paymentDeleteBtn[data-renewal-id="' + renewalId.replace(/"/g, '\\"') + '"]');
+      if (existing) return;
+
+      var delBtn = document.createElement('button');
+      delBtn.type = 'button';
+      delBtn.className = 'paymentDeleteBtn';
+      delBtn.setAttribute('data-renewal-id', renewalId);
+      delBtn.innerHTML = '&#128465; Borrar';
+      delBtn.onclick = function(){
+        deleteRenewalFromStore(renewalId, delBtn);
+      };
+      actions.appendChild(delBtn);
+    });
+  } catch(e) {
+    console.warn('No se pudieron añadir botones de borrar', e);
+  }
+}
+
 // ========== FIN RENOVACIONES E INGRESOS ==========
 
 // ========== PANEL APP IBO ==========
@@ -4316,3 +4344,14 @@ if('serviceWorker' in navigator){
 }
 // ========== FIN MODO APP INSTALABLE PWA ==========
 
+
+
+// Refuerzo visual: añade el botón Borrar al historial aunque la PWA conserve parte del listado en caché.
+document.addEventListener('DOMContentLoaded', function(){
+  setTimeout(ensurePaymentDeleteButtons, 500);
+  setTimeout(ensurePaymentDeleteButtons, 1500);
+});
+setInterval(function(){
+  var paymentsSheet = document.getElementById('paymentsSheet');
+  if (paymentsSheet && paymentsSheet.classList.contains('open')) ensurePaymentDeleteButtons();
+}, 1200);

@@ -829,3 +829,20 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, 'S
   display: block !important;
   width: 100% !important;
 }
+
+
+.paymentActions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.paymentActions .paymentDeleteBtn {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  min-width: 86px;
+  border-color: rgba(255,77,77,.8) !important;
+  color: var(--red) !important;
+  background: rgba(255,77,77,.12) !important;
+}
