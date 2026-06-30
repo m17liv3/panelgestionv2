@@ -823,3 +823,9 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, 'S
 .paymentNotice .paymentDeleteBtn:hover {
   background: rgba(255,77,77,.16) !important;
 }
+
+
+#editRenewalDeleteBtn {
+  display: block !important;
+  width: 100% !important;
+}

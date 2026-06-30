@@ -1027,6 +1027,15 @@ async function deleteRenewalFromStore(renewalId, btn) {
 }
 
 
+
+function deleteCurrentEditedRenewal(btn) {
+  var idEl = document.getElementById('editRenewalId');
+  var id = idEl ? idEl.value : '';
+  if (!id) { alert('No se ha encontrado el registro para borrar.'); return; }
+  deleteRenewalFromStore(id, btn);
+}
+
+
 function openEditRenewal(renewalId) {
   // Releer los ingresos antes de editar ayuda cuando vienes de otra pantalla o la PWA estaba en caché.
   var r = (renewals || []).find(function(x){ return String(x.id) === String(renewalId); });
