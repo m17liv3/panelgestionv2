@@ -1,0 +1,46 @@
+-- M17LIV3 - Plantillas editables de mensajes rápidos
+-- Ejecutar una sola vez en Supabase SQL Editor.
+
+create table if not exists public.message_templates (
+  id uuid primary key default gen_random_uuid(),
+  owner_id uuid default auth.uid(),
+  tipo text not null,
+  texto text not null,
+  updated_at timestamptz default now(),
+  unique(owner_id, tipo)
+);
+
+alter table public.message_templates enable row level security;
+
+grant usage on schema public to authenticated;
+grant select, insert, update, delete on public.message_templates to authenticated;
+
+drop policy if exists "message_templates_select_owner" on public.message_templates;
+drop policy if exists "message_templates_insert_owner" on public.message_templates;
+drop policy if exists "message_templates_update_owner" on public.message_templates;
+drop policy if exists "message_templates_delete_owner" on public.message_templates;
+
+create policy "message_templates_select_owner"
+on public.message_templates
+for select
+to authenticated
+using (owner_id = (select auth.uid()) and (select auth.jwt()->>'aal') = 'aal2');
+
+create policy "message_templates_insert_owner"
+on public.message_templates
+for insert
+to authenticated
+with check (owner_id = (select auth.uid()) and (select auth.jwt()->>'aal') = 'aal2');
+
+create policy "message_templates_update_owner"
+on public.message_templates
+for update
+to authenticated
+using (owner_id = (select auth.uid()) and (select auth.jwt()->>'aal') = 'aal2')
+with check (owner_id = (select auth.uid()) and (select auth.jwt()->>'aal') = 'aal2');
+
+create policy "message_templates_delete_owner"
+on public.message_templates
+for delete
+to authenticated
+using (owner_id = (select auth.uid()) and (select auth.jwt()->>'aal') = 'aal2');

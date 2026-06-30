@@ -369,10 +369,55 @@
       <button class="btnFull gray" onclick="copyClientMessage('renewed', this)">&#9989; Renovacion OK</button>
       <button class="btnFull gray" onclick="copyClientMessage('expired', this)">&#9888; Cliente caducado</button>
     </div>
+    <button class="btnFull primary" onclick="openMessageTemplateEditor()" style="margin-top:12px">&#9998; Editar plantillas de mensajes</button>
     <button class="btnFull gray" onclick="closeSheet('messageSheet','messageOverlay')" style="margin-top:8px">Cerrar</button>
   </div>
 </div>
 
+
+
+<!-- EDIT MESSAGE TEMPLATES SHEET -->
+<div class="sheet-overlay" id="messageTemplateOverlay" onclick="closeSheet('messageTemplateSheet','messageTemplateOverlay')"></div>
+<div class="sheet" id="messageTemplateSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <h3>&#9998; Editar plantillas Msg</h3>
+    <button class="sheet-close" onclick="closeSheet('messageTemplateSheet','messageTemplateOverlay')">x</button>
+  </div>
+  <div class="sheet-body">
+    <div class="messageTemplateHelp">
+      Puedes cambiar los textos y se aplicarán a todos los clientes. Mantén las variables entre llaves para que la app ponga los datos de cada cliente.
+      <div class="messageTemplateVars">
+        {saludo} · {nombre} · {app} · {usuario} · {password} · {expiracion} · {servicio} · {fecha_hoy}
+      </div>
+    </div>
+
+    <div class="formGroup">
+      <label>Datos de acceso</label>
+      <textarea id="msgTplAccess" class="msgTemplateTextarea" rows="9"></textarea>
+    </div>
+
+    <div class="formGroup">
+      <label>Aviso de caducidad</label>
+      <textarea id="msgTplExpiry" class="msgTemplateTextarea" rows="8"></textarea>
+    </div>
+
+    <div class="formGroup">
+      <label>Renovación OK</label>
+      <textarea id="msgTplRenewed" class="msgTemplateTextarea" rows="7"></textarea>
+    </div>
+
+    <div class="formGroup">
+      <label>Cliente caducado</label>
+      <textarea id="msgTplExpired" class="msgTemplateTextarea" rows="7"></textarea>
+    </div>
+
+    <div class="formError" id="messageTemplateError"></div>
+    <button class="btnFull primary" id="messageTemplateSaveBtn" onclick="saveMessageTemplates(this)">&#128190; Guardar plantillas</button>
+    <button class="btnFull gray" onclick="resetMessageTemplatesToDefault()" style="margin-top:8px">&#8634; Restaurar textos originales</button>
+    <button class="btnFull gray" onclick="closeSheet('messageTemplateSheet','messageTemplateOverlay')" style="margin-top:8px">Cerrar</button>
+  </div>
+</div>
 
 <!-- BACKUP SHEET -->
 <div class="sheet-overlay" id="backupOverlay" onclick="closeSheet('backupSheet','backupOverlay')"></div>

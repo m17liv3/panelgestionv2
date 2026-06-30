@@ -33,6 +33,7 @@ var raffles = [];
 var lastRaffleResult = null;
 var SUPABASE_RAFFLES_TABLE = CONFIG.supabaseRafflesTable || 'sorteos';
 var SUPABASE_RENEWALS_TABLE = CONFIG.supabaseRenewalsTable || 'renovaciones';
+var SUPABASE_MESSAGE_TEMPLATES_TABLE = CONFIG.supabaseMessageTemplatesTable || 'message_templates';
 var renewals = [];
 var BACKUP_LAST_KEY = 'm17_last_backup_at';
 var BACKUP_REMINDER_DAYS = 7;
@@ -1744,6 +1745,183 @@ function viewClient(id) {
 }
 
 
+
+// ========== PLANTILLAS EDITABLES DE MENSAJES ==========
+var MESSAGE_TEMPLATE_STORAGE_KEY = 'm17_message_templates_v1';
+var messageTemplatesLoaded = false;
+var DEFAULT_MESSAGE_TEMPLATES = {
+  access: '{saludo}\n\nEstos son tus datos de acceso:\n\nApp: {app}\nUsuario: {usuario}\nContraseña: {password}\nFecha de expiración: {expiracion}\n\nRecuerda que te avisaré 15 días antes para su renovación.',
+  expiry: '{saludo}\n\nEste es un aviso de que te quedan 15 días para que te caduque el servicio.\n\nFecha de caducidad: {expiracion}\n\nPuedes renovarlo cuando quieras para evitar cortes en el servicio.',
+  renewed: '{saludo}\n\nTu servicio ha sido renovado correctamente.\n\nNueva fecha de expiración: {expiracion}\n\nEstamos en contacto.',
+  expired: '{saludo}\n\nTu servicio expiró el día {expiracion}.\n\nSi quieres reactivarlo, dime y te lo renuevo.'
+};
+var messageTemplates = Object.assign({}, DEFAULT_MESSAGE_TEMPLATES);
+
+function loadLocalMessageTemplates() {
+  try {
+    var saved = JSON.parse(localStorage.getItem(MESSAGE_TEMPLATE_STORAGE_KEY) || '{}');
+    messageTemplates = Object.assign({}, DEFAULT_MESSAGE_TEMPLATES, saved || {});
+  } catch(e) {
+    messageTemplates = Object.assign({}, DEFAULT_MESSAGE_TEMPLATES);
+  }
+}
+
+function saveLocalMessageTemplates() {
+  try { localStorage.setItem(MESSAGE_TEMPLATE_STORAGE_KEY, JSON.stringify(messageTemplates)); } catch(e) {}
+}
+
+async function loadMessageTemplates(showMsg) {
+  loadLocalMessageTemplates();
+
+  if (!USE_SUPABASE) {
+    messageTemplatesLoaded = true;
+    return messageTemplates;
+  }
+
+  try {
+    var db = initSupabase();
+    var result = await db.from(SUPABASE_MESSAGE_TEMPLATES_TABLE).select('tipo,texto');
+    if (result.error) throw result.error;
+
+    (result.data || []).forEach(function(row){
+      if (row && row.tipo && Object.prototype.hasOwnProperty.call(DEFAULT_MESSAGE_TEMPLATES, row.tipo)) {
+        messageTemplates[row.tipo] = row.texto || DEFAULT_MESSAGE_TEMPLATES[row.tipo];
+      }
+    });
+
+    saveLocalMessageTemplates();
+    messageTemplatesLoaded = true;
+    if (showMsg && typeof showToast === 'function') showToast('Plantillas cargadas');
+  } catch(ex) {
+    console.warn('No se pudieron cargar plantillas desde Supabase', ex);
+    messageTemplatesLoaded = true;
+    if (showMsg && typeof showToast === 'function') showToast('Usando plantillas locales. Revisa SQL message_templates si quieres sincronizarlas.', 'error');
+  }
+
+  return messageTemplates;
+}
+
+function messageTemplateValue(type) {
+  return (messageTemplates && messageTemplates[type]) || DEFAULT_MESSAGE_TEMPLATES[type] || '';
+}
+
+function messageTemplateVars(c) {
+  var name = c && c.name ? c.name : '';
+  var saludo = name ? 'Hola ' + name + ' 👋' : 'Hola 👋';
+  return {
+    saludo: saludo,
+    nombre: name || '',
+    app: getClientMainApp(c),
+    usuario: c && c.user ? c.user : '-',
+    password: c && c.pass ? c.pass : '-',
+    contrasena: c && c.pass ? c.pass : '-',
+    expiracion: formatDate(c && c.expiry ? c.expiry : ''),
+    servicio: c && c.service ? c.service : '-',
+    fecha_hoy: formatDate(new Date().toISOString().split('T')[0]),
+    notas: c && c.notes ? c.notes : ''
+  };
+}
+
+function applyMessageTemplate(type, c) {
+  var tpl = messageTemplateValue(type);
+  var vars = messageTemplateVars(c);
+  return String(tpl || '').replace(/\{([a-zA-Z0-9_]+)\}/g, function(full, key){
+    key = String(key || '').toLowerCase();
+    return Object.prototype.hasOwnProperty.call(vars, key) ? vars[key] : full;
+  });
+}
+
+async function openMessageTemplateEditor() {
+  await loadMessageTemplates(false);
+
+  var map = {
+    msgTplAccess: 'access',
+    msgTplExpiry: 'expiry',
+    msgTplRenewed: 'renewed',
+    msgTplExpired: 'expired'
+  };
+
+  Object.keys(map).forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.value = messageTemplateValue(map[id]);
+  });
+
+  var err = document.getElementById('messageTemplateError');
+  if (err) { err.textContent = ''; err.style.display = 'none'; }
+
+  openSheet('messageTemplateSheet','messageTemplateOverlay');
+}
+
+async function saveMessageTemplates(btn) {
+  var oldText = btn ? btn.textContent : '';
+  var err = document.getElementById('messageTemplateError');
+  var next = {
+    access: (document.getElementById('msgTplAccess') || {}).value || DEFAULT_MESSAGE_TEMPLATES.access,
+    expiry: (document.getElementById('msgTplExpiry') || {}).value || DEFAULT_MESSAGE_TEMPLATES.expiry,
+    renewed: (document.getElementById('msgTplRenewed') || {}).value || DEFAULT_MESSAGE_TEMPLATES.renewed,
+    expired: (document.getElementById('msgTplExpired') || {}).value || DEFAULT_MESSAGE_TEMPLATES.expired
+  };
+
+  messageTemplates = Object.assign({}, DEFAULT_MESSAGE_TEMPLATES, next);
+  saveLocalMessageTemplates();
+
+  try {
+    if (err) { err.textContent = ''; err.style.display = 'none'; }
+    if (btn) { btn.disabled = true; btn.textContent = 'Guardando...'; }
+
+    if (USE_SUPABASE) {
+      var db = initSupabase();
+      var userRes = await db.auth.getUser();
+      var ownerId = userRes && userRes.data && userRes.data.user ? userRes.data.user.id : null;
+      if (!ownerId) throw new Error('No se pudo identificar el usuario.');
+
+      var rows = Object.keys(next).map(function(key){
+        return {
+          owner_id: ownerId,
+          tipo: key,
+          texto: next[key],
+          updated_at: new Date().toISOString()
+        };
+      });
+
+      var result = await db.from(SUPABASE_MESSAGE_TEMPLATES_TABLE).upsert(rows, { onConflict: 'owner_id,tipo' });
+      if (result.error) throw result.error;
+    }
+
+    if (typeof showToast === 'function') showToast('Plantillas guardadas');
+    closeSheet('messageTemplateSheet','messageTemplateOverlay');
+  } catch(ex) {
+    var msg = ex && ex.message ? ex.message : 'No se pudieron guardar las plantillas.';
+    if (err) { err.textContent = 'Guardado local realizado. Error Supabase: ' + msg; err.style.display = 'block'; }
+    else alert('Guardado local realizado. Error Supabase: ' + msg);
+    if (typeof showToast === 'function') showToast('Guardado local. Revisa SQL de plantillas.', 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = oldText || 'Guardar plantillas'; }
+  }
+}
+
+function resetMessageTemplatesToDefault() {
+  var ok = confirm('¿Restaurar los textos originales de las 4 plantillas?');
+  if (!ok) return;
+  messageTemplates = Object.assign({}, DEFAULT_MESSAGE_TEMPLATES);
+  saveLocalMessageTemplates();
+
+  var ids = {
+    msgTplAccess: 'access',
+    msgTplExpiry: 'expiry',
+    msgTplRenewed: 'renewed',
+    msgTplExpired: 'expired'
+  };
+  Object.keys(ids).forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.value = DEFAULT_MESSAGE_TEMPLATES[ids[id]];
+  });
+
+  if (typeof showToast === 'function') showToast('Textos originales restaurados. Pulsa Guardar plantillas para sincronizar.');
+}
+// ========== FIN PLANTILLAS EDITABLES DE MENSAJES ==========
+
+
 function getClientMainApp(c) {
   if (!c || !c.apps || !c.apps.length) return '-';
   var a = c.apps[0];
@@ -1755,44 +1933,7 @@ function getClientById(id) {
 }
 
 function buildClientMessage(c, type) {
-  var name = c && c.name ? c.name : '';
-  var greeting = name ? 'Hola ' + name + ' 👋' : 'Hola 👋';
-  var expiry = formatDate(c && c.expiry ? c.expiry : '');
-  var user = c && c.user ? c.user : '-';
-  var pass = c && c.pass ? c.pass : '-';
-  var app = getClientMainApp(c);
-
-  if (type === 'access') {
-    return greeting + '\n\n' +
-      'Estos son tus datos de acceso:\n\n' +
-      'App: ' + app + '\n' +
-      'Usuario: ' + user + '\n' +
-      'Contraseña: ' + pass + '\n' +
-      'Fecha de expiración: ' + expiry + '\n\n' +
-      'Recuerda que te avisaré 15 días antes para su renovación.';
-  }
-
-  if (type === 'expiry') {
-    return greeting + '\n\n' +
-      'Este es un aviso de que te quedan 15 días para que te caduque el servicio.\n\n' +
-      'Fecha de caducidad: ' + expiry + '\n\n' +
-      'Puedes renovarlo cuando quieras para evitar cortes en el servicio.';
-  }
-
-  if (type === 'renewed') {
-    return greeting + '\n\n' +
-      'Tu servicio ha sido renovado correctamente.\n\n' +
-      'Nueva fecha de expiración: ' + expiry + '\n\n' +
-      'Estamos en contacto.';
-  }
-
-  if (type === 'expired') {
-    return greeting + '\n\n' +
-      'Tu servicio expiró el día ' + expiry + '.\n\n' +
-      'Si quieres reactivarlo, dime y te lo renuevo.';
-  }
-
-  return '';
+  return applyMessageTemplate(type, c);
 }
 
 function openClientMessages(id) {
@@ -1802,7 +1943,7 @@ function openClientMessages(id) {
   var title = document.getElementById('messageSheetTitle');
   var info = document.getElementById('messageInfo');
   if (title) title.textContent = 'Mensajes · ' + c.name;
-  if (info) info.textContent = 'Pulsa el tipo de mensaje que quieras y se copiará directamente al portapapeles para pegarlo manualmente donde prefieras.';
+  if (info) info.textContent = 'Pulsa el tipo de mensaje para copiarlo. Si quieres cambiar el texto para todos los clientes, entra en “Editar plantillas de mensajes”.';
   openSheet('messageSheet','messageOverlay');
 }
 
@@ -1835,9 +1976,10 @@ function copyMessageText(txt, btn) {
   }
 }
 
-function copyClientMessage(type, btn) {
+async function copyClientMessage(type, btn) {
   var c = getClientById(messageTargetId);
   if (!c) return;
+  await loadMessageTemplates(false);
   var txt = buildClientMessage(c, type);
   copyMessageText(txt, btn);
 }

@@ -846,3 +846,41 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, 'S
   color: var(--red) !important;
   background: rgba(255,77,77,.12) !important;
 }
+
+
+/* Editor de plantillas de mensajes rápidos */
+.messageTemplateHelp {
+  border: 1px solid rgba(0,229,255,.18);
+  background: rgba(0,229,255,.06);
+  border-radius: 14px;
+  padding: 12px;
+  color: var(--muted);
+  font-size: .82rem;
+  line-height: 1.45;
+  margin-bottom: 14px;
+}
+.messageTemplateVars {
+  color: var(--cyan);
+  font-family: monospace;
+  font-size: .78rem;
+  margin-top: 8px;
+  word-break: break-word;
+}
+.msgTemplateTextarea {
+  width: 100%;
+  min-height: 130px;
+  resize: vertical;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(0,0,0,.25);
+  color: var(--text);
+  padding: 12px;
+  line-height: 1.4;
+  font-size: .9rem;
+  font-family: inherit;
+}
+.msgTemplateTextarea:focus {
+  outline: none;
+  border-color: var(--cyan);
+  box-shadow: 0 0 0 2px rgba(0,229,255,.08);
+}
