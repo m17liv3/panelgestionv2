@@ -1235,3 +1235,136 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, 'S
 .mfaRemember {
   margin-top: 10px;
 }
+
+
+/* ===== Mini panel inicio ===== */
+.homeMiniPanel {
+  margin: 12px 0 14px;
+  border: 1px solid rgba(0,229,255,.16);
+  background: rgba(0,229,255,.035);
+  border-radius: 18px;
+  padding: 12px;
+}
+.homeMiniTitle {
+  color: var(--cyan);
+  font-weight: 900;
+  margin-bottom: 10px;
+}
+.homeMiniGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.homeMiniCard {
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.045);
+  color: var(--text);
+  border-radius: 14px;
+  padding: 10px;
+  text-align: left;
+}
+button.homeMiniCard {
+  cursor: pointer;
+}
+.homeMiniCard span {
+  display: block;
+  color: var(--muted);
+  font-size: .74rem;
+  margin-bottom: 4px;
+}
+.homeMiniCard strong {
+  display: block;
+  color: var(--cyan);
+  font-size: 1.04rem;
+}
+
+/* ===== WhatsApp y teléfono ===== */
+.whatsappActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0;
+}
+.whatsappActions button,
+.whatsappFull,
+.act-wa,
+.act-quick {
+  border: 1px solid rgba(105,255,71,.25);
+  background: rgba(105,255,71,.08);
+  color: var(--green);
+}
+.whatsappActions button {
+  border-radius: 999px;
+  padding: 7px 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.whatsappActions.compact {
+  margin: 8px 0 0;
+}
+.phoneField {
+  border-color: rgba(105,255,71,.12) !important;
+}
+
+/* ===== Renovar rápido ===== */
+.renewQuickMonths {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 7px;
+  margin-top: 10px;
+}
+.renewQuickMonths button {
+  border: 1px solid rgba(0,229,255,.22);
+  background: rgba(0,229,255,.06);
+  color: var(--cyan);
+  border-radius: 12px;
+  padding: 9px 6px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+/* ===== Gráficas mejoradas ===== */
+.financeChartCard .financeBar.incomeAlt {
+  background: linear-gradient(180deg, #d9b8ff, var(--cyan));
+}
+.financeComparisonCard {
+  border: 1px solid rgba(0,229,255,.22);
+  background: rgba(255,255,255,.04);
+  border-radius: 16px;
+  padding: 12px;
+}
+.financeCompareGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+.financeCompareGrid div {
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(0,0,0,.12);
+  border-radius: 13px;
+  padding: 10px;
+}
+.financeCompareGrid span {
+  display: block;
+  color: var(--muted);
+  font-size: .76rem;
+}
+.financeCompareGrid strong {
+  display: block;
+  margin: 3px 0;
+  color: var(--text);
+}
+.financeCompareGrid small.positive {
+  color: var(--green);
+}
+.financeCompareGrid small.negative {
+  color: var(--red);
+}
+@media (min-width: 720px) {
+  .homeMiniGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .financeCompareGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}

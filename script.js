@@ -194,6 +194,7 @@ function dbRowToClient(row) {
     name: row.nombre || '',
     user: row.usuario || '',
     pass: row.password || '',
+    phone: row.telefono || row.phone || '',
     service: row.servicio || 'TODO',
     expiry: row.expiracion || '',
     notes: row.notas || '',
@@ -215,6 +216,7 @@ function clientToDbPayload(c) {
     nombre: c.name || '',
     usuario: c.user || '',
     password: c.pass || '',
+    telefono: c.phone || '',
     servicio: c.service || 'TODO',
     expiracion: c.expiry || null,
     apps: JSON.stringify(c.apps || []),
@@ -390,6 +392,94 @@ async function tryRestoreSupabaseSession() {
 }
 // ========== FIN RECORDAR DISPOSITIVO ==========
 
+
+// ========== TELÉFONO + WHATSAPP ==========
+function cleanPhone(value) {
+  return String(value || '').trim();
+}
+
+function whatsappPhoneNumber(value) {
+  var raw = String(value || '').trim();
+  if (!raw) return '';
+  var n = raw.replace(/[^\d+]/g, '');
+  if (n.indexOf('00') === 0) n = n.slice(2);
+  if (n.indexOf('+') === 0) n = n.slice(1);
+  n = n.replace(/\D/g, '');
+  // Si parece móvil español sin prefijo, añadimos 34.
+  if (n.length === 9 && /^[67]/.test(n)) n = '34' + n;
+  return n;
+}
+
+function whatsappUrl(phone, text) {
+  var n = whatsappPhoneNumber(phone);
+  if (!n) return '';
+  return 'https://wa.me/' + n + '?text=' + encodeURIComponent(text || '');
+}
+
+function openWhatsappToClient(clientId, type) {
+  var c = getClientById ? getClientById(clientId) : clients.find(function(x){ return x.id === clientId; });
+  if (!c) return;
+  if (!c.phone) {
+    alert('Este cliente no tiene teléfono guardado.');
+    return;
+  }
+  loadMessageTemplates(false).then(function(){
+    var txt = '';
+    if (type === 'pending') {
+      var r = getPendingPaymentRenewalForClient(c.id);
+      txt = (c.name ? 'Hola ' + c.name + ' 👋' : 'Hola 👋') +
+        '\n\nTe recuerdo que tienes un pago pendiente' +
+        (r && Number(r.amount || 0) > 0 ? ' de ' + euro(r.amount) : '') +
+        '.\n\nFecha de expiración: ' + formatDate(c.expiry) +
+        '\n\nCuando puedas me dices y lo dejamos cerrado.';
+    } else {
+      txt = buildClientMessage(c, type || 'access');
+    }
+    var url = whatsappUrl(c.phone, txt);
+    if (!url) { alert('Teléfono no válido para WhatsApp.'); return; }
+    window.open(url, '_blank');
+  }).catch(function(ex){
+    alert('No se pudo preparar WhatsApp: ' + (ex && ex.message ? ex.message : ex));
+  });
+}
+
+function clientWhatsappButtonsHtml(c, compact) {
+  if (!c || !c.phone) return '';
+  return '<div class="'+(compact?'whatsappActions compact':'whatsappActions')+'">' +
+    '<button type="button" onclick="openWhatsappToClient(&quot;'+esc(c.id)+'&quot;,&quot;access&quot;)">&#128241; Datos</button>' +
+    '<button type="button" onclick="openWhatsappToClient(&quot;'+esc(c.id)+'&quot;,&quot;expiry&quot;)">&#9200; Renovar</button>' +
+    '<button type="button" onclick="openWhatsappToClient(&quot;'+esc(c.id)+'&quot;,&quot;renewed&quot;)">&#9989; OK</button>' +
+    (clientHasPendingPayment(c) ? '<button type="button" onclick="openWhatsappToClient(&quot;'+esc(c.id)+'&quot;,&quot;pending&quot;)">&#128176; Pago</button>' : '') +
+  '</div>';
+}
+// ========== FIN TELÉFONO + WHATSAPP ==========
+
+// ========== MINI PANEL INICIO ==========
+function updateHomeMiniPanel() {
+  var set = function(id, val){ var el = document.getElementById(id); if (el) el.textContent = val; };
+  var now = new Date();
+  var key = now.getFullYear() + '-' + pad2(now.getMonth() + 1);
+  var inMonth = function(dateValue){ return financeMonthKeyFromDate(dateValue) === key; };
+
+  var soon = (clients || []).filter(function(c){ return getStatus(c.expiry) === 'warn'; }).length;
+  var pending = (clients || []).filter(function(c){ return clientHasPendingPayment(c); }).length;
+  var clientIncome = (typeof financeSumPaidRenewals === 'function') ? financeSumPaidRenewals(function(r){ return inMonth(financeRenewalDate(r)); }) : 0;
+  var otherIncome = (typeof financeSumMovements === 'function') ? financeSumMovements('ingreso', function(m){ return inMonth(m.date); }) : 0;
+  var expense = (typeof financeSumMovements === 'function') ? financeSumMovements('gasto', function(m){ return inMonth(m.date); }) : 0;
+  var income = clientIncome + otherIncome;
+  var profit = income - expense;
+
+  set('miniSoon', soon);
+  set('miniPendingPay', pending);
+  set('miniMonthIncome', euro(income));
+  set('miniMonthProfit', euro(profit));
+
+  var p = document.getElementById('miniMonthProfit');
+  if (p) p.style.color = profit >= 0 ? 'var(--green)' : 'var(--red)';
+}
+// ========== FIN MINI PANEL INICIO ==========
+
+
 function showAppAfterLogin() {
   var lp = document.getElementById('loginPage');
   var ap = document.getElementById('appPage');
@@ -402,6 +492,7 @@ function showAppAfterLogin() {
   updateStats();
   updateBackupReminder();
   renderTagFilterBar();
+  updateHomeMiniPanel();
 }
 
 
@@ -469,6 +560,7 @@ async function completeSupabaseLogin(fromSavedSession) {
 
   await loadClientsFromStore();
   await loadRenewals(false);
+  try { if (typeof loadFinanceMovements === 'function') await loadFinanceMovements(false); } catch(e) { console.warn('No se pudo cargar finanzas para inicio', e); }
   setMfaVisible(false);
   clearLoginLoading();
   showAppAfterLogin();
@@ -993,7 +1085,7 @@ function buildClientExportRows() {
   return clients.map(function(c){
     var svc = c.service === 'ESPANA' ? 'ESPAÑA' : c.service;
     var appsStr=(c.apps||[]).map(function(a){var s=a.name;if(a.customName) s+=' ('+a.customName+')';if(a.mac) s+=' MAC:'+a.mac;if(a.code) s+=' CODE:'+a.code;return s;}).join(' | ');
-    return {'ID':c.id,'Nombre':c.name,'Usuario':c.user,'Contrasena':c.pass,'Servicio':svc,'Expiracion':c.expiry,'Apps':appsStr,'Etiquetas':normalizeClientTags(c.tags).join(', '),'Notas':c.notes,'AvisoRenovacion':isRenewalNoticeCurrent(c)?'SI':'NO','FechaAviso':c.avisoRenovacionFecha?String(c.avisoRenovacionFecha).split('T')[0]:'','ContestadoAviso':clientHasAnsweredRenewalNotice(c)?'SI':'NO','FechaContestacion':c.avisoRenovacionContestadoFecha?String(c.avisoRenovacionContestadoFecha).split('T')[0]:'','Creado':c.createdAt?String(c.createdAt).split('T')[0]:''};
+    return {'ID':c.id,'Nombre':c.name,'Usuario':c.user,'Contrasena':c.pass,'Telefono':c.phone||'','Servicio':svc,'Expiracion':c.expiry,'Apps':appsStr,'Etiquetas':normalizeClientTags(c.tags).join(', '),'Notas':c.notes,'AvisoRenovacion':isRenewalNoticeCurrent(c)?'SI':'NO','FechaAviso':c.avisoRenovacionFecha?String(c.avisoRenovacionFecha).split('T')[0]:'','ContestadoAviso':clientHasAnsweredRenewalNotice(c)?'SI':'NO','FechaContestacion':c.avisoRenovacionContestadoFecha?String(c.avisoRenovacionContestadoFecha).split('T')[0]:'','Creado':c.createdAt?String(c.createdAt).split('T')[0]:''};
   });
 }
 
@@ -1905,7 +1997,7 @@ function financeMonthlyTotals(year) {
     var expense = financeSumMovements('gasto', function(m){ return inMonth(m.date); });
     var income = clientIncome + otherIncome;
     var profit = income - expense;
-    rows.push({month: FINANCE_MONTH_NAMES[i-1].slice(0,3), income: income, expense: expense, profit: profit});
+    rows.push({month: FINANCE_MONTH_NAMES[i-1].slice(0,3), clientIncome: clientIncome, otherIncome: otherIncome, income: income, expense: expense, profit: profit});
   }
   return rows;
 }
@@ -1928,9 +2020,36 @@ function financeBarsChartHtml(title, rows, key, className) {
   '</div>';
 }
 
+
+function financeMonthComparisonHtml(rows) {
+  var now = new Date();
+  var currentIndex = now.getMonth();
+  var prevIndex = currentIndex === 0 ? 11 : currentIndex - 1;
+  var cur = rows[currentIndex] || {income:0, expense:0, profit:0};
+  var prev = rows[prevIndex] || {income:0, expense:0, profit:0};
+  var diff = function(a,b){ return Number(a || 0) - Number(b || 0); };
+  var cls = function(v){ return v >= 0 ? 'positive' : 'negative'; };
+
+  return '<div class="financeComparisonCard">' +
+    '<div class="financeChartTitle">Mes actual vs mes anterior</div>' +
+    '<div class="financeCompareGrid">' +
+      '<div><span>Ingresos</span><strong>'+euro(cur.income)+'</strong><small class="'+cls(diff(cur.income, prev.income))+'">'+(diff(cur.income, prev.income)>=0?'+ ':'')+euro(diff(cur.income, prev.income))+'</small></div>' +
+      '<div><span>Gastos</span><strong>'+euro(cur.expense)+'</strong><small class="'+cls(-diff(cur.expense, prev.expense))+'">'+(diff(cur.expense, prev.expense)>=0?'+ ':'')+euro(diff(cur.expense, prev.expense))+'</small></div>' +
+      '<div><span>Beneficio</span><strong>'+euro(cur.profit)+'</strong><small class="'+cls(diff(cur.profit, prev.profit))+'">'+(diff(cur.profit, prev.profit)>=0?'+ ':'')+euro(diff(cur.profit, prev.profit))+'</small></div>' +
+    '</div>' +
+  '</div>';
+}
+
+function financeIncomeBreakdownHtml(rows) {
+  return financeBarsChartHtml('Ingresos clientes', rows, 'clientIncome', 'income') +
+         financeBarsChartHtml('Ingresos externos', rows, 'otherIncome', 'incomeAlt');
+}
+
 function financeChartsHtml(year) {
   var rows = financeMonthlyTotals(year);
-  return financeBarsChartHtml('Ingresos por mes', rows, 'income', 'income') +
+  return financeMonthComparisonHtml(rows) +
+         financeBarsChartHtml('Ingresos totales por mes', rows, 'income', 'income') +
+         financeIncomeBreakdownHtml(rows) +
          financeBarsChartHtml('Gastos por mes', rows, 'expense', 'expense') +
          financeBarsChartHtml('Beneficio por mes', rows, 'profit', 'profit');
 }
@@ -2017,6 +2136,7 @@ function renderFinanceDashboard() {
     chartBox.innerHTML = p.isYearView ? financeChartsHtml(p.selectedYear) : '';
   }
   if (chartHeader) chartHeader.style.display = p.isYearView ? '' : 'none';
+  updateHomeMiniPanel();
 
   if (!box) return;
 
@@ -2332,6 +2452,7 @@ function updateStats() {
   var noAnswerEl = document.getElementById('stNoAnswer');
   if (noAnswerEl) noAnswerEl.textContent = clients.filter(function(c){ return clientHasUnansweredRenewalNotice(c); }).length;
   updateBackupReminder();
+  updateHomeMiniPanel();
 }
 
 function copyText(txt, btn) {
@@ -2374,7 +2495,7 @@ function renderCards() {
   if (search) hasSelectedClientFilter = true;
   var filtered = clients.filter(function(c) {
     var tagText = normalizeClientTags(c.tags).join(' ').toLowerCase();
-    var ms = !search || c.name.toLowerCase().indexOf(search)>=0 || (c.user||'').toLowerCase().indexOf(search)>=0 || tagText.indexOf(search)>=0;
+    var ms = !search || c.name.toLowerCase().indexOf(search)>=0 || (c.user||'').toLowerCase().indexOf(search)>=0 || (c.phone||'').toLowerCase().indexOf(search)>=0 || tagText.indexOf(search)>=0;
     var mv = !filterSvc || c.service===filterSvc;
     var mt = !filterSt || (filterSt==='paypend' ? clientHasPendingPayment(c) : (filterSt==='advised' ? clientHasRenewalNotice(c) : (filterSt==='answered' ? clientHasAnsweredRenewalNotice(c) : (filterSt==='noanswer' ? clientHasUnansweredRenewalNotice(c) : (filterSt==='warn_no_advised' ? (getStatus(c.expiry)==='warn' && !clientHasRenewalNotice(c)) : (filterSt==='tag_no_contesta_renovar' ? (normalizeClientTags(c.tags).map(function(t){return t.toLowerCase();}).indexOf('no contesta al renovar')>=0) : (filterSt==='ok' ? (getStatus(c.expiry)==='ok'||getStatus(c.expiry)==='warn') : getStatus(c.expiry)===filterSt)))))));
     var mtag = !activeTagFilter || normalizeClientTags(c.tags).indexOf(activeTagFilter) >= 0;
@@ -2421,6 +2542,7 @@ function renderCards() {
             (c.pass ? '<button class="btnCopy" data-copy="'+esc(c.pass)+'" onclick="copyText(this.dataset.copy,this)">Copiar</button>' : '') +
           '</div>' +
         '</div>' +
+        (c.phone ? '<div class="copyField phoneField" style="flex-direction:column;align-items:flex-start"><div class="copyField-label">Teléfono</div><div style="display:flex;align-items:center;gap:6px;width:100%"><span class="copyField-val">'+esc(c.phone)+'</span><button class="btnCopy" data-copy="'+esc(c.phone)+'" onclick="copyText(this.dataset.copy,this)">Copiar</button></div></div>' : '') +
       '</div>' +
       '<div class="clientCard-expiry">Expira: <span>' + formatDate(c.expiry) + '</span></div>' +
       clientTagsHtml(c) +
@@ -2430,6 +2552,8 @@ function renderCards() {
         '<button class="act-ver" data-id="'+c.id+'" onclick="viewClient(this.dataset.id)">&#128065; Ver</button>' +
         '<button class="act-edit" data-id="'+c.id+'" onclick="editClient(this.dataset.id)">&#9998; Editar</button>' +
         '<button class="act-renew" data-id="'+c.id+'" onclick="openRenew(this.dataset.id)">&#8635; Renovar</button>' +
+        '<button class="act-quick" data-id="'+c.id+'" onclick="openQuickRenew(this.dataset.id)">&#9889; Rápido</button>' +
+        (c.phone ? '<button class="act-wa" data-id="'+c.id+'" onclick="openWhatsappToClient(this.dataset.id,&quot;access&quot;)">&#128241; WhatsApp</button>' : '') +
         '<button class="act-msg" data-id="'+c.id+'" onclick="openClientMessages(this.dataset.id)">&#128203; Msg</button>' +
         '<button class="act-del" data-id="'+c.id+'" onclick="openDelete(this.dataset.id)">&#128465; Borrar</button>' +
       '</div>';
@@ -2524,6 +2648,7 @@ function openNewClient() {
   document.getElementById('fName').value='';
   document.getElementById('fUser').value='';
   document.getElementById('fPass').value='';
+  var phoneEl=document.getElementById('fPhone'); if(phoneEl) phoneEl.value='';
   document.getElementById('fExpiry').value='';
   document.getElementById('fService').value='TODO';
   document.getElementById('fNotes').value='';
@@ -2548,6 +2673,7 @@ function editClient(id) {
   document.getElementById('fName').value=c.name;
   document.getElementById('fUser').value=c.user||'';
   document.getElementById('fPass').value=c.pass||'';
+  var phoneEl=document.getElementById('fPhone'); if(phoneEl) phoneEl.value=c.phone||'';
   document.getElementById('fExpiry').value=c.expiry||'';
   document.getElementById('fService').value=c.service||'TODO';
   document.getElementById('fNotes').value=c.notes||'';
@@ -2586,6 +2712,8 @@ async function saveClient(markInitialPending) {
   var name=document.getElementById('fName').value.trim();
   var user=document.getElementById('fUser').value.trim();
   var pass=document.getElementById('fPass').value.trim();
+  var phoneEl=document.getElementById('fPhone');
+  var phone=phoneEl?cleanPhone(phoneEl.value):'';
   var expiry=document.getElementById('fExpiry').value;
   var service=document.getElementById('fService').value;
   var notes=document.getElementById('fNotes').value.trim();
@@ -2638,6 +2766,7 @@ async function saveClient(markInitialPending) {
       name:name,
       user:user,
       pass:pass,
+      phone:phone,
       expiry:expiry,
       service:service,
       notes:notes,
@@ -2709,6 +2838,7 @@ function viewClient(id) {
   if (normalizeClientTags(c.tags).length) html+='<div class="viewRow"><div class="vlabel">Etiquetas</div><div class="vval">'+clientTagsHtml(c)+'</div></div>';
   html+=renewalNoticeHtml(c, 'view');
   html+=pendingPaymentNoticeHtml(c, 'view');
+  if(c.phone) html+='<div class="viewRow"><div class="vlabel">Teléfono</div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="font-family:monospace;color:var(--cyan)">'+esc(c.phone)+'</span><button class="btnCopy" data-copy="'+esc(c.phone)+'" onclick="copyText(this.dataset.copy,this)">Copiar</button></div></div>' + clientWhatsappButtonsHtml(c, false);
   html+='<div class="viewRow"><div class="vlabel">Usuario</div><div style="display:flex;align-items:center;gap:8px"><span style="font-family:monospace;color:var(--cyan)">'+esc(c.user||'-')+'</span>'+(c.user?'<button class="btnCopy" data-copy="'+esc(c.user)+'" onclick="copyText(this.dataset.copy,this)">Copiar</button>':'')+'</div></div>';
   html+='<div class="viewRow"><div class="vlabel">Contrasena</div><div style="display:flex;align-items:center;gap:8px"><span style="font-family:monospace">'+esc(c.pass||'-')+'</span>'+(c.pass?'<button class="btnCopy" data-copy="'+esc(c.pass)+'" onclick="copyText(this.dataset.copy,this)">Copiar</button>':'')+'</div></div>';
   html+='<div class="vlabel" style="margin-bottom:10px">Apps instaladas</div>';
@@ -2721,6 +2851,7 @@ function viewClient(id) {
   if(c.notes) html+='<div class="viewRow" style="margin-top:10px"><div class="vlabel">Notas</div><div class="vval" style="color:var(--muted)">'+esc(c.notes)+'</div></div>';
   html+=clientRenewalsHtml(c);
   html+='<button class="btnFull primary" data-id="'+c.id+'" onclick="openClientMessages(this.dataset.id)" style="margin-top:12px">&#128203; Copiar mensajes rapidos</button>';
+  if(c.phone) html+='<button class="btnFull whatsappFull" data-id="'+c.id+'" onclick="openWhatsappToClient(this.dataset.id,&quot;access&quot;)" style="margin-top:8px">&#128241; Enviar datos por WhatsApp</button>';
   document.getElementById('viewSheetBody').innerHTML=html;
   openSheet('viewSheet','viewOverlay');
 }
@@ -2798,6 +2929,7 @@ function messageTemplateVars(c) {
     contrasena: c && c.pass ? c.pass : '-',
     expiracion: formatDate(c && c.expiry ? c.expiry : ''),
     servicio: c && c.service ? c.service : '-',
+    telefono: c && c.phone ? c.phone : '',
     fecha_hoy: formatDate(new Date().toISOString().split('T')[0]),
     notas: c && c.notes ? c.notes : ''
   };
@@ -3199,6 +3331,25 @@ function openRenew(id) {
   updateRenewHint(c);
   openSheet('renewSheet','renewOverlay');
 }
+
+function setRenewMonths(months) {
+  renewMonths = Math.max(1, Math.min(24, Number(months || 1)));
+  var val = document.getElementById('renewMonthsVal');
+  if (val) val.textContent = renewMonths;
+  var c = clients.find(function(x){ return x.id === renewTargetId; });
+  if (c) updateRenewHint(c);
+}
+
+function openQuickRenew(id) {
+  openRenew(id);
+  setRenewMonths(1);
+  setTimeout(function(){
+    var amountEl = document.getElementById('renewAmount');
+    if (amountEl) amountEl.focus();
+    if (typeof showToast === 'function') showToast('Renovación rápida: elige meses, importe y confirma');
+  }, 120);
+}
+
 function changeRenewMonths(delta) {
   renewMonths = Math.max(1, Math.min(24, renewMonths + delta));
   document.getElementById('renewMonthsVal').textContent = renewMonths;
@@ -3393,7 +3544,7 @@ function importExcel(event) {
         var avisoImported = avisoRaw === 'si' || avisoRaw === 'sí' || avisoRaw === 'true' || avisoRaw === '1';
         var contestadoRaw = String(row['ContestadoAviso'] || '').trim().toLowerCase();
         var contestadoImported = contestadoRaw === 'si' || contestadoRaw === 'sí' || contestadoRaw === 'true' || contestadoRaw === '1';
-        var nc={id:rowId,name:row['Nombre']||'',user:row['Usuario']||'',pass:row['Contrasena']||'',service:svc,expiry:importedExpiry,notes:row['Notas']||'',tags:normalizeClientTags(row['Etiquetas']||''),apps:apps.length?apps:[],createdAt:row['Creado']||new Date().toISOString(),avisoRenovacionEnviado:avisoImported,avisoRenovacionFecha:row['FechaAviso']?normalizeImportDate(row['FechaAviso']):null,avisoRenovacionExpiracion:avisoImported?importedExpiry:null,avisoRenovacionContestado:avisoImported&&contestadoImported,avisoRenovacionContestadoFecha:row['FechaContestacion']?normalizeImportDate(row['FechaContestacion']):null,avisoRenovacionContestadoExpiracion:(avisoImported&&contestadoImported)?importedExpiry:null};
+        var nc={id:rowId,name:row['Nombre']||'',user:row['Usuario']||'',pass:row['Contrasena']||'',phone:cleanPhone(row['Telefono']||row['Teléfono']||row['Phone']||''),service:svc,expiry:importedExpiry,notes:row['Notas']||'',tags:normalizeClientTags(row['Etiquetas']||''),apps:apps.length?apps:[],createdAt:row['Creado']||new Date().toISOString(),avisoRenovacionEnviado:avisoImported,avisoRenovacionFecha:row['FechaAviso']?normalizeImportDate(row['FechaAviso']):null,avisoRenovacionExpiracion:avisoImported?importedExpiry:null,avisoRenovacionContestado:avisoImported&&contestadoImported,avisoRenovacionContestadoFecha:row['FechaContestacion']?normalizeImportDate(row['FechaContestacion']):null,avisoRenovacionContestadoExpiracion:(avisoImported&&contestadoImported)?importedExpiry:null};
         var saved = await saveClientToStore(nc);
         if(existingIdx>=0) clients[existingIdx]=saved; else clients.push(saved);
         imported++;

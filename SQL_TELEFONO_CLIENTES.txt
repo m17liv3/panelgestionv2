@@ -1,0 +1,5 @@
+-- M17LIV3 - Teléfono / WhatsApp del cliente
+-- Ejecutar UNA SOLA VEZ en Supabase SQL Editor.
+
+alter table public.clientes
+add column if not exists telefono text;

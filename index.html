@@ -109,6 +109,28 @@
       </div>
     </div>
 
+    <div class="homeMiniPanel" id="homeMiniPanel">
+      <div class="homeMiniTitle">&#9889; Resumen rápido</div>
+      <div class="homeMiniGrid">
+        <button class="homeMiniCard" onclick="quickFilter('warn')">
+          <span>Caducan pronto</span>
+          <strong id="miniSoon">0</strong>
+        </button>
+        <button class="homeMiniCard" onclick="quickFilter('paypend')">
+          <span>Pagos pendientes</span>
+          <strong id="miniPendingPay">0</strong>
+        </button>
+        <div class="homeMiniCard">
+          <span>Ingresos mes</span>
+          <strong id="miniMonthIncome">0,00 €</strong>
+        </div>
+        <div class="homeMiniCard profit">
+          <span>Beneficio mes</span>
+          <strong id="miniMonthProfit">0,00 €</strong>
+        </div>
+      </div>
+    </div>
+
     <div class="backupNotice" id="backupNotice" style="display:none">
       <div>
         <strong>Backup recomendado</strong>
@@ -182,6 +204,10 @@
     <div class="formGroup">
       <label>Nombre / Apodo <span class="required-star">*</span></label>
       <input type="text" id="fName" placeholder="Ej: Juan Garcia"/>
+    </div>
+    <div class="formGroup">
+      <label>Teléfono / WhatsApp</label>
+      <input type="tel" id="fPhone" placeholder="Ej: 600123123"/>
     </div>
     <div class="formRow2">
       <div class="formGroup">
@@ -287,6 +313,12 @@
         <div class="renewMonthsVal" id="renewMonthsVal">1</div>
         <button onclick="changeRenewMonths(1)">+</button>
         <div class="renewMonthsHint" id="renewMonthsHint"></div>
+      </div>
+      <div class="renewQuickMonths">
+        <button type="button" onclick="setRenewMonths(1)">1 mes</button>
+        <button type="button" onclick="setRenewMonths(3)">3 meses</button>
+        <button type="button" onclick="setRenewMonths(6)">6 meses</button>
+        <button type="button" onclick="setRenewMonths(12)">12 meses</button>
       </div>
     </div>
     <div class="renewPaymentBox">
