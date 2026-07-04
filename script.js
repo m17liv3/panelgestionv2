@@ -428,6 +428,102 @@ function clientWhatsappButtonsHtml(c, compact) {
 // ========== FIN TELÉFONO + WHATSAPP ==========
 
 // ========== MINI PANEL INICIO ==========
+
+// ========== HOME OPCIÓN 1 ==========
+function homeGreetingText() {
+  var h = new Date().getHours();
+  if (h < 6) return 'Buenas noches';
+  if (h < 13) return 'Buenos días';
+  if (h < 20) return 'Buenas tardes';
+  return 'Buenas noches';
+}
+
+function homeDateText() {
+  try {
+    return new Date().toLocaleDateString('es-ES', { weekday:'long', day:'numeric', month:'long' });
+  } catch(e) {
+    return 'Panel general';
+  }
+}
+
+function clientNoRenewCurrent(c) {
+  return !!(c && clientHasRenewalNotice(c) && isRenewalReplyCurrent(c) && renewalResponseValue(c) === 'no_renueva');
+}
+
+function clientAttentionReasons(c) {
+  var reasons = [];
+  var s = getStatus(c && c.expiry);
+  var d = getDaysLeft(c && c.expiry);
+  if (clientHasPendingPayment(c)) reasons.push({ label:'Pago pendiente', cls:'pay', priority:1 });
+  if (s === 'exp') reasons.push({ label:'Expirado', cls:'exp', priority:2 });
+  if (clientNoRenewCurrent(c)) reasons.push({ label:'No va a renovar', cls:'noRenew', priority:3 });
+  if (s === 'warn') reasons.push({ label:(d === 0 ? 'Caduca hoy' : 'Caduca en ' + d + ' días'), cls:'warn', priority:4 });
+  if (clientHasUnansweredRenewalNotice(c)) reasons.push({ label:'Sin contestar', cls:'noanswer', priority:5 });
+  if (s === 'warn' && !clientHasRenewalNotice(c)) reasons.push({ label:'Falta avisar', cls:'advice', priority:6 });
+  return reasons;
+}
+
+function clientAttentionPriority(c) {
+  var reasons = clientAttentionReasons(c);
+  if (!reasons.length) return 999;
+  return Math.min.apply(null, reasons.map(function(r){ return r.priority; }));
+}
+
+function homeAttentionClients() {
+  return sortClientsByExpiryAsc((clients || []).filter(function(c){
+    return clientAttentionReasons(c).length > 0;
+  })).sort(function(a,b){
+    var pa = clientAttentionPriority(a);
+    var pb = clientAttentionPriority(b);
+    if (pa !== pb) return pa - pb;
+    return clientExpirySortValue(a) - clientExpirySortValue(b);
+  });
+}
+
+function homeAttentionItemHtml(c) {
+  var reasons = clientAttentionReasons(c);
+  var main = reasons[0] || { label:'Revisar', cls:'info' };
+  var extra = reasons.slice(1, 3).map(function(r){
+    return '<span class="homeReason '+r.cls+'">'+esc(r.label)+'</span>';
+  }).join('');
+  return '<div class="homeAttentionItem" data-id="'+esc(c.id)+'" onclick="viewClient(this.dataset.id)">' +
+    '<div class="homeAttentionAvatar">'+esc(avatarLetter(c.name))+'</div>' +
+    '<div class="homeAttentionInfo"><strong>'+esc(c.name)+'</strong><span>'+esc(getClientMainApp(c) || c.user || '-')+'</span><div class="homeReasonRow"><span class="homeReason '+main.cls+'">'+esc(main.label)+'</span>'+extra+'</div></div>' +
+    '<button type="button" data-id="'+esc(c.id)+'" onclick="event.stopPropagation(); openRenew(this.dataset.id)">Renovar</button>' +
+  '</div>';
+}
+
+function renderHomeDashboard() {
+  var greet = document.getElementById('homeGreeting');
+  var date = document.getElementById('homeTodayDate');
+  if (greet) greet.textContent = homeGreetingText() + ', hoy toca revisar';
+  if (date) date.textContent = homeDateText();
+
+  var attention = homeAttentionClients();
+  var noRenew = (clients || []).filter(clientNoRenewCurrent).length;
+  var noRenewEl = document.getElementById('homeNoRenewCount');
+  if (noRenewEl) noRenewEl.textContent = noRenew;
+
+  var title = document.getElementById('homeTodayTitle');
+  if (title) {
+    if (!attention.length) title.textContent = 'Todo bajo control';
+    else if (attention.length === 1) title.textContent = '1 cliente requiere atención';
+    else title.textContent = attention.length + ' clientes requieren atención';
+  }
+
+  var box = document.getElementById('homeAttentionList');
+  if (box) {
+    if (!attention.length) {
+      box.innerHTML = '<div class="homeAttentionEmpty"><strong>Todo limpio por ahora</strong><span>No hay pagos pendientes, expirados ni renovaciones urgentes.</span></div>';
+    } else {
+      box.innerHTML = attention.slice(0, 6).map(homeAttentionItemHtml).join('') +
+        (attention.length > 6 ? '<button class="homeAttentionMore" onclick="quickFilter(&quot;attention&quot;)">Ver '+(attention.length - 6)+' más</button>' : '');
+    }
+  }
+}
+// ========== FIN HOME OPCIÓN 1 ==========
+
+
 function updateHomeMiniPanel() {
   var set = function(id, val){ var el = document.getElementById(id); if (el) el.textContent = val; };
   var now = new Date();
@@ -449,6 +545,7 @@ function updateHomeMiniPanel() {
 
   var p = document.getElementById('miniMonthProfit');
   if (p) p.style.color = profit >= 0 ? 'var(--green)' : 'var(--red)';
+  if (typeof renderHomeDashboard === 'function') renderHomeDashboard();
 }
 // ========== FIN MINI PANEL INICIO ==========
 
@@ -476,6 +573,7 @@ function navHome() {
   var sb = document.getElementById('searchBox');
   if (sb) sb.value = '';
   renderTagFilterBar();
+  renderHomeDashboard();
   renderCards();
   var bar = document.getElementById('activeFilterBar');
   if (bar) bar.style.display = 'none';
@@ -2996,6 +3094,7 @@ function quickFilter(st) {
     if (st === 'noanswer') lbl.textContent = 'Mostrando: Avisados sin contestar';
     if (st === 'warn_no_advised') lbl.textContent = 'Mostrando: Expiran pronto sin aviso enviado';
     if (st === 'tag_no_contesta_renovar') lbl.textContent = 'Mostrando: No contesta al renovar';
+    if (st === 'attention') lbl.textContent = 'Mostrando: Requieren atención';
   }
   renderCards();
   document.getElementById('mainScroll').scrollTo({top: 200, behavior: 'smooth'});
@@ -3049,10 +3148,7 @@ function renderCards() {
   var empty = document.getElementById('emptyState');
   if (!hasSelectedClientFilter && !search) {
     if (container) container.innerHTML = '';
-    if (empty) {
-      empty.style.display = 'block';
-      empty.innerHTML = '<div class="ico">&#128064;</div><div>Selecciona un filtro para ver clientes</div><small style="display:block;margin-top:8px;color:var(--muted);font-size:12px">Pulsa Total, Activos, Expiran pronto, Pendientes de pago, Avisados, Contestados o Sin contestar.</small>';
-    }
+    if (empty) empty.style.display = 'none';
     return;
   }
   if (search) hasSelectedClientFilter = true;
@@ -3060,7 +3156,7 @@ function renderCards() {
     var tagText = normalizeClientTags(c.tags).join(' ').toLowerCase();
     var ms = !search || c.name.toLowerCase().indexOf(search)>=0 || (c.user||'').toLowerCase().indexOf(search)>=0 || (c.phone||'').toLowerCase().indexOf(search)>=0 || tagText.indexOf(search)>=0;
     var mv = !filterSvc || c.service===filterSvc;
-    var mt = !filterSt || (filterSt==='paypend' ? clientHasPendingPayment(c) : (filterSt==='advised' ? clientHasRenewalNotice(c) : (filterSt==='answered' ? clientHasAnsweredRenewalNotice(c) : (filterSt==='noanswer' ? clientHasUnansweredRenewalNotice(c) : (filterSt==='warn_no_advised' ? (getStatus(c.expiry)==='warn' && !clientHasRenewalNotice(c)) : (filterSt==='tag_no_contesta_renovar' ? (normalizeClientTags(c.tags).map(function(t){return t.toLowerCase();}).indexOf('no contesta al renovar')>=0) : (filterSt==='ok' ? (getStatus(c.expiry)==='ok'||getStatus(c.expiry)==='warn') : getStatus(c.expiry)===filterSt)))))));
+    var mt = !filterSt || (filterSt==='attention' ? (typeof clientAttentionReasons === 'function' && clientAttentionReasons(c).length > 0) : (filterSt==='paypend' ? clientHasPendingPayment(c) : (filterSt==='advised' ? clientHasRenewalNotice(c) : (filterSt==='answered' ? clientHasAnsweredRenewalNotice(c) : (filterSt==='noanswer' ? clientHasUnansweredRenewalNotice(c) : (filterSt==='warn_no_advised' ? (getStatus(c.expiry)==='warn' && !clientHasRenewalNotice(c)) : (filterSt==='tag_no_contesta_renovar' ? (normalizeClientTags(c.tags).map(function(t){return t.toLowerCase();}).indexOf('no contesta al renovar')>=0) : (filterSt==='ok' ? (getStatus(c.expiry)==='ok'||getStatus(c.expiry)==='warn') : getStatus(c.expiry)===filterSt))))))));
     var mtag = !activeTagFilter || normalizeClientTags(c.tags).indexOf(activeTagFilter) >= 0;
     return ms && mv && mt && mtag;
   });

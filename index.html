@@ -82,62 +82,83 @@
     </div>
   </div>
 
-  <div id="mainScroll">
-    <div class="statsRow">
-      <div class="statCard" onclick="quickFilter('')">
-        <div class="val" id="stTotal" style="color:var(--cyan)">0</div>
-        <div class="lbl">Total Clientes</div>
+  <div id="mainScroll" class="homeOptionOne">
+    <section class="homeHeroControl">
+      <div>
+        <span class="homeEyebrow" id="homeTodayDate">Panel general</span>
+        <h2 id="homeGreeting">Hoy tengo que revisar...</h2>
+        <p>Resumen rápido de clientes, renovaciones y pagos que necesitan atención.</p>
       </div>
-      <div class="statCard" onclick="quickFilter('ok')" style="border-color:rgba(105,255,71,0.3)">
-        <div class="val" id="stActive" style="color:var(--green)">0</div>
-        <div class="lbl" style="color:var(--green)">&#10003; Total clientes activos</div>
-      </div>
-      <div class="statCard" onclick="quickFilter('warn')" style="border-color:rgba(255,170,0,0.3)">
-        <div class="val" id="stSoon" style="color:var(--orange)">0</div>
-        <div class="lbl">&#9888; Expiran pronto</div>
-      </div>
-      <div class="statCard" onclick="quickFilter('exp')" style="border-color:rgba(255,77,77,0.3)">
-        <div class="val" id="stExp" style="color:var(--red)">0</div>
-        <div class="lbl">&#128683; Expirados</div>
-      </div>
-      <div class="statCard" onclick="quickFilter('paypend')" style="border-color:rgba(255,170,0,0.3)">
-        <div class="val" id="stPendingPay" style="color:var(--orange)">0</div>
-        <div class="lbl">&#9203; Pendientes de pago</div>
-      </div>
-      <div class="statCard" onclick="quickFilter('advised')" style="border-color:rgba(0,229,255,0.3)">
-        <div class="val" id="stAdvised" style="color:var(--cyan)">0</div>
-        <div class="lbl">&#128276; Avisados</div>
-      </div>
-      <div class="statCard" onclick="quickFilter('answered')" style="border-color:rgba(105,255,71,0.3)">
-        <div class="val" id="stAnswered" style="color:var(--green)">0</div>
-        <div class="lbl">&#128172; Contestados</div>
-      </div>
-      <div class="statCard" onclick="quickFilter('noanswer')" style="border-color:rgba(255,170,0,0.3)">
-        <div class="val" id="stNoAnswer" style="color:var(--orange)">0</div>
-        <div class="lbl">&#128064; Sin contestar</div>
-      </div>
-    </div>
+      <button class="homeHeroBtn" onclick="openClientBrowser()">Ver clientes</button>
+    </section>
 
-    <div class="homeMiniPanel" id="homeMiniPanel">
-      <div class="homeMiniTitle">&#9889; Resumen rápido</div>
-      <div class="homeMiniGrid">
-        <button class="homeMiniCard" onclick="quickFilter('warn')">
-          <span>Caducan pronto</span>
-          <strong id="miniSoon">0</strong>
-        </button>
-        <button class="homeMiniCard" onclick="quickFilter('paypend')">
-          <span>Pagos pendientes</span>
-          <strong id="miniPendingPay">0</strong>
-        </button>
-        <div class="homeMiniCard">
-          <span>Ingresos mes</span>
-          <strong id="miniMonthIncome">0,00 €</strong>
+    <section class="homeStatusGrid">
+      <button class="homeStatusCard active" onclick="quickFilter('ok')">
+        <span class="homeStatusIcon">&#10003;</span>
+        <small>Activos</small>
+        <strong id="stActive">0</strong>
+      </button>
+      <button class="homeStatusCard warn" onclick="quickFilter('warn')">
+        <span class="homeStatusIcon">&#9888;</span>
+        <small>Caducan pronto</small>
+        <strong id="stSoon">0</strong>
+      </button>
+      <button class="homeStatusCard expired" onclick="quickFilter('exp')">
+        <span class="homeStatusIcon">&#128683;</span>
+        <small>Expirados</small>
+        <strong id="stExp">0</strong>
+      </button>
+      <button class="homeStatusCard pending" onclick="quickFilter('paypend')">
+        <span class="homeStatusIcon">&#9203;</span>
+        <small>Pagos pendientes</small>
+        <strong id="stPendingPay">0</strong>
+      </button>
+    </section>
+
+    <section class="homeTodayCard">
+      <div class="homeTodayHeader">
+        <div>
+          <span>Estado de hoy</span>
+          <strong id="homeTodayTitle">Todo bajo control</strong>
         </div>
-        <div class="homeMiniCard profit">
-          <span>Beneficio mes</span>
-          <strong id="miniMonthProfit">0,00 €</strong>
+        <div class="homeTotalBubble" onclick="quickFilter('')">
+          <small>Total</small>
+          <strong id="stTotal">0</strong>
         </div>
       </div>
+      <div class="homeTodayMetrics">
+        <div><span>Sin contestar</span><strong id="stNoAnswer">0</strong></div>
+        <div><span>No renuevan</span><strong id="homeNoRenewCount">0</strong></div>
+        <div><span>Ingresos mes</span><strong id="miniMonthIncome">0,00 €</strong></div>
+        <div><span>Beneficio</span><strong id="miniMonthProfit">0,00 €</strong></div>
+      </div>
+    </section>
+
+    <section class="homeAttentionBlock">
+      <div class="homeSectionHead">
+        <div>
+          <span>Prioridad</span>
+          <h3>Requieren atención</h3>
+        </div>
+        <button onclick="quickFilter('attention')">Ver todos</button>
+      </div>
+      <div id="homeAttentionList" class="homeAttentionList">
+        <div class="homeAttentionEmpty">Cargando revisión...</div>
+      </div>
+    </section>
+
+    <section class="homeQuickActions">
+      <button onclick="openNewClient()"><span>+</span><strong>Cliente</strong></button>
+      <button onclick="openClientBrowser()"><span>&#128101;</span><strong>Deslizar</strong></button>
+      <button onclick="openFinanceBalance()"><span>&#128202;</span><strong>Balance</strong></button>
+      <button onclick="openCartelera()"><span>&#127916;</span><strong>Cartelera</strong></button>
+    </section>
+
+    <div class="homeHiddenCounters" aria-hidden="true">
+      <span id="stAdvised">0</span>
+      <span id="stAnswered">0</span>
+      <span id="miniSoon">0</span>
+      <span id="miniPendingPay">0</span>
     </div>
 
     <div class="backupNotice" id="backupNotice" style="display:none">
@@ -148,26 +169,28 @@
       <button onclick="openBackupCenter()">Exportar</button>
     </div>
 
-    <div id="activeFilterBar" class="activeFilterBar">
-      <span id="activeFilterLabel"></span>
-      <button onclick="quickFilter('')">&#10005; Quitar filtro</button>
-    </div>
+    <section class="homeResultsBlock" id="homeResultsBlock">
+      <div id="activeFilterBar" class="activeFilterBar">
+        <span id="activeFilterLabel"></span>
+        <button onclick="quickFilter('')">&#10005; Quitar filtro</button>
+      </div>
 
-    <div class="searchBar">
-      <input type="search" id="searchBox" placeholder="Buscar cliente..." oninput="renderCards()"/>
-      <button class="filterBtn" id="filterToggleBtn" onclick="toggleFilters()">&#9881;</button>
-    </div>
+      <div class="searchBar">
+        <input type="search" id="searchBox" placeholder="Buscar cliente..." oninput="renderCards()"/>
+        <button class="filterBtn" id="filterToggleBtn" onclick="toggleFilters()">&#9881;</button>
+      </div>
 
-    <div class="filterPills" id="filterPills" style="display:none">
-      <div class="pill active" data-svc="" onclick="setPillSvc(this,'')">Todos</div>
-      <div class="pill" data-svc="TODO" onclick="setPillSvc(this,'TODO')">TODO</div>
-      <div class="pill" data-svc="ESPANA" onclick="setPillSvc(this,'ESPANA')">ESPA&Ntilde;A</div>
-    </div>
-<div id="cardsContainer"></div>
-    <div class="empty" id="emptyState" style="display:none">
-      <div class="ico">&#128250;</div>
-      <div>No hay clientes</div>
-    </div>
+      <div class="filterPills" id="filterPills" style="display:none">
+        <div class="pill active" data-svc="" onclick="setPillSvc(this,'')">Todos</div>
+        <div class="pill" data-svc="TODO" onclick="setPillSvc(this,'TODO')">TODO</div>
+        <div class="pill" data-svc="ESPANA" onclick="setPillSvc(this,'ESPANA')">ESPA&Ntilde;A</div>
+      </div>
+      <div id="cardsContainer"></div>
+      <div class="empty" id="emptyState" style="display:none">
+        <div class="ico">&#128250;</div>
+        <div>No hay clientes</div>
+      </div>
+    </section>
   </div>
 
   <nav class="bottomNav" id="bottomNav">

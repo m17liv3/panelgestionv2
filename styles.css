@@ -2329,3 +2329,357 @@ button:active,
   max-width: 260px;
   font-size: .84rem;
 }
+
+
+/* ===== Pantalla principal Opción 1: Hoy tengo que revisar ===== */
+.homeOptionOne {
+  padding-top: 10px;
+}
+.homeHeroControl {
+  margin: 4px 12px 12px;
+  border: 1px solid rgba(0,229,255,.18);
+  border-radius: 26px;
+  padding: 18px;
+  background:
+    radial-gradient(circle at top left, rgba(0,229,255,.18), transparent 42%),
+    radial-gradient(circle at bottom right, rgba(105,255,71,.10), transparent 38%),
+    rgba(255,255,255,.045);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: 0 16px 45px rgba(0,0,0,.25);
+  animation: m17SoftFadeUp .34s ease both;
+}
+.homeEyebrow,
+.homeSectionHead span,
+.homeTodayHeader span {
+  display: block;
+  color: var(--cyan);
+  font-size: .68rem;
+  text-transform: uppercase;
+  letter-spacing: 1.6px;
+  font-weight: 900;
+}
+.homeHeroControl h2 {
+  margin: 6px 0 5px;
+  font-size: 1.2rem;
+  line-height: 1.15;
+  color: var(--text);
+}
+.homeHeroControl p {
+  margin: 0;
+  color: var(--muted);
+  font-size: .84rem;
+  line-height: 1.35;
+}
+.homeHeroBtn {
+  flex-shrink: 0;
+  border: 1px solid rgba(0,229,255,.25);
+  background: rgba(0,229,255,.09);
+  color: var(--cyan);
+  border-radius: 14px;
+  padding: 10px 12px;
+  font-weight: 950;
+  cursor: pointer;
+}
+
+.homeStatusGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  padding: 0 12px;
+  margin-bottom: 12px;
+}
+.homeStatusCard {
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.045);
+  color: var(--text);
+  border-radius: 22px;
+  padding: 14px 12px;
+  min-height: 104px;
+  text-align: left;
+  cursor: pointer;
+  display: grid;
+  gap: 5px;
+  position: relative;
+  overflow: hidden;
+  animation: m17SoftFadeUp .36s ease both;
+}
+.homeStatusCard::after {
+  content: "";
+  position: absolute;
+  right: -22px;
+  top: -28px;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  opacity: .14;
+  background: currentColor;
+}
+.homeStatusCard .homeStatusIcon {
+  font-size: 1.15rem;
+}
+.homeStatusCard small {
+  color: var(--muted);
+  font-size: .74rem;
+  font-weight: 800;
+}
+.homeStatusCard strong {
+  font-size: 1.75rem;
+  line-height: 1;
+  font-weight: 950;
+}
+.homeStatusCard.active { color: var(--green); border-color: rgba(105,255,71,.22); }
+.homeStatusCard.warn { color: var(--orange); border-color: rgba(255,170,0,.24); }
+.homeStatusCard.expired { color: var(--red); border-color: rgba(255,77,77,.24); }
+.homeStatusCard.pending { color: var(--orange); border-color: rgba(255,170,0,.24); }
+
+.homeTodayCard,
+.homeAttentionBlock,
+.homeQuickActions,
+.homeResultsBlock {
+  margin: 0 12px 12px;
+}
+.homeTodayCard,
+.homeAttentionBlock {
+  border: 1px solid rgba(0,229,255,.13);
+  background: rgba(255,255,255,.04);
+  border-radius: 24px;
+  padding: 14px;
+  animation: m17SoftFadeUp .38s ease both;
+}
+.homeTodayHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.homeTodayHeader strong {
+  display: block;
+  margin-top: 3px;
+  color: var(--text);
+  font-size: 1rem;
+}
+.homeTotalBubble {
+  min-width: 72px;
+  text-align: center;
+  border-radius: 18px;
+  border: 1px solid rgba(0,229,255,.18);
+  background: rgba(0,0,0,.18);
+  padding: 8px 10px;
+  cursor: pointer;
+}
+.homeTotalBubble small {
+  display: block;
+  color: var(--muted);
+  font-size: .66rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.homeTotalBubble strong {
+  color: var(--cyan);
+  font-size: 1.35rem;
+}
+.homeTodayMetrics {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+.homeTodayMetrics div {
+  border: 1px solid rgba(255,255,255,.07);
+  background: rgba(0,0,0,.14);
+  border-radius: 16px;
+  padding: 10px;
+}
+.homeTodayMetrics span {
+  display: block;
+  color: var(--muted);
+  font-size: .72rem;
+}
+.homeTodayMetrics strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--cyan);
+  font-size: 1rem;
+  overflow-wrap: anywhere;
+}
+
+.homeSectionHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.homeSectionHead h3 {
+  margin: 3px 0 0;
+  font-size: 1.05rem;
+  color: var(--text);
+}
+.homeSectionHead button,
+.homeAttentionMore {
+  border: 1px solid rgba(0,229,255,.20);
+  background: rgba(0,229,255,.07);
+  color: var(--cyan);
+  border-radius: 999px;
+  padding: 8px 11px;
+  font-weight: 900;
+  cursor: pointer;
+}
+.homeAttentionList {
+  display: grid;
+  gap: 9px;
+}
+.homeAttentionItem {
+  display: grid;
+  grid-template-columns: 42px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.04);
+  border-radius: 18px;
+  padding: 10px;
+  cursor: pointer;
+  transition: transform .18s ease, border-color .18s ease, background .18s ease;
+}
+.homeAttentionItem:active {
+  transform: scale(.99);
+}
+.homeAttentionAvatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,229,255,.08);
+  border: 1px solid rgba(0,229,255,.12);
+  color: var(--cyan);
+  font-weight: 950;
+}
+.homeAttentionInfo {
+  min-width: 0;
+}
+.homeAttentionInfo strong {
+  display: block;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.homeAttentionInfo > span {
+  display: block;
+  color: var(--muted);
+  font-size: .76rem;
+  margin-top: 2px;
+}
+.homeAttentionItem > button {
+  border: 1px solid rgba(105,255,71,.22);
+  background: rgba(105,255,71,.08);
+  color: var(--green);
+  border-radius: 13px;
+  padding: 9px 10px;
+  font-weight: 950;
+  cursor: pointer;
+}
+.homeReasonRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 7px;
+}
+.homeReason {
+  display: inline-flex;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 999px;
+  padding: 4px 7px;
+  font-size: .66rem;
+  font-weight: 900;
+}
+.homeReason.pay,
+.homeReason.warn,
+.homeReason.noanswer,
+.homeReason.advice { color: var(--orange); border-color: rgba(255,170,0,.25); background: rgba(255,170,0,.07); }
+.homeReason.exp,
+.homeReason.noRenew { color: var(--red); border-color: rgba(255,77,77,.26); background: rgba(255,77,77,.07); }
+.homeAttentionEmpty {
+  text-align: center;
+  color: var(--muted);
+  border: 1px dashed rgba(255,255,255,.12);
+  border-radius: 18px;
+  padding: 24px 14px;
+}
+.homeAttentionEmpty strong {
+  display: block;
+  color: var(--green);
+  margin-bottom: 5px;
+}
+.homeAttentionMore {
+  width: 100%;
+  border-radius: 16px;
+  padding: 11px;
+}
+
+.homeQuickActions {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+.homeQuickActions button {
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.045);
+  color: var(--text);
+  border-radius: 18px;
+  padding: 11px 6px;
+  cursor: pointer;
+  display: grid;
+  gap: 5px;
+  justify-items: center;
+}
+.homeQuickActions span {
+  color: var(--cyan);
+  font-size: 1.12rem;
+}
+.homeQuickActions strong {
+  font-size: .72rem;
+}
+.homeHiddenCounters {
+  display: none !important;
+}
+.homeResultsBlock {
+  padding-top: 2px;
+}
+.homeResultsBlock .searchBar {
+  margin-left: 0;
+  margin-right: 0;
+}
+.homeResultsBlock .activeFilterBar {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+@media (min-width: 680px) {
+  .homeStatusGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .homeTodayMetrics {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+@media (max-width: 380px) {
+  .homeHeroControl {
+    flex-direction: column;
+  }
+  .homeHeroBtn {
+    width: 100%;
+  }
+  .homeQuickActions {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .homeAttentionItem {
+    grid-template-columns: 38px 1fr;
+  }
+  .homeAttentionItem > button {
+    grid-column: 1 / -1;
+  }
+}
