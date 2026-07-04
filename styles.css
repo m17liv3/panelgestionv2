@@ -1207,3 +1207,31 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, 'S
   border-color: rgba(0,229,255,.24);
   background: rgba(0,229,255,.04);
 }
+
+
+/* Recordar dispositivo MFA */
+.rememberDeviceRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 12px;
+  padding: 9px 10px;
+  border: 1px solid rgba(0,229,255,.18);
+  border-radius: 12px;
+  background: rgba(0,229,255,.045);
+  color: var(--muted);
+  font-size: .86rem;
+  cursor: pointer;
+}
+.rememberDeviceRow input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--cyan);
+}
+.rememberDeviceRow span {
+  color: var(--text);
+  font-weight: 700;
+}
+.mfaRemember {
+  margin-top: 10px;
+}

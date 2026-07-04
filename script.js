@@ -47,6 +47,9 @@ var mfaMode = '';
 var mfaFactorId = '';
 var mfaFactorName = '';
 var mfaEnrollmentData = null;
+var REMEMBER_DEVICE_KEY = 'm17liv3_remember_device';
+var REMEMBER_DEVICE_EMAIL_KEY = 'm17liv3_remember_email';
+var autoSessionTried = false;
 
 function initSupabase() {
   if (!USE_SUPABASE) return null;
@@ -54,7 +57,14 @@ function initSupabase() {
   if (!window.supabase || !window.supabase.createClient) {
     throw new Error('No se ha podido cargar Supabase. Revisa la conexión a Internet.');
   }
-  supabaseDb = window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseKey);
+  supabaseDb = window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseKey, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: false,
+      storageKey: 'm17liv3-supabase-auth'
+    }
+  });
   return supabaseDb;
 }
 
@@ -280,6 +290,106 @@ async function deleteAllClientsFromStore() {
   return true;
 }
 
+
+// ========== RECORDAR DISPOSITIVO / SESION RAPIDA ==========
+function rememberDeviceWanted() {
+  var loginCb = document.getElementById('rememberDeviceLogin');
+  var mfaCb = document.getElementById('rememberDeviceMfa');
+  if (mfaCb) return !!mfaCb.checked;
+  if (loginCb) return !!loginCb.checked;
+  return true;
+}
+
+function setRememberDevice(enabled, email) {
+  try {
+    if (enabled) {
+      localStorage.setItem(REMEMBER_DEVICE_KEY, '1');
+      if (email) localStorage.setItem(REMEMBER_DEVICE_EMAIL_KEY, email);
+    } else {
+      localStorage.removeItem(REMEMBER_DEVICE_KEY);
+      localStorage.removeItem(REMEMBER_DEVICE_EMAIL_KEY);
+    }
+  } catch(e) {}
+}
+
+function isRememberDeviceEnabled() {
+  try { return localStorage.getItem(REMEMBER_DEVICE_KEY) === '1'; } catch(e) { return false; }
+}
+
+function syncRememberCheckboxes() {
+  var remembered = isRememberDeviceEnabled();
+  var loginCb = document.getElementById('rememberDeviceLogin');
+  var mfaCb = document.getElementById('rememberDeviceMfa');
+  if (loginCb) loginCb.checked = remembered || true;
+  if (mfaCb) mfaCb.checked = loginCb ? loginCb.checked : true;
+  try {
+    var email = localStorage.getItem(REMEMBER_DEVICE_EMAIL_KEY) || '';
+    var lu = document.getElementById('lUser');
+    if (email && lu && !lu.value) lu.value = email;
+  } catch(e) {}
+}
+
+function setLoginLoading(message) {
+  var err = document.getElementById('loginErr');
+  if (!err) return;
+  err.textContent = message || 'Comprobando sesión guardada...';
+  err.style.display = 'block';
+}
+
+function clearLoginLoading() {
+  var err = document.getElementById('loginErr');
+  if (!err) return;
+  err.style.display = 'none';
+}
+
+async function checkMfaAal2() {
+  var db = initSupabase();
+  if (!MFA_ENABLED || !db.auth || !db.auth.mfa) return true;
+  var aal = await db.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (aal.error) throw aal.error;
+  return !!(aal.data && aal.data.currentLevel === 'aal2');
+}
+
+async function tryRestoreSupabaseSession() {
+  if (!USE_SUPABASE || autoSessionTried) return false;
+  autoSessionTried = true;
+
+  try {
+    syncRememberCheckboxes();
+    if (!isRememberDeviceEnabled()) return false;
+
+    var db = initSupabase();
+    if (!db || !db.auth || !db.auth.getSession) return false;
+
+    setLoginLoading('Comprobando sesión guardada...');
+    var sessionRes = await db.auth.getSession();
+    if (sessionRes.error) throw sessionRes.error;
+
+    var session = sessionRes.data && sessionRes.data.session;
+    if (!session) {
+      clearLoginLoading();
+      return false;
+    }
+
+    if (MFA_ENABLED) {
+      var aal2 = await checkMfaAal2();
+      if (!aal2) {
+        clearLoginLoading();
+        setLoginLoading('Sesión guardada encontrada. Por seguridad, introduce Google Authenticator una vez.');
+        setTimeout(clearLoginLoading, 3500);
+        return false;
+      }
+    }
+
+    await completeSupabaseLogin(true);
+    return true;
+  } catch (ex) {
+    clearLoginLoading();
+    return false;
+  }
+}
+// ========== FIN RECORDAR DISPOSITIVO ==========
+
 function showAppAfterLogin() {
   var lp = document.getElementById('loginPage');
   var ap = document.getElementById('appPage');
@@ -346,12 +456,23 @@ function getVerifiedTotpFactors(factorsData) {
   return list.filter(function(f){ return !f.status || f.status === 'verified'; });
 }
 
-async function completeSupabaseLogin() {
+async function completeSupabaseLogin(fromSavedSession) {
+  try {
+    var db = initSupabase();
+    var userEmail = '';
+    if (db && db.auth && db.auth.getUser) {
+      var userRes = await db.auth.getUser();
+      userEmail = userRes && userRes.data && userRes.data.user && userRes.data.user.email ? userRes.data.user.email : '';
+    }
+    setRememberDevice(rememberDeviceWanted(), userEmail);
+  } catch(e) {}
+
   await loadClientsFromStore();
   await loadRenewals(false);
   setMfaVisible(false);
+  clearLoginLoading();
   showAppAfterLogin();
-  if (typeof showToast === 'function') showToast('Conectado a Supabase');
+  if (typeof showToast === 'function') showToast(fromSavedSession ? 'Entrando con sesión guardada' : 'Conectado a Supabase');
 }
 
 async function handleMfaAfterPasswordLogin() {
@@ -402,6 +523,9 @@ async function startMfaChallengeScreen() {
   if (sub) sub.textContent = 'Pega o escribe el codigo de 6 digitos para entrar en la app.';
   if (setup) setup.style.display = 'none';
   if (btn) btn.textContent = 'Verificar y entrar';
+  var loginCb = document.getElementById('rememberDeviceLogin');
+  var mfaCb = document.getElementById('rememberDeviceMfa');
+  if (loginCb && mfaCb) mfaCb.checked = loginCb.checked;
   setMfaError('');
   setMfaCodeValue('');
   setMfaVisible(true);
@@ -427,6 +551,9 @@ async function startMfaEnrollmentScreen() {
   if (qr) qr.src = normalizeMfaQr(res.data.totp && res.data.totp.qr_code);
   if (secret) secret.textContent = (res.data.totp && res.data.totp.secret) ? res.data.totp.secret : '';
   if (btn) btn.textContent = 'Activar y entrar';
+  var loginCb = document.getElementById('rememberDeviceLogin');
+  var mfaCb = document.getElementById('rememberDeviceMfa');
+  if (loginCb && mfaCb) mfaCb.checked = loginCb.checked;
   setMfaError('');
   setMfaCodeValue('');
   setMfaVisible(true);
@@ -480,6 +607,7 @@ async function copyMfaSecret() {
 }
 
 async function cancelMfaLogin() {
+  setRememberDevice(false);
   try { if (USE_SUPABASE && supabaseDb) await supabaseDb.auth.signOut(); } catch(e) {}
   setMfaVisible(false);
   var lp = document.getElementById('loginPage');
@@ -547,6 +675,7 @@ async function doLogin() {
     if (btn) { btn.disabled = true; btn.textContent = 'Entrando...'; }
 
     if (USE_SUPABASE) {
+      setRememberDevice(rememberDeviceWanted(), u);
       var db = initSupabase();
       var res = await db.auth.signInWithPassword({ email: u, password: p });
       if (res.error) throw res.error;
@@ -576,6 +705,8 @@ async function doLogin() {
   }
 }
 document.addEventListener('DOMContentLoaded', function() {
+  syncRememberCheckboxes();
+  setTimeout(function(){ tryRestoreSupabaseSession(); }, 350);
   var lp = document.getElementById('lPass');
   var lu = document.getElementById('lUser');
   if(lp) lp.addEventListener('keydown', function(e){ if(e.key==='Enter') doLogin(); });
@@ -588,6 +719,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 async function doLogout() {
   closeSheet('menuSheet','menuOverlay');
+  setRememberDevice(false);
   if (USE_SUPABASE && supabaseDb) {
     try { await supabaseDb.auth.signOut(); } catch(e) {}
   }
