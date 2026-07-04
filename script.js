@@ -2552,8 +2552,6 @@ function renderCards() {
         '<button class="act-ver" data-id="'+c.id+'" onclick="viewClient(this.dataset.id)">&#128065; Ver</button>' +
         '<button class="act-edit" data-id="'+c.id+'" onclick="editClient(this.dataset.id)">&#9998; Editar</button>' +
         '<button class="act-renew" data-id="'+c.id+'" onclick="openRenew(this.dataset.id)">&#8635; Renovar</button>' +
-        '<button class="act-quick" data-id="'+c.id+'" onclick="openQuickRenew(this.dataset.id)">&#9889; Rápido</button>' +
-        (c.phone ? '<button class="act-wa" data-id="'+c.id+'" onclick="openWhatsappToClient(this.dataset.id,&quot;access&quot;)">&#128241; WhatsApp</button>' : '') +
         '<button class="act-msg" data-id="'+c.id+'" onclick="openClientMessages(this.dataset.id)">&#128203; Msg</button>' +
         '<button class="act-del" data-id="'+c.id+'" onclick="openDelete(this.dataset.id)">&#128465; Borrar</button>' +
       '</div>';
@@ -2838,7 +2836,7 @@ function viewClient(id) {
   if (normalizeClientTags(c.tags).length) html+='<div class="viewRow"><div class="vlabel">Etiquetas</div><div class="vval">'+clientTagsHtml(c)+'</div></div>';
   html+=renewalNoticeHtml(c, 'view');
   html+=pendingPaymentNoticeHtml(c, 'view');
-  if(c.phone) html+='<div class="viewRow"><div class="vlabel">Teléfono</div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="font-family:monospace;color:var(--cyan)">'+esc(c.phone)+'</span><button class="btnCopy" data-copy="'+esc(c.phone)+'" onclick="copyText(this.dataset.copy,this)">Copiar</button></div></div>' + clientWhatsappButtonsHtml(c, false);
+  if(c.phone) html+='<div class="viewRow"><div class="vlabel">Teléfono</div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="font-family:monospace;color:var(--cyan)">'+esc(c.phone)+'</span><button class="btnCopy" data-copy="'+esc(c.phone)+'" onclick="copyText(this.dataset.copy,this)">Copiar</button></div></div>';
   html+='<div class="viewRow"><div class="vlabel">Usuario</div><div style="display:flex;align-items:center;gap:8px"><span style="font-family:monospace;color:var(--cyan)">'+esc(c.user||'-')+'</span>'+(c.user?'<button class="btnCopy" data-copy="'+esc(c.user)+'" onclick="copyText(this.dataset.copy,this)">Copiar</button>':'')+'</div></div>';
   html+='<div class="viewRow"><div class="vlabel">Contrasena</div><div style="display:flex;align-items:center;gap:8px"><span style="font-family:monospace">'+esc(c.pass||'-')+'</span>'+(c.pass?'<button class="btnCopy" data-copy="'+esc(c.pass)+'" onclick="copyText(this.dataset.copy,this)">Copiar</button>':'')+'</div></div>';
   html+='<div class="vlabel" style="margin-bottom:10px">Apps instaladas</div>';
@@ -2851,7 +2849,6 @@ function viewClient(id) {
   if(c.notes) html+='<div class="viewRow" style="margin-top:10px"><div class="vlabel">Notas</div><div class="vval" style="color:var(--muted)">'+esc(c.notes)+'</div></div>';
   html+=clientRenewalsHtml(c);
   html+='<button class="btnFull primary" data-id="'+c.id+'" onclick="openClientMessages(this.dataset.id)" style="margin-top:12px">&#128203; Copiar mensajes rapidos</button>';
-  if(c.phone) html+='<button class="btnFull whatsappFull" data-id="'+c.id+'" onclick="openWhatsappToClient(this.dataset.id,&quot;access&quot;)" style="margin-top:8px">&#128241; Enviar datos por WhatsApp</button>';
   document.getElementById('viewSheetBody').innerHTML=html;
   openSheet('viewSheet','viewOverlay');
 }
