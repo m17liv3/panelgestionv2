@@ -4760,6 +4760,7 @@ function openCartelera() {
   if (!base.endsWith('/')) base += '/';
   document.getElementById('clienteLinkBox').textContent = base + 'cartelera.html';
   cartLoadExisting();
+  try { dailyPromptRefreshDate(); } catch(e) {}
   openSheet('carteleraSheet','carteleraOverlay');
 }
 
@@ -5264,6 +5265,190 @@ async function dailyPosterUploadToHorarios() {
 }
 // ========== FIN GENERADOR CARTELERA DIARIA ==========
 
+
+
+// ========== PROMPT CHATGPT CARTELERA DIARIA ==========
+function dailyPromptDateText() {
+  try {
+    var d = new Date();
+    var txt = d.toLocaleDateString('es-ES', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+    return txt.charAt(0).toUpperCase() + txt.slice(1);
+  } catch(e) {
+    return 'Cartelera del día';
+  }
+}
+
+function dailyPromptRefreshDate() {
+  var el = document.getElementById('dailyPromptDatePreview');
+  if (el) el.textContent = dailyPromptDateText();
+}
+
+function dailyPromptStatus(msg, type) {
+  var el = document.getElementById('dailyPromptStatus');
+  if (!el) return;
+  el.textContent = msg || '';
+  el.className = 'dailyPromptStatus ' + (type || '');
+}
+
+function dailyPromptUseCartText() {
+  var source = document.getElementById('cart-texto');
+  var target = document.getElementById('dailyPromptEvents');
+  if (!target) return;
+  target.value = source && source.value ? source.value : '';
+  if (!target.value.trim()) {
+    showToast('No hay texto en la cartelera actual', 'warning');
+    dailyPromptStatus('No hay texto previo. Pega los eventos manualmente.', 'error');
+  } else {
+    showToast('Eventos copiados al generador de prompt');
+    dailyPromptStatus('Eventos listos. Pulsa “Generar prompt”.', 'ok');
+  }
+}
+
+function dailyPromptBuildText(eventsText) {
+  var fecha = dailyPromptDateText();
+  eventsText = String(eventsText || '').trim();
+
+  return [
+    'Hazme una cartela profesional en horizontal y en 4K para mi servicio de streaming M17LIV3.',
+    '',
+    'ESTILO VISUAL:',
+    '- Diseño premium muy neon, moderno, cinematográfico y profesional.',
+    '- Formato horizontal 16:9, resolución 4K.',
+    '- Fondo oscuro elegante con luces neon cyan, azul eléctrico, verde lima y pequeños brillos deportivos.',
+    '- Estética de plataforma streaming / cartel deportivo profesional.',
+    '- Buena jerarquía visual, legible en móvil y TV.',
+    '- Texto limpio, ordenado, sin errores, sin inventar eventos.',
+    '- Usa separadores finos, tarjetas o bloques para cada evento.',
+    '- No sobrecargar la composición.',
+    '- No poner marcas de agua.',
+    '',
+    'FECHA QUE DEBE APARECER EN LA CARTELA:',
+    fecha,
+    '',
+    'CONTENIDO DE LA CARTELA:',
+    eventsText,
+    '',
+    'REQUISITOS DE COMPOSICIÓN:',
+    '- Mantén exactamente los horarios, equipos, canales y categorías que aparecen en el contenido.',
+    '- Respeta emojis como ⚽, ⏰, 📺 y 🗂 si ayudan a la legibilidad.',
+    '- Destaca los partidos principales con más presencia visual.',
+    '- Incluye el título general “M17LIV3” de forma elegante.',
+    '- Que parezca una cartela final lista para publicar en una app de streaming.',
+    '- No añadas eventos que no estén escritos.',
+    '- No cambies nombres de equipos, horarios ni canales.'
+  ].join('\n');
+}
+
+function dailyPromptBuild() {
+  dailyPromptRefreshDate();
+  var eventsEl = document.getElementById('dailyPromptEvents');
+  var out = document.getElementById('dailyGeneratedPrompt');
+  var eventsText = eventsEl ? eventsEl.value.trim() : '';
+  if (!eventsText) {
+    showToast('Pega primero los eventos del día', 'error');
+    dailyPromptStatus('Faltan los eventos. Solo tienes que pegar los eventos, la fecha se añade sola.', 'error');
+    return;
+  }
+  var prompt = dailyPromptBuildText(eventsText);
+  if (out) out.value = prompt;
+  dailyPromptStatus('Prompt generado con la fecha automática: ' + dailyPromptDateText(), 'ok');
+  showToast('Prompt generado');
+}
+
+function dailyPromptCopy() {
+  var out = document.getElementById('dailyGeneratedPrompt');
+  if (!out || !out.value.trim()) {
+    dailyPromptBuild();
+  }
+  out = document.getElementById('dailyGeneratedPrompt');
+  if (!out || !out.value.trim()) return;
+
+  var text = out.value;
+  var done = function(){
+    dailyPromptStatus('Prompt copiado. Pégalo en ChatGPT para generar la imagen.', 'ok');
+    showToast('Prompt copiado');
+  };
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(done).catch(function(){
+      out.focus();
+      out.select();
+      document.execCommand('copy');
+      done();
+    });
+  } else {
+    out.focus();
+    out.select();
+    document.execCommand('copy');
+    done();
+  }
+}
+
+function dailyPromptPreviewFinalImage(event) {
+  var input = event && event.target ? event.target : document.getElementById('dailyFinalImageFile');
+  var file = input && input.files ? input.files[0] : null;
+  var box = document.getElementById('dailyPromptFinalPreview');
+  var img = document.getElementById('dailyPromptFinalPreviewImg');
+  if (!file) {
+    if (box) box.style.display = 'none';
+    if (img) img.removeAttribute('src');
+    return;
+  }
+  if (!file.type || file.type.indexOf('image/') !== 0) {
+    showToast('Selecciona una imagen válida', 'error');
+    if (box) box.style.display = 'none';
+    return;
+  }
+  var url = URL.createObjectURL(file);
+  if (img) img.src = url;
+  if (box) box.style.display = 'block';
+  dailyPromptStatus('Imagen final seleccionada. Pulsa “Subir imagen final a HORARIOS MUNDIAL”.', 'ok');
+}
+
+async function dailyPromptUploadFinalImage() {
+  var input = document.getElementById('dailyFinalImageFile');
+  var file = input && input.files ? input.files[0] : null;
+  if (!file) {
+    showToast('Selecciona la imagen descargada de ChatGPT', 'error');
+    dailyPromptStatus('Primero selecciona la imagen final descargada de ChatGPT.', 'error');
+    return;
+  }
+  if (!file.type || file.type.indexOf('image/') !== 0) {
+    showToast('El archivo debe ser una imagen', 'error');
+    dailyPromptStatus('El archivo seleccionado no parece una imagen.', 'error');
+    return;
+  }
+
+  var btn = null;
+  try {
+    var buttons = document.querySelectorAll('.dailyPromptFinalUpload button.success');
+    btn = buttons && buttons.length ? buttons[0] : null;
+    if (btn) { btn.disabled = true; btn.textContent = 'Subiendo...'; }
+
+    var slot = fixedSlotByKey('horarios_mundial');
+    var sb = initSupabase();
+    var res = await sb.storage.from(FIXED_IMAGE_BUCKET).upload(slot.path, file, {
+      cacheControl: '60',
+      upsert: true,
+      contentType: file.type || 'image/jpeg'
+    });
+    if (res.error) throw res.error;
+
+    dailyPromptStatus('Imagen final subida correctamente a HORARIOS MUNDIAL.', 'ok');
+    showToast('HORARIOS MUNDIAL actualizado');
+    try { loadFixedSlotImage('horarios_mundial'); } catch(e) {}
+  } catch(e) {
+    console.error(e);
+    dailyPromptStatus('Error al subir: ' + (e && e.message ? e.message : 'desconocido'), 'error');
+    showToast('Error al subir imagen final', 'error');
+  }
+  if (btn) { btn.disabled = false; btn.textContent = 'Subir imagen final a HORARIOS MUNDIAL'; }
+}
+// ========== FIN PROMPT CHATGPT CARTELERA DIARIA ==========
 
 // ========== FIN CARTELERA ADMIN ==========
 
