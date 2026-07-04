@@ -2683,3 +2683,10 @@ button:active,
     grid-column: 1 / -1;
   }
 }
+
+
+/* ===== Fix botón Ver más en Requieren atención ===== */
+.homeAttentionMore {
+  display: block;
+  text-align: center;
+}

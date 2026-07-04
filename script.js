@@ -430,6 +430,7 @@ function clientWhatsappButtonsHtml(c, compact) {
 // ========== MINI PANEL INICIO ==========
 
 // ========== HOME OPCIÓN 1 ==========
+var homeAttentionExpanded = false;
 function homeGreetingText() {
   var h = new Date().getHours();
   if (h < 6) return 'Buenas noches';
@@ -493,6 +494,13 @@ function homeAttentionItemHtml(c) {
   '</div>';
 }
 
+function toggleHomeAttentionMore() {
+  homeAttentionExpanded = !homeAttentionExpanded;
+  renderHomeDashboard();
+  var box = document.getElementById('homeAttentionList');
+  if (box) box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
 function renderHomeDashboard() {
   var greet = document.getElementById('homeGreeting');
   var date = document.getElementById('homeTodayDate');
@@ -511,13 +519,17 @@ function renderHomeDashboard() {
     else title.textContent = attention.length + ' clientes requieren atención';
   }
 
+  var topToggle = document.getElementById('homeAttentionToggleTop');
+  if (topToggle) topToggle.textContent = homeAttentionExpanded ? 'Ver menos' : 'Ver todos';
+
   var box = document.getElementById('homeAttentionList');
   if (box) {
     if (!attention.length) {
       box.innerHTML = '<div class="homeAttentionEmpty"><strong>Todo limpio por ahora</strong><span>No hay pagos pendientes, expirados ni renovaciones urgentes.</span></div>';
     } else {
-      box.innerHTML = attention.slice(0, 6).map(homeAttentionItemHtml).join('') +
-        (attention.length > 6 ? '<button class="homeAttentionMore" onclick="quickFilter(&quot;attention&quot;)">Ver '+(attention.length - 6)+' más</button>' : '');
+      var limit = homeAttentionExpanded ? attention.length : 6;
+      box.innerHTML = attention.slice(0, limit).map(homeAttentionItemHtml).join('') +
+        (attention.length > 6 ? '<button class="homeAttentionMore" onclick="toggleHomeAttentionMore()">'+(homeAttentionExpanded ? 'Ver menos' : 'Ver '+(attention.length - 6)+' más')+'</button>' : '');
     }
   }
 }
@@ -566,6 +578,7 @@ function setBottomNavActive(key) {
 
 function navHome() {
   setBottomNavActive('home');
+  homeAttentionExpanded = false;
   filterSt = '';
   filterSvc = '';
   activeTagFilter = '';
