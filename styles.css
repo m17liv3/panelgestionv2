@@ -2974,3 +2974,115 @@ button:active,
 .homeStatusListItem.paypend .homeStatusListActions {
   margin-top: 8px;
 }
+
+
+/* ===== Generador cartelera diaria ===== */
+.dailyPosterBox {
+  border: 1px solid rgba(0,212,255,.22);
+  background:
+    radial-gradient(circle at top left, rgba(0,212,255,.13), transparent 42%),
+    radial-gradient(circle at bottom right, rgba(57,255,20,.08), transparent 40%),
+    rgba(255,255,255,.04);
+  border-radius: 18px;
+  padding: 14px;
+  margin-bottom: 18px;
+}
+.dailyPosterTop {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.dailyPosterTop strong {
+  display: block;
+  color: var(--text);
+  font-size: .98rem;
+}
+.dailyPosterTop span {
+  display: block;
+  color: var(--muted);
+  font-size: .8rem;
+  margin-top: 4px;
+  line-height: 1.35;
+}
+.dailyPosterKicker {
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--cyan);
+  margin-bottom: 6px;
+  font-weight: 900;
+}
+.dailyPosterTextarea {
+  width: 100%;
+  min-height: 170px;
+  background: rgba(0,0,0,.22);
+  border: 1px solid rgba(0,212,255,.16);
+  border-radius: 14px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.55;
+  padding: 12px;
+  resize: vertical;
+  outline: none;
+}
+.dailyPosterTextarea:focus {
+  border-color: rgba(0,212,255,.42);
+  box-shadow: 0 0 0 3px rgba(0,212,255,.08);
+}
+.dailyPosterActions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin-top: 10px;
+}
+.dailyPosterActions button {
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.055);
+  color: var(--text);
+  border-radius: 12px;
+  padding: 11px 10px;
+  font-weight: 900;
+  cursor: pointer;
+}
+.dailyPosterActions button.primary {
+  border-color: rgba(0,212,255,.28);
+  background: rgba(0,212,255,.10);
+  color: var(--cyan);
+}
+.dailyPosterActions button.success {
+  border-color: rgba(57,255,20,.32);
+  background: rgba(57,255,20,.10);
+  color: var(--green);
+}
+.dailyPosterActions button:disabled {
+  opacity: .55;
+  cursor: wait;
+}
+.dailyPosterStatus {
+  color: var(--muted);
+  font-size: .78rem;
+  line-height: 1.35;
+  margin-top: 10px;
+}
+.dailyPosterStatus.ok { color: var(--green); }
+.dailyPosterStatus.error { color: var(--red); }
+.dailyPosterPreviewWrap {
+  margin-top: 12px;
+  border: 1px solid rgba(0,212,255,.18);
+  background: rgba(0,0,0,.28);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.dailyPosterPreviewWrap canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: #050814;
+}
+@media (min-width: 620px) {
+  .dailyPosterActions {
+    grid-template-columns: 1fr 1fr 1.25fr;
+  }
+}

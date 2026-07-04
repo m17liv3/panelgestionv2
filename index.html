@@ -943,6 +943,31 @@
       <div id="clienteLinkBox" style="font-size:13px;color:#00D4FF;word-break:break-all;padding:8px 12px;background:rgba(0,0,0,0.3);border-radius:8px;cursor:pointer;border:1px solid rgba(0,212,255,0.2);">Cargando...</div>
       <button onclick="copyClienteLink()" style="margin-top:10px;width:100%;padding:10px;background:linear-gradient(135deg,#0099CC,#00D4FF);color:#001822;border:none;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;">&#128203; Copiar enlace de clientes</button>
     </div>
+
+    <div class="dailyPosterBox">
+      <div class="dailyPosterTop">
+        <div>
+          <div class="dailyPosterKicker">&#9889; Crear cartelera diaria</div>
+          <strong>Generador de imagen para HORARIOS MUNDIAL</strong>
+          <span>Pega los eventos del día, genera la imagen y súbela directamente al enlace fijo.</span>
+        </div>
+      </div>
+
+      <textarea id="dailyPosterText" class="dailyPosterTextarea" placeholder="Pega aquí el texto diario con fecha, categoría y eventos..."></textarea>
+
+      <div class="dailyPosterActions">
+        <button type="button" onclick="dailyPosterUseCartText()">Usar texto de cartelera</button>
+        <button type="button" class="primary" onclick="dailyPosterGenerate()">Generar imagen</button>
+        <button type="button" class="success" onclick="dailyPosterUploadToHorarios()">Subir a HORARIOS MUNDIAL</button>
+      </div>
+
+      <div id="dailyPosterStatus" class="dailyPosterStatus">Todavía no has generado ninguna imagen.</div>
+
+      <div class="dailyPosterPreviewWrap" id="dailyPosterPreviewWrap" style="display:none">
+        <canvas id="dailyPosterCanvas" width="3840" height="2160"></canvas>
+      </div>
+    </div>
+
     <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#7AA3C8;margin-bottom:10px;">&#127937; Evento del dia</div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
       <input type="file" id="cart-img-file" accept="image/*" style="flex:1;min-width:0;background:rgba(255,255,255,0.04);border:1px solid rgba(0,212,255,0.15);border-radius:10px;color:#E8F4FF;font-size:13px;padding:8px 10px;cursor:pointer;">

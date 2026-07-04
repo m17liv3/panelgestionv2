@@ -4919,6 +4919,352 @@ async function cartResetVisits() {
     showToast('Contador reseteado');
   } catch(e) { showToast('Error al resetear','error'); }
 }
+
+// ========== GENERADOR CARTELERA DIARIA ==========
+var dailyPosterLastBlob = null;
+var dailyPosterLastUrl = '';
+
+function dailyPosterSetStatus(msg, type) {
+  var el = document.getElementById('dailyPosterStatus');
+  if (!el) return;
+  el.textContent = msg || '';
+  el.className = 'dailyPosterStatus ' + (type || '');
+}
+
+function dailyPosterUseCartText() {
+  var source = document.getElementById('cart-texto');
+  var target = document.getElementById('dailyPosterText');
+  if (!target) return;
+  target.value = source && source.value ? source.value : '';
+  if (!target.value) {
+    showToast('No hay texto en la cartelera actual', 'warning');
+  } else {
+    showToast('Texto copiado al generador');
+    dailyPosterSetStatus('Texto listo. Pulsa “Generar imagen”.', 'ok');
+  }
+}
+
+function dailyPosterDefaultDateText() {
+  try {
+    var d = new Date();
+    var txt = d.toLocaleDateString('es-ES', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+    return txt.charAt(0).toUpperCase() + txt.slice(1);
+  } catch(e) {
+    return 'Cartelera del día';
+  }
+}
+
+function dailyPosterCleanLine(line) {
+  return String(line || '').replace(/\s+/g, ' ').trim();
+}
+
+function dailyPosterParse(raw) {
+  raw = String(raw || '').replace(/\r/g, '');
+  var lines = raw.split('\n').map(function(l){ return l.trim(); }).filter(function(l){
+    if (!l) return false;
+    if (/^[.…·\-\_]{5,}$/.test(l.replace(/\s/g,''))) return false;
+    return true;
+  });
+
+  var date = '';
+  if (lines.length && !/^(⏰|📺|🗂|⚽)/.test(lines[0])) date = lines.shift();
+  if (!date) date = dailyPosterDefaultDateText();
+
+  var category = '';
+  var events = [];
+  var current = null;
+
+  lines.forEach(function(line){
+    if (/^⚽/.test(line) || (/^[A-ZÁÉÍÓÚÜÑ0-9\s·\-]+$/.test(line.replace(/[⚽️]/g,'')) && line.length < 60 && line.indexOf('🆚') < 0 && line.indexOf(':') < 0)) {
+      category = line.replace(/⚽️?/g, '').trim() || category;
+      return;
+    }
+    if (/^⏰/.test(line)) {
+      if (current) events.push(current);
+      var clean = line.replace(/^⏰\s*/, '');
+      var parts = clean.split(/\s+[–-]\s+/);
+      var time = parts.length > 1 ? parts.shift() : '';
+      current = { time: dailyPosterCleanLine(time), title: dailyPosterCleanLine(parts.join(' – ') || clean), tv: '', group: '', extra: [] };
+      return;
+    }
+    if (/^📺/.test(line) && current) {
+      current.tv = dailyPosterCleanLine(line.replace(/^📺\s*/, ''));
+      return;
+    }
+    if (/^🗂/.test(line) && current) {
+      current.group = dailyPosterCleanLine(line.replace(/^🗂\s*/, ''));
+      return;
+    }
+    if (current) current.extra.push(dailyPosterCleanLine(line));
+    else if (!category) category = line;
+  });
+  if (current) events.push(current);
+
+  if (!category) category = 'FÚTBOL INTERNACIONAL';
+  if (!events.length && raw.trim()) {
+    events.push({ time:'', title: raw.trim().split('\n').slice(0, 3).join(' · '), tv:'', group:'', extra:[] });
+  }
+
+  return { date: date, category: category, events: events };
+}
+
+function dailyPosterRoundRect(ctx, x, y, w, h, r, fill, stroke) {
+  r = Math.min(r, w/2, h/2);
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.arcTo(x+w, y, x+w, y+h, r);
+  ctx.arcTo(x+w, y+h, x, y+h, r);
+  ctx.arcTo(x, y+h, x, y, r);
+  ctx.arcTo(x, y, x+w, y, r);
+  ctx.closePath();
+  if (fill) ctx.fill();
+  if (stroke) ctx.stroke();
+}
+
+function dailyPosterWrapText(ctx, text, x, y, maxWidth, lineHeight, maxLines) {
+  text = String(text || '');
+  var words = text.split(/\s+/);
+  var line = '';
+  var lines = [];
+  words.forEach(function(word){
+    var test = line ? line + ' ' + word : word;
+    if (ctx.measureText(test).width > maxWidth && line) {
+      lines.push(line);
+      line = word;
+    } else {
+      line = test;
+    }
+  });
+  if (line) lines.push(line);
+  if (maxLines && lines.length > maxLines) {
+    lines = lines.slice(0, maxLines);
+    var last = lines[lines.length - 1] || '';
+    while (last.length && ctx.measureText(last + '…').width > maxWidth) last = last.slice(0, -1);
+    lines[lines.length - 1] = last + '…';
+  }
+  lines.forEach(function(l, i){ ctx.fillText(l, x, y + i * lineHeight); });
+  return lines.length * lineHeight;
+}
+
+function dailyPosterDrawNeonBackground(ctx, w, h) {
+  var bg = ctx.createLinearGradient(0, 0, w, h);
+  bg.addColorStop(0, '#050814');
+  bg.addColorStop(.45, '#0b1025');
+  bg.addColorStop(1, '#03040a');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, w, h);
+
+  var g1 = ctx.createRadialGradient(w*.14, h*.12, 0, w*.14, h*.12, w*.55);
+  g1.addColorStop(0, 'rgba(0,212,255,.32)');
+  g1.addColorStop(.38, 'rgba(0,212,255,.08)');
+  g1.addColorStop(1, 'rgba(0,212,255,0)');
+  ctx.fillStyle = g1; ctx.fillRect(0,0,w,h);
+
+  var g2 = ctx.createRadialGradient(w*.88, h*.88, 0, w*.88, h*.88, w*.50);
+  g2.addColorStop(0, 'rgba(57,255,20,.22)');
+  g2.addColorStop(.38, 'rgba(57,255,20,.06)');
+  g2.addColorStop(1, 'rgba(57,255,20,0)');
+  ctx.fillStyle = g2; ctx.fillRect(0,0,w,h);
+
+  ctx.save();
+  ctx.globalAlpha = .14;
+  ctx.strokeStyle = '#00d4ff';
+  ctx.lineWidth = 2;
+  for (var x = 0; x < w; x += 120) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x - 420, h); ctx.stroke();
+  }
+  for (var y = 0; y < h; y += 120) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y + 260); ctx.stroke();
+  }
+  ctx.restore();
+
+  ctx.save();
+  ctx.globalAlpha = .8;
+  ctx.strokeStyle = 'rgba(0,212,255,.45)';
+  ctx.lineWidth = 5;
+  dailyPosterRoundRect(ctx, 72, 72, w-144, h-144, 42, false, true);
+  ctx.strokeStyle = 'rgba(57,255,20,.20)';
+  ctx.lineWidth = 2;
+  dailyPosterRoundRect(ctx, 96, 96, w-192, h-192, 34, false, true);
+  ctx.restore();
+}
+
+function dailyPosterDraw(data) {
+  var canvas = document.getElementById('dailyPosterCanvas');
+  if (!canvas) throw new Error('No se encontró el canvas.');
+  var ctx = canvas.getContext('2d');
+  var w = canvas.width, h = canvas.height;
+  dailyPosterDrawNeonBackground(ctx, w, h);
+
+  ctx.textBaseline = 'top';
+  ctx.shadowColor = 'rgba(0,212,255,.65)';
+  ctx.shadowBlur = 24;
+  ctx.fillStyle = '#00D4FF';
+  ctx.font = '900 118px Rajdhani, Arial, sans-serif';
+  ctx.fillText('M17LIV3', 180, 160);
+
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = 'rgba(232,244,255,.85)';
+  ctx.font = '700 38px Rajdhani, Arial, sans-serif';
+  ctx.fillText('SERVICIO STREAMING · CARTELERA DIARIA', 188, 282);
+
+  ctx.textAlign = 'right';
+  ctx.fillStyle = '#39FF14';
+  ctx.font = '800 54px Rajdhani, Arial, sans-serif';
+  ctx.fillText(String(data.date || '').toUpperCase(), w - 180, 180);
+  ctx.textAlign = 'left';
+
+  ctx.shadowColor = 'rgba(57,255,20,.55)';
+  ctx.shadowBlur = 18;
+  ctx.fillStyle = '#E8F4FF';
+  ctx.font = '900 92px Rajdhani, Arial, sans-serif';
+  var cat = String(data.category || 'FÚTBOL INTERNACIONAL').toUpperCase();
+  dailyPosterWrapText(ctx, cat, 180, 405, w - 360, 92, 2);
+  ctx.shadowBlur = 0;
+
+  var events = data.events || [];
+  var maxEvents = Math.max(events.length, 1);
+  var top = 620;
+  var bottom = h - 190;
+  var gap = maxEvents > 6 ? 22 : 28;
+  var cardH = Math.max(180, Math.min(260, Math.floor((bottom - top - gap * (maxEvents - 1)) / maxEvents)));
+  var titleFont = maxEvents > 6 ? 48 : (maxEvents > 4 ? 54 : 62);
+  var metaFont = maxEvents > 6 ? 30 : 34;
+  var timeFont = maxEvents > 6 ? 44 : 52;
+
+  events.forEach(function(ev, idx){
+    var y = top + idx * (cardH + gap);
+    var x = 180;
+    var cw = w - 360;
+
+    ctx.save();
+    ctx.fillStyle = 'rgba(9,18,39,.82)';
+    ctx.strokeStyle = idx % 2 ? 'rgba(57,255,20,.32)' : 'rgba(0,212,255,.34)';
+    ctx.lineWidth = 3;
+    ctx.shadowColor = idx % 2 ? 'rgba(57,255,20,.22)' : 'rgba(0,212,255,.25)';
+    ctx.shadowBlur = 24;
+    dailyPosterRoundRect(ctx, x, y, cw, cardH, 34, true, true);
+    ctx.restore();
+
+    var timeW = ev.time ? 260 : 92;
+    ctx.fillStyle = idx % 2 ? 'rgba(57,255,20,.16)' : 'rgba(0,212,255,.16)';
+    ctx.strokeStyle = idx % 2 ? 'rgba(57,255,20,.35)' : 'rgba(0,212,255,.35)';
+    ctx.lineWidth = 2;
+    dailyPosterRoundRect(ctx, x + 34, y + 34, timeW, 74, 24, true, true);
+
+    ctx.fillStyle = ev.time ? (idx % 2 ? '#39FF14' : '#00D4FF') : '#00D4FF';
+    ctx.font = '900 '+timeFont+'px Rajdhani, Arial, sans-serif';
+    ctx.fillText(ev.time || 'TV', x + 58, y + 42);
+
+    ctx.fillStyle = '#E8F4FF';
+    ctx.font = '900 '+titleFont+'px Rajdhani, Arial, sans-serif';
+    var titleX = x + 34 + timeW + 34;
+    var titleY = y + 36;
+    var titleMaxW = cw - timeW - 112;
+    dailyPosterWrapText(ctx, ev.title || '-', titleX, titleY, titleMaxW, titleFont * 1.06, cardH > 210 ? 2 : 1);
+
+    var metaY = y + cardH - 76;
+    ctx.font = '700 '+metaFont+'px Rajdhani, Arial, sans-serif';
+    ctx.fillStyle = 'rgba(232,244,255,.72)';
+    var meta = [];
+    if (ev.tv) meta.push('📺 ' + ev.tv);
+    if (ev.group) meta.push('🗂 ' + ev.group);
+    if (ev.extra && ev.extra.length) meta = meta.concat(ev.extra);
+    dailyPosterWrapText(ctx, meta.join('   ·   '), x + 48, metaY, cw - 96, metaFont * 1.12, 1);
+  });
+
+  ctx.fillStyle = 'rgba(232,244,255,.62)';
+  ctx.font = '700 30px Rajdhani, Arial, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Imagen generada desde M17LIV3 Gestión Clientes', w/2, h - 118);
+  ctx.textAlign = 'left';
+
+  var wrap = document.getElementById('dailyPosterPreviewWrap');
+  if (wrap) wrap.style.display = 'block';
+}
+
+function dailyPosterGenerate() {
+  var textarea = document.getElementById('dailyPosterText');
+  var raw = textarea ? textarea.value : '';
+  if (!raw.trim()) {
+    var current = document.getElementById('cart-texto');
+    if (current && current.value.trim()) {
+      raw = current.value;
+      if (textarea) textarea.value = raw;
+    }
+  }
+  if (!raw.trim()) {
+    showToast('Pega primero los eventos del día', 'error');
+    dailyPosterSetStatus('Pega el texto diario y vuelve a generar.', 'error');
+    return;
+  }
+
+  try {
+    var data = dailyPosterParse(raw);
+    dailyPosterDraw(data);
+    dailyPosterLastBlob = null;
+    dailyPosterSetStatus('Vista previa generada. Si te gusta, pulsa “Subir a HORARIOS MUNDIAL”.', 'ok');
+    showToast('Imagen generada');
+  } catch(e) {
+    console.error(e);
+    dailyPosterSetStatus('Error al generar: ' + (e && e.message ? e.message : 'desconocido'), 'error');
+    showToast('Error al generar imagen', 'error');
+  }
+}
+
+function dailyPosterCanvasToBlob() {
+  return new Promise(function(resolve, reject){
+    var canvas = document.getElementById('dailyPosterCanvas');
+    if (!canvas) { reject(new Error('No se encontró el canvas.')); return; }
+    canvas.toBlob(function(blob){
+      if (!blob) reject(new Error('No se pudo crear la imagen.'));
+      else resolve(blob);
+    }, 'image/jpeg', 0.92);
+  });
+}
+
+async function uploadBlobToFixedSlot(slotKey, blob, filename) {
+  var slot = fixedSlotByKey(slotKey || 'horarios_mundial');
+  var sb = initSupabase();
+  var file = new File([blob], filename || slot.path || 'imagen_actual.jpg', { type: 'image/jpeg' });
+  var res = await sb.storage.from(FIXED_IMAGE_BUCKET).upload(slot.path, file, {
+    cacheControl: '60',
+    upsert: true,
+    contentType: 'image/jpeg'
+  });
+  if (res.error) throw res.error;
+  return fixedAppImageUrl(slot.key, true);
+}
+
+async function dailyPosterUploadToHorarios() {
+  var btn = null;
+  try {
+    var buttons = document.querySelectorAll('.dailyPosterActions .success');
+    btn = buttons && buttons.length ? buttons[0] : null;
+    if (btn) { btn.disabled = true; btn.textContent = 'Subiendo...'; }
+
+    var canvas = document.getElementById('dailyPosterCanvas');
+    if (!canvas || document.getElementById('dailyPosterPreviewWrap').style.display === 'none') {
+      dailyPosterGenerate();
+    }
+
+    var blob = await dailyPosterCanvasToBlob();
+    dailyPosterLastBlob = blob;
+    var url = await uploadBlobToFixedSlot('horarios_mundial', blob, 'imagen_actual.jpg');
+    dailyPosterLastUrl = url;
+    dailyPosterSetStatus('Subida correcta a HORARIOS MUNDIAL. El enlace fijo ya muestra la nueva imagen.', 'ok');
+    showToast('HORARIOS MUNDIAL actualizado');
+    try { loadFixedSlotImage('horarios_mundial'); } catch(e) {}
+  } catch(e) {
+    console.error(e);
+    dailyPosterSetStatus('Error al subir: ' + (e && e.message ? e.message : 'desconocido'), 'error');
+    showToast('Error al subir a Horarios Mundial', 'error');
+  }
+  if (btn) { btn.disabled = false; btn.textContent = 'Subir a HORARIOS MUNDIAL'; }
+}
+// ========== FIN GENERADOR CARTELERA DIARIA ==========
+
+
 // ========== FIN CARTELERA ADMIN ==========
 
 
