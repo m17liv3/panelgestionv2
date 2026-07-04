@@ -16,6 +16,6 @@ window.M17_CONFIG = {
   supabaseRenewalsTable: 'renovaciones',
   fixedImageBucket: 'cartelera',
   fixedImagePath: 'imagen_actual.jpg',
-  mfaEnabled: true,
-  mfaForceSetup: true
+  mfaEnabled: false,
+  mfaForceSetup: false
 };

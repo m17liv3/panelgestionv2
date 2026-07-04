@@ -1,0 +1,163 @@
+-- M17LIV3 - Login rápido sin Google Authenticator obligatorio
+-- Ejecutar UNA SOLA VEZ en Supabase SQL Editor.
+-- Mantiene seguridad por usuario autenticado: cada usuario solo ve sus propios datos.
+-- Quita el requisito aal2 de Google Authenticator en las políticas RLS.
+
+-- CLIENTES
+drop policy if exists "clientes_select_owner" on public.clientes;
+drop policy if exists "clientes_insert_owner" on public.clientes;
+drop policy if exists "clientes_update_owner" on public.clientes;
+drop policy if exists "clientes_delete_owner" on public.clientes;
+
+create policy "clientes_select_owner"
+on public.clientes
+for select
+to authenticated
+using (owner_id = (select auth.uid()));
+
+create policy "clientes_insert_owner"
+on public.clientes
+for insert
+to authenticated
+with check (owner_id = (select auth.uid()));
+
+create policy "clientes_update_owner"
+on public.clientes
+for update
+to authenticated
+using (owner_id = (select auth.uid()))
+with check (owner_id = (select auth.uid()));
+
+create policy "clientes_delete_owner"
+on public.clientes
+for delete
+to authenticated
+using (owner_id = (select auth.uid()));
+
+
+-- RENOVACIONES
+drop policy if exists "renovaciones_select_owner" on public.renovaciones;
+drop policy if exists "renovaciones_insert_owner" on public.renovaciones;
+drop policy if exists "renovaciones_update_owner" on public.renovaciones;
+drop policy if exists "renovaciones_delete_owner" on public.renovaciones;
+
+create policy "renovaciones_select_owner"
+on public.renovaciones
+for select
+to authenticated
+using (owner_id = (select auth.uid()));
+
+create policy "renovaciones_insert_owner"
+on public.renovaciones
+for insert
+to authenticated
+with check (owner_id = (select auth.uid()));
+
+create policy "renovaciones_update_owner"
+on public.renovaciones
+for update
+to authenticated
+using (owner_id = (select auth.uid()))
+with check (owner_id = (select auth.uid()));
+
+create policy "renovaciones_delete_owner"
+on public.renovaciones
+for delete
+to authenticated
+using (owner_id = (select auth.uid()));
+
+
+-- SORTEOS
+drop policy if exists "sorteos_select_owner" on public.sorteos;
+drop policy if exists "sorteos_insert_owner" on public.sorteos;
+drop policy if exists "sorteos_update_owner" on public.sorteos;
+drop policy if exists "sorteos_delete_owner" on public.sorteos;
+
+create policy "sorteos_select_owner"
+on public.sorteos
+for select
+to authenticated
+using (owner_id = (select auth.uid()));
+
+create policy "sorteos_insert_owner"
+on public.sorteos
+for insert
+to authenticated
+with check (owner_id = (select auth.uid()));
+
+create policy "sorteos_update_owner"
+on public.sorteos
+for update
+to authenticated
+using (owner_id = (select auth.uid()))
+with check (owner_id = (select auth.uid()));
+
+create policy "sorteos_delete_owner"
+on public.sorteos
+for delete
+to authenticated
+using (owner_id = (select auth.uid()));
+
+
+-- PLANTILLAS DE MENSAJES
+drop policy if exists "message_templates_select_owner" on public.message_templates;
+drop policy if exists "message_templates_insert_owner" on public.message_templates;
+drop policy if exists "message_templates_update_owner" on public.message_templates;
+drop policy if exists "message_templates_delete_owner" on public.message_templates;
+
+create policy "message_templates_select_owner"
+on public.message_templates
+for select
+to authenticated
+using (owner_id = (select auth.uid()));
+
+create policy "message_templates_insert_owner"
+on public.message_templates
+for insert
+to authenticated
+with check (owner_id = (select auth.uid()));
+
+create policy "message_templates_update_owner"
+on public.message_templates
+for update
+to authenticated
+using (owner_id = (select auth.uid()))
+with check (owner_id = (select auth.uid()));
+
+create policy "message_templates_delete_owner"
+on public.message_templates
+for delete
+to authenticated
+using (owner_id = (select auth.uid()));
+
+
+-- FINANZAS
+drop policy if exists "finanzas_select_owner" on public.finanzas_movimientos;
+drop policy if exists "finanzas_insert_owner" on public.finanzas_movimientos;
+drop policy if exists "finanzas_update_owner" on public.finanzas_movimientos;
+drop policy if exists "finanzas_delete_owner" on public.finanzas_movimientos;
+
+create policy "finanzas_select_owner"
+on public.finanzas_movimientos
+for select
+to authenticated
+using (owner_id = (select auth.uid()));
+
+create policy "finanzas_insert_owner"
+on public.finanzas_movimientos
+for insert
+to authenticated
+with check (owner_id = (select auth.uid()));
+
+create policy "finanzas_update_owner"
+on public.finanzas_movimientos
+for update
+to authenticated
+using (owner_id = (select auth.uid()))
+with check (owner_id = (select auth.uid()));
+
+create policy "finanzas_delete_owner"
+on public.finanzas_movimientos
+for delete
+to authenticated
+using (owner_id = (select auth.uid()));

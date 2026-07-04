@@ -41,8 +41,8 @@ var SUPABASE_MESSAGE_TEMPLATES_TABLE = CONFIG.supabaseMessageTemplatesTable || '
 var renewals = [];
 var BACKUP_LAST_KEY = 'm17_last_backup_at';
 var BACKUP_REMINDER_DAYS = 7;
-var MFA_ENABLED = USE_SUPABASE && CONFIG.mfaEnabled !== false;
-var MFA_FORCE_SETUP = CONFIG.mfaForceSetup !== false;
+var MFA_ENABLED = false; // Login rapido: Google Authenticator no se pide para entrar
+var MFA_FORCE_SETUP = false;
 var mfaMode = '';
 var mfaFactorId = '';
 var mfaFactorName = '';
