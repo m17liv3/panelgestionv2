@@ -2825,30 +2825,94 @@ async function saveClient(markInitialPending) {
   }
 }
 
+function premiumExpiryText(c) {
+  var d = getDaysLeft(c && c.expiry);
+  if (isNaN(d)) return 'Sin fecha';
+  if (d < 0) return 'Caducó hace ' + Math.abs(d) + ' día(s)';
+  if (d === 0) return 'Caduca hoy';
+  if (d <= 15) return 'Quedan ' + d + ' día(s)';
+  return 'Activo · quedan ' + d + ' día(s)';
+}
+
+function premiumDataCard(label, value, copyValue, accent) {
+  value = value || '-';
+  return '<div class="premiumDataCard '+(accent || '')+'">' +
+    '<div class="premiumDataLabel">'+esc(label)+'</div>' +
+    '<div class="premiumDataValue">'+esc(value)+'</div>' +
+    (copyValue ? '<button class="btnCopy premiumCopy" data-copy="'+esc(copyValue)+'" onclick="copyText(this.dataset.copy,this)">Copiar</button>' : '') +
+  '</div>';
+}
+
 function viewClient(id) {
   var c=clients.find(function(x){return x.id===id;});
   if(!c) return;
-  document.getElementById('viewSheetTitle').textContent=c.name;
-  var svcLabel = c.service === 'ESPANA' ? 'ESPA\u00D1A' : esc(c.service);
+
+  document.getElementById('viewSheetTitle').textContent='Ficha cliente';
+  var svcLabel = c.service === 'ESPANA' ? 'ESPAÑA' : esc(c.service);
+  var status = getStatus(c.expiry);
+  var heroClass = status === 'exp' ? 'expired' : (status === 'warn' ? 'warning' : 'active');
+  var tags = normalizeClientTags(c.tags);
+  var mainApp = getClientMainApp(c);
+
   var html='';
-  html+='<div class="viewRow"><div class="vlabel">Servicio</div><div class="vval"><span class="badge '+(c.service==='TODO'?'badgeTodo':'badgeEs')+'">'+svcLabel+'</span></div></div>';
-  html+='<div class="viewRow"><div class="vlabel">Expiracion</div><div class="vval">'+formatDate(c.expiry)+' '+statusBadge(c.expiry)+(clientHasPendingPayment(c)?' <span class="badge badgePayPending">Pago pendiente</span>':'')+(clientHasRenewalNotice(c)?' <span class="badge badgeAdvised">Avisado</span>':'')+renewalReplyBadgeHtml(c)+'</div></div>';
-  if (normalizeClientTags(c.tags).length) html+='<div class="viewRow"><div class="vlabel">Etiquetas</div><div class="vval">'+clientTagsHtml(c)+'</div></div>';
+  html+='<div class="premiumClientHero '+heroClass+'">';
+  html+=  '<div class="premiumHeroTop">';
+  html+=    '<div class="premiumAvatar">'+esc(avatarLetter(c.name))+'</div>';
+  html+=    '<div class="premiumHeroInfo">';
+  html+=      '<div class="premiumClientName">'+esc(c.name)+'</div>';
+  html+=      '<div class="premiumClientSub">'+esc(mainApp || '-')+'</div>';
+  html+=    '</div>';
+  html+=  '</div>';
+  html+=  '<div class="premiumHeroBadges">';
+  html+=    '<span class="badge '+(c.service==='TODO'?'badgeTodo':'badgeEs')+'">'+svcLabel+'</span>';
+  html+=    statusBadge(c.expiry);
+  html+=    (clientHasPendingPayment(c)?' <span class="badge badgePayPending">Pago pendiente</span>':'');
+  html+=    (clientHasRenewalNotice(c)?' <span class="badge badgeAdvised">Avisado</span>':'');
+  html+=    renewalReplyBadgeHtml(c);
+  html+=  '</div>';
+  html+=  '<div class="premiumExpiryLine"><span>Expira</span><strong>'+formatDate(c.expiry)+'</strong><small>'+esc(premiumExpiryText(c))+'</small></div>';
+  if (tags.length) html+= '<div class="premiumTagsWrap">'+clientTagsHtml(c)+'</div>';
+  html+='</div>';
+
+  html+='<div class="premiumActionRow">';
+  html+=  '<button class="primary" data-id="'+esc(c.id)+'" onclick="openRenew(this.dataset.id)">&#8635; Renovar</button>';
+  html+=  '<button data-id="'+esc(c.id)+'" onclick="editClient(this.dataset.id)">&#9998; Editar</button>';
+  html+=  '<button data-id="'+esc(c.id)+'" onclick="openClientMessages(this.dataset.id)">&#128203; Msg</button>';
+  html+='</div>';
+
   html+=renewalNoticeHtml(c, 'view');
   html+=pendingPaymentNoticeHtml(c, 'view');
-  if(c.phone) html+='<div class="viewRow"><div class="vlabel">Teléfono</div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="font-family:monospace;color:var(--cyan)">'+esc(c.phone)+'</span><button class="btnCopy" data-copy="'+esc(c.phone)+'" onclick="copyText(this.dataset.copy,this)">Copiar</button></div></div>';
-  html+='<div class="viewRow"><div class="vlabel">Usuario</div><div style="display:flex;align-items:center;gap:8px"><span style="font-family:monospace;color:var(--cyan)">'+esc(c.user||'-')+'</span>'+(c.user?'<button class="btnCopy" data-copy="'+esc(c.user)+'" onclick="copyText(this.dataset.copy,this)">Copiar</button>':'')+'</div></div>';
-  html+='<div class="viewRow"><div class="vlabel">Contrasena</div><div style="display:flex;align-items:center;gap:8px"><span style="font-family:monospace">'+esc(c.pass||'-')+'</span>'+(c.pass?'<button class="btnCopy" data-copy="'+esc(c.pass)+'" onclick="copyText(this.dataset.copy,this)">Copiar</button>':'')+'</div></div>';
-  html+='<div class="vlabel" style="margin-bottom:10px">Apps instaladas</div>';
-  (c.apps||[]).forEach(function(a,i){
-    html+='<div class="viewApp"><div class="viewApp-name" style="color:'+(i===0?'var(--cyan)':'var(--text)')+'">'+esc(a.name)+(a.customName?' ('+esc(a.customName)+')':'')+(i===0?' <span style="font-size:.7rem;color:var(--green)">[Principal]</span>':'')+'</div>';
-    if(a.mac) html+='<div style="font-size:.8rem;color:var(--muted);margin-top:6px;display:flex;align-items:center;gap:6px">MAC: <span style="font-family:monospace;color:var(--text)">'+esc(a.mac)+'</span><button class="btnCopy" data-copy="'+esc(a.mac)+'" onclick="copyText(this.dataset.copy,this)">Copiar</button></div>';
-    if(a.code) html+='<div style="font-size:.8rem;color:var(--muted);margin-top:4px;display:flex;align-items:center;gap:6px">Cod: <span style="font-family:monospace;color:var(--text)">'+esc(a.code)+'</span><button class="btnCopy" data-copy="'+esc(a.code)+'" onclick="copyText(this.dataset.copy,this)">Copiar</button></div>';
+
+  html+='<div class="premiumSectionTitle">Datos de acceso</div>';
+  html+='<div class="premiumDataGrid">';
+  html+=premiumDataCard('Usuario', c.user || '-', c.user || '', 'cyan');
+  html+=premiumDataCard('Contraseña', c.pass || '-', c.pass || '', '');
+  if(c.phone) html+=premiumDataCard('Teléfono', c.phone, c.phone, 'green');
+  html+=premiumDataCard('Servicio', c.service === 'ESPANA' ? 'ESPAÑA' : (c.service || '-'), '', '');
+  html+='</div>';
+
+  html+='<div class="premiumSectionTitle">Apps instaladas</div>';
+  if ((c.apps || []).length) {
+    html+='<div class="premiumAppsList">';
+    (c.apps||[]).forEach(function(a,i){
+      html+='<div class="premiumAppCard '+(i===0?'main':'')+'">';
+      html+=  '<div class="premiumAppTop"><strong>'+esc(a.customName || a.name || '-')+'</strong>'+(i===0?'<span>Principal</span>':'')+'</div>';
+      if(a.customName && a.name) html+='<div class="premiumAppMeta">'+esc(a.name)+'</div>';
+      if(a.mac) html+='<div class="premiumCodeLine"><span>MAC</span><code>'+esc(a.mac)+'</code><button class="btnCopy" data-copy="'+esc(a.mac)+'" onclick="copyText(this.dataset.copy,this)">Copiar</button></div>';
+      if(a.code) html+='<div class="premiumCodeLine"><span>Código</span><code>'+esc(a.code)+'</code><button class="btnCopy" data-copy="'+esc(a.code)+'" onclick="copyText(this.dataset.copy,this)">Copiar</button></div>';
+      html+='</div>';
+    });
     html+='</div>';
-  });
-  if(c.notes) html+='<div class="viewRow" style="margin-top:10px"><div class="vlabel">Notas</div><div class="vval" style="color:var(--muted)">'+esc(c.notes)+'</div></div>';
+  } else {
+    html+='<div class="emptyMini">No hay apps registradas.</div>';
+  }
+
+  if(c.notes) {
+    html+='<div class="premiumSectionTitle">Notas</div>';
+    html+='<div class="premiumNotes">'+esc(c.notes)+'</div>';
+  }
+
   html+=clientRenewalsHtml(c);
-  html+='<button class="btnFull primary" data-id="'+c.id+'" onclick="openClientMessages(this.dataset.id)" style="margin-top:12px">&#128203; Copiar mensajes rapidos</button>';
   document.getElementById('viewSheetBody').innerHTML=html;
   openSheet('viewSheet','viewOverlay');
 }

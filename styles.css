@@ -1345,3 +1345,360 @@ button.homeMiniCard {
     grid-template-columns: repeat(3, 1fr);
   }
 }
+
+
+/* ===== Diseño premium: animaciones suaves ===== */
+@keyframes m17SoftFadeUp {
+  from { opacity: 0; transform: translateY(12px) scale(.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes m17SoftPop {
+  0% { opacity: 0; transform: translateY(16px) scale(.92); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes m17GlowPulse {
+  0%,100% { box-shadow: 0 10px 30px rgba(0,229,255,.30), 0 0 0 1px rgba(105,255,71,.16); }
+  50% { box-shadow: 0 12px 38px rgba(105,255,71,.28), 0 0 0 1px rgba(0,229,255,.20); }
+}
+
+.statCard,
+.homeMiniPanel,
+.clientCard,
+.financeChartCard,
+.financeComparisonCard,
+.paymentsStat,
+.backupNotice,
+.filterPills,
+.activeFilterBar {
+  animation: m17SoftFadeUp .34s ease both;
+}
+
+.clientCard {
+  transition: transform .22s ease, border-color .22s ease, box-shadow .22s ease, background .22s ease;
+}
+.clientCard:active {
+  transform: scale(.992);
+}
+@media (hover:hover) {
+  .clientCard:hover {
+    transform: translateY(-2px);
+    border-color: rgba(0,229,255,.26);
+    box-shadow: 0 12px 34px rgba(0,0,0,.22);
+  }
+  .statCard:hover,
+  .homeMiniCard:hover {
+    transform: translateY(-1px);
+    border-color: rgba(0,229,255,.24);
+  }
+}
+button,
+.iconBtn,
+.btnCopy,
+.menuItem,
+.appChip,
+.filterPills button,
+.clientCard-actions button {
+  transition: transform .18s ease, border-color .18s ease, background .18s ease, opacity .18s ease, box-shadow .18s ease;
+}
+button:active,
+.iconBtn:active,
+.btnCopy:active,
+.menuItem:active,
+.appChip:active {
+  transform: scale(.97);
+}
+.sheet.open {
+  animation: m17SoftPop .28s ease both;
+}
+.sheet-overlay.active {
+  animation: m17OverlayFade .22s ease both;
+}
+@keyframes m17OverlayFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ===== Botón flotante premium ===== */
+.fab.fabPremium {
+  width: auto;
+  min-width: 118px;
+  height: 58px;
+  border-radius: 999px;
+  padding: 0 18px 0 14px;
+  gap: 8px;
+  font-size: .94rem;
+  font-weight: 900;
+  letter-spacing: .2px;
+  background: linear-gradient(135deg, var(--cyan), var(--green));
+  box-shadow: 0 10px 30px rgba(0,229,255,.35), 0 0 0 1px rgba(255,255,255,.12) inset;
+  animation: m17SoftPop .38s ease both, m17GlowPulse 3.6s ease-in-out infinite;
+}
+.fabPremium .fabPlus {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(13,13,20,.22);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.55rem;
+  line-height: 1;
+}
+.fabPremium .fabLabel {
+  color: #0d0d14;
+}
+@media (max-width: 420px) {
+  .fab.fabPremium {
+    min-width: 58px;
+    padding: 0;
+  }
+  .fabPremium .fabLabel {
+    display: none;
+  }
+  .fabPremium .fabPlus {
+    background: transparent;
+  }
+}
+
+/* ===== Ficha cliente premium ===== */
+#viewSheet .sheet-header h3 {
+  color: var(--cyan);
+}
+.premiumClientHero {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(0,229,255,.20);
+  border-radius: 22px;
+  padding: 16px;
+  margin-bottom: 12px;
+  background:
+    radial-gradient(circle at top left, rgba(0,229,255,.18), transparent 42%),
+    radial-gradient(circle at bottom right, rgba(105,255,71,.12), transparent 40%),
+    rgba(255,255,255,.04);
+  animation: m17SoftFadeUp .34s ease both;
+}
+.premiumClientHero.active {
+  border-color: rgba(105,255,71,.24);
+}
+.premiumClientHero.warning {
+  border-color: rgba(255,170,0,.30);
+}
+.premiumClientHero.expired {
+  border-color: rgba(255,77,77,.28);
+}
+.premiumHeroTop {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.premiumAvatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 19px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,.22);
+  border: 1px solid rgba(255,255,255,.10);
+  color: var(--cyan);
+  font-size: 1.55rem;
+  font-weight: 950;
+  box-shadow: inset 0 0 20px rgba(0,229,255,.10);
+}
+.premiumHeroInfo {
+  min-width: 0;
+}
+.premiumClientName {
+  font-size: 1.15rem;
+  font-weight: 950;
+  color: var(--text);
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+.premiumClientSub {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: .84rem;
+}
+.premiumHeroBadges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 13px;
+}
+.premiumExpiryLine {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 3px 10px;
+  align-items: center;
+  margin-top: 13px;
+  padding: 11px 12px;
+  border-radius: 15px;
+  background: rgba(0,0,0,.16);
+  border: 1px solid rgba(255,255,255,.07);
+}
+.premiumExpiryLine span {
+  color: var(--muted);
+  font-size: .72rem;
+  text-transform: uppercase;
+  letter-spacing: .9px;
+}
+.premiumExpiryLine strong {
+  color: var(--cyan);
+  font-size: 1rem;
+}
+.premiumExpiryLine small {
+  grid-column: 1 / -1;
+  color: var(--muted);
+}
+.premiumTagsWrap {
+  margin-top: 10px;
+}
+
+.premiumActionRow {
+  display: grid;
+  grid-template-columns: 1.25fr 1fr 1fr;
+  gap: 8px;
+  margin: 12px 0 14px;
+  animation: m17SoftFadeUp .38s ease both;
+}
+.premiumActionRow button {
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.055);
+  color: var(--text);
+  border-radius: 14px;
+  padding: 11px 8px;
+  font-weight: 900;
+  cursor: pointer;
+}
+.premiumActionRow button.primary {
+  background: linear-gradient(135deg, rgba(0,229,255,.18), rgba(105,255,71,.10));
+  color: var(--cyan);
+  border-color: rgba(0,229,255,.26);
+}
+.premiumSectionTitle {
+  margin: 16px 0 9px;
+  color: var(--cyan);
+  font-weight: 950;
+  letter-spacing: .5px;
+  font-size: .88rem;
+}
+.premiumDataGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 9px;
+}
+.premiumDataCard {
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.045);
+  border-radius: 16px;
+  padding: 12px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 5px 10px;
+  align-items: center;
+  animation: m17SoftFadeUp .35s ease both;
+}
+.premiumDataCard.cyan {
+  border-color: rgba(0,229,255,.16);
+}
+.premiumDataCard.green {
+  border-color: rgba(105,255,71,.15);
+}
+.premiumDataLabel {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-size: .72rem;
+  text-transform: uppercase;
+  letter-spacing: .8px;
+}
+.premiumDataValue {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color: var(--text);
+  font-size: .94rem;
+}
+.premiumCopy {
+  justify-self: end;
+}
+.premiumAppsList {
+  display: grid;
+  gap: 9px;
+}
+.premiumAppCard {
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.04);
+  border-radius: 16px;
+  padding: 12px;
+  animation: m17SoftFadeUp .35s ease both;
+}
+.premiumAppCard.main {
+  border-color: rgba(0,229,255,.22);
+  background: linear-gradient(135deg, rgba(0,229,255,.08), rgba(255,255,255,.035));
+}
+.premiumAppTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.premiumAppTop strong {
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.premiumAppTop span {
+  color: var(--green);
+  font-size: .68rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border: 1px solid rgba(105,255,71,.18);
+  border-radius: 999px;
+  padding: 4px 7px;
+}
+.premiumAppMeta {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: .78rem;
+}
+.premiumCodeLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  margin-top: 9px;
+  color: var(--muted);
+  font-size: .8rem;
+}
+.premiumCodeLine code {
+  color: var(--cyan);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  background: rgba(0,0,0,.18);
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 8px;
+  padding: 4px 6px;
+}
+.premiumNotes {
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.04);
+  border-radius: 16px;
+  padding: 12px;
+  color: var(--muted);
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+
+@media (min-width: 640px) {
+  .premiumDataGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
