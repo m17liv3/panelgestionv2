@@ -2945,3 +2945,15 @@ button:active,
     grid-template-columns: repeat(3, 1fr);
   }
 }
+
+
+/* ===== Inicio limpio sin accesos duplicados ===== */
+.homeStatusOnly .backupNotice {
+  margin: 0 12px 12px;
+}
+.homeStatusGridMain {
+  margin-bottom: 14px;
+}
+.topbar-right .iconBtn.refreshBtn {
+  margin-left: auto;
+}

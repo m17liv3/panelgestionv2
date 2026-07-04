@@ -78,7 +78,6 @@
     <span class="topbar-title">Gestion Clientes M17LIV3</span>
     <div class="topbar-right">
       <button class="iconBtn refreshBtn" onclick="refreshWebApp()" title="Actualizar web-app" aria-label="Actualizar web-app">&#8635;</button>
-      <button class="iconBtn" onclick="openMenu()" title="Menu" aria-label="Menu">&#9776;</button>
     </div>
   </div>
 
@@ -117,23 +116,7 @@
         <em>Ver clientes</em>
       </button>
     </section>
-
-    <section class="homeStatusHint">
-      <div>
-        <strong>Clientes uno a uno</strong>
-        <span>Usa el botón inferior “Clientes” para ver tus fichas deslizando.</span>
-      </div>
-      <button onclick="openClientBrowser()">Abrir</button>
-    </section>
-
-    <section class="homeQuickActions homeQuickActionsCompact">
-      <button onclick="openNewClient()"><span>+</span><strong>Cliente</strong></button>
-      <button onclick="openFinanceBalance()"><span>&#128202;</span><strong>Balance</strong></button>
-      <button onclick="openCartelera()"><span>&#127916;</span><strong>Cartelera</strong></button>
-      <button onclick="openBackupCenter()"><span>&#128190;</span><strong>Backup</strong></button>
-    </section>
-
-    <div class="homeHiddenCounters" aria-hidden="true">
+<div class="homeHiddenCounters" aria-hidden="true">
       <span id="stTotal">0</span>
       <span id="stAdvised">0</span>
       <span id="stAnswered">0</span>
