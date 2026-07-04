@@ -903,6 +903,21 @@ function homeStatusListSubtitle(c, type) {
 
 function homeStatusListItemHtml(c, type) {
   var svcLabel = c.service === 'ESPANA' ? 'ESPAÑA' : esc(c.service || '-');
+  var actions = '';
+  if (type === 'paypend') {
+    var pendingRenewal = getPendingPaymentRenewalForClient(c.id);
+    actions = '<div class="homeStatusListActions homeStatusListActionsPaidOnly">' +
+      '<button class="paidOnlyBtn" data-id="'+esc(c.id)+'" data-renewal-id="'+esc(pendingRenewal ? pendingRenewal.id : '')+'" onclick="homeStatusListMarkPaid(this.dataset.id, this.dataset.renewalId, this)">✓ Pagado</button>' +
+    '</div>';
+  } else {
+    actions = '<div class="homeStatusListActions">' +
+      '<button data-id="'+esc(c.id)+'" onclick="homeStatusListOpenFull(this.dataset.id)">Ver</button>' +
+      '<button data-id="'+esc(c.id)+'" onclick="homeStatusListRenew(this.dataset.id)">Renovar</button>' +
+      '<button data-id="'+esc(c.id)+'" onclick="homeStatusListMessages(this.dataset.id)">Msg</button>' +
+      '<button data-id="'+esc(c.id)+'" onclick="homeStatusListEdit(this.dataset.id)">Editar</button>' +
+      '<button data-id="'+esc(c.id)+'" onclick="homeStatusListMore(this.dataset.id)">⋮</button>' +
+    '</div>';
+  }
   return '<div class="homeStatusListItem '+esc(type || '')+'">' +
     '<div class="homeStatusListAvatar">'+esc(avatarLetter(c.name))+'</div>' +
     '<div class="homeStatusListInfo">' +
@@ -911,13 +926,7 @@ function homeStatusListItemHtml(c, type) {
       '<div class="homeStatusListBadges"><span class="badge '+(c.service==='TODO'?'badgeTodo':'badgeEs')+'">'+svcLabel+'</span>'+statusBadge(c.expiry)+(clientHasPendingPayment(c)?' <span class="badge badgePayPending">Pago pendiente</span>':'')+renewalReplyBadgeHtml(c)+'</div>' +
       '<small>'+esc(homeStatusListSubtitle(c, type))+' · Expira: '+formatDate(c.expiry)+'</small>' +
     '</div>' +
-    '<div class="homeStatusListActions">' +
-      '<button data-id="'+esc(c.id)+'" onclick="homeStatusListOpenFull(this.dataset.id)">Ver</button>' +
-      '<button data-id="'+esc(c.id)+'" onclick="homeStatusListRenew(this.dataset.id)">Renovar</button>' +
-      '<button data-id="'+esc(c.id)+'" onclick="homeStatusListMessages(this.dataset.id)">Msg</button>' +
-      '<button data-id="'+esc(c.id)+'" onclick="homeStatusListEdit(this.dataset.id)">Editar</button>' +
-      '<button data-id="'+esc(c.id)+'" onclick="homeStatusListMore(this.dataset.id)">⋮</button>' +
-    '</div>' +
+    actions +
   '</div>';
 }
 
@@ -958,6 +967,20 @@ function homeStatusListEdit(id) {
 function homeStatusListMore(id) {
   closeSheet('homeStatusListSheet','homeStatusListOverlay');
   setTimeout(function(){ openClientMoreActions(id); }, 260);
+}
+
+async function homeStatusListMarkPaid(clientId, renewalId, btn) {
+  var renewal = renewalId ? (renewals || []).find(function(r){ return String(r.id) === String(renewalId); }) : null;
+  if (!renewal && clientId) renewal = getPendingPaymentRenewalForClient(clientId);
+  if (!renewal) {
+    showToast('No se ha encontrado el pago pendiente', 'error');
+    renderHomeStatusList();
+    return;
+  }
+  await markRenewalAsPaid(renewal.id, btn);
+  renderHomeStatusList();
+  updateStats();
+  updateHomeMiniPanel();
 }
 // ========== FIN LISTAS DESDE PANTALLA PRINCIPAL ==========
 
@@ -2088,6 +2111,8 @@ async function markRenewalAsPaid(renewalId, btn) {
     }
     renderPaymentsDashboard();
     renderCards();
+    if (typeof renderHomeStatusList === 'function' && document.getElementById('homeStatusListSheet') && document.getElementById('homeStatusListSheet').classList.contains('open')) renderHomeStatusList();
+    updateStats();
     var sheet = document.getElementById('viewSheet');
     if (sheet && sheet.classList.contains('open') && r.clientId) viewClient(r.clientId);
     if (typeof showToast === 'function') showToast('Pago marcado como cobrado');

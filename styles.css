@@ -2957,3 +2957,20 @@ button:active,
 .topbar-right .iconBtn.refreshBtn {
   margin-left: auto;
 }
+
+
+/* ===== Pagos pendientes: solo botón Pagado ===== */
+.homeStatusListActionsPaidOnly {
+  grid-template-columns: 1fr !important;
+}
+.homeStatusListActionsPaidOnly .paidOnlyBtn {
+  width: 100%;
+  padding: 13px 10px;
+  font-size: .95rem;
+  color: var(--green) !important;
+  border-color: rgba(105,255,71,.32) !important;
+  background: linear-gradient(135deg, rgba(105,255,71,.14), rgba(105,255,71,.06)) !important;
+}
+.homeStatusListItem.paypend .homeStatusListActions {
+  margin-top: 8px;
+}
