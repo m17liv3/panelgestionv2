@@ -2690,3 +2690,258 @@ button:active,
   display: block;
   text-align: center;
 }
+
+
+/* ===== Inicio simplificado: panel de estado ===== */
+.homeStatusOnly {
+  padding-top: 10px;
+}
+.homeHeroSimple {
+  align-items: center;
+}
+.homeStatusGridMain {
+  margin-top: 4px;
+}
+.homeStatusCard.infoOnly {
+  cursor: default;
+}
+.homeStatusCard.infoOnly:active {
+  transform: none;
+}
+.homeStatusCard em {
+  display: inline-flex;
+  width: fit-content;
+  margin-top: 4px;
+  color: var(--muted);
+  font-style: normal;
+  font-size: .68rem;
+  font-weight: 900;
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(0,0,0,.14);
+  border-radius: 999px;
+  padding: 4px 7px;
+}
+.homeStatusCard.warn em,
+.homeStatusCard.expired em,
+.homeStatusCard.pending em {
+  color: currentColor;
+  border-color: currentColor;
+  opacity: .82;
+}
+.homeStatusHint {
+  margin: 0 12px 12px;
+  border: 1px solid rgba(0,229,255,.13);
+  background: rgba(255,255,255,.04);
+  border-radius: 22px;
+  padding: 13px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  animation: m17SoftFadeUp .38s ease both;
+}
+.homeStatusHint strong {
+  display: block;
+  color: var(--text);
+}
+.homeStatusHint span {
+  display: block;
+  color: var(--muted);
+  font-size: .8rem;
+  margin-top: 3px;
+}
+.homeStatusHint button {
+  border: 1px solid rgba(0,229,255,.22);
+  background: rgba(0,229,255,.08);
+  color: var(--cyan);
+  border-radius: 14px;
+  padding: 10px 13px;
+  font-weight: 950;
+  cursor: pointer;
+}
+.homeQuickActionsCompact {
+  margin-bottom: 16px;
+}
+.homeResultsBlock[style*="display:none"] {
+  display: none !important;
+}
+
+/* ===== Ventana de listados desde inicio ===== */
+.homeStatusListSheet {
+  max-height: 92vh;
+}
+.homeStatusListSheet .sheet-header h3 {
+  color: var(--cyan);
+}
+.homeStatusListIntro {
+  border: 1px solid rgba(0,229,255,.14);
+  background: rgba(0,229,255,.05);
+  border-radius: 18px;
+  padding: 12px;
+  margin-bottom: 10px;
+}
+.homeStatusListIntro strong {
+  display: block;
+  color: var(--text);
+}
+.homeStatusListIntro span {
+  display: block;
+  color: var(--muted);
+  font-size: .8rem;
+  margin-top: 4px;
+}
+.homeStatusListSearch {
+  display: grid;
+  grid-template-columns: 34px 1fr 34px;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+  padding: 8px 9px;
+  border: 1px solid rgba(0,229,255,.18);
+  background: rgba(255,255,255,.045);
+  border-radius: 18px;
+}
+.homeStatusListSearch span {
+  color: var(--cyan);
+  text-align: center;
+}
+.homeStatusListSearch input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text);
+  font-family: inherit;
+  font-size: .9rem;
+  padding: 8px 2px;
+}
+.homeStatusListSearch button {
+  width: 30px;
+  height: 30px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.06);
+  color: var(--muted);
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: 900;
+}
+.homeStatusListContent {
+  display: grid;
+  gap: 10px;
+}
+.homeStatusListItem {
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.04);
+  border-radius: 20px;
+  padding: 11px;
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: 10px;
+  animation: m17SoftFadeUp .26s ease both;
+}
+.homeStatusListItem.warn { border-color: rgba(255,170,0,.20); }
+.homeStatusListItem.exp { border-color: rgba(255,77,77,.22); }
+.homeStatusListItem.paypend { border-color: rgba(255,170,0,.20); }
+.homeStatusListAvatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,229,255,.08);
+  border: 1px solid rgba(0,229,255,.14);
+  color: var(--cyan);
+  font-weight: 950;
+}
+.homeStatusListInfo {
+  min-width: 0;
+}
+.homeStatusListInfo strong {
+  display: block;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.homeStatusListInfo > span {
+  display: block;
+  color: var(--muted);
+  font-size: .78rem;
+  margin-top: 2px;
+}
+.homeStatusListInfo small {
+  display: block;
+  color: var(--muted);
+  font-size: .76rem;
+  margin-top: 7px;
+}
+.homeStatusListBadges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 7px;
+}
+.homeStatusListActions {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 7px;
+  margin-top: 4px;
+}
+.homeStatusListActions button {
+  border: 1px solid rgba(0,229,255,.16);
+  background: rgba(0,229,255,.06);
+  color: var(--cyan);
+  border-radius: 13px;
+  padding: 9px 4px;
+  font-weight: 900;
+  cursor: pointer;
+  font-size: .78rem;
+}
+.homeStatusListActions button:nth-child(2) {
+  color: var(--green);
+  border-color: rgba(105,255,71,.18);
+  background: rgba(105,255,71,.06);
+}
+.homeStatusListEmpty {
+  min-height: 220px;
+  border: 1px dashed rgba(255,255,255,.12);
+  background: rgba(255,255,255,.035);
+  border-radius: 20px;
+  padding: 26px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+  color: var(--muted);
+}
+.homeStatusListEmpty .ico {
+  font-size: 2rem;
+}
+.homeStatusListEmpty strong {
+  color: var(--text);
+}
+.homeStatusListEmpty span {
+  max-width: 280px;
+  font-size: .84rem;
+}
+@media (min-width: 680px) {
+  .homeStatusListSheet {
+    max-width: 620px;
+    margin: 0 auto;
+    left: 50%;
+    right: auto;
+    transform: translate(-50%, 100%);
+    width: calc(100% - 28px);
+    border-radius: 24px 24px 0 0;
+  }
+  .homeStatusListSheet.open {
+    transform: translate(-50%, 0);
+  }
+}
+@media (max-width: 380px) {
+  .homeStatusListActions {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}

@@ -504,7 +504,7 @@ function toggleHomeAttentionMore() {
 function renderHomeDashboard() {
   var greet = document.getElementById('homeGreeting');
   var date = document.getElementById('homeTodayDate');
-  if (greet) greet.textContent = homeGreetingText() + ', hoy toca revisar';
+  if (greet) greet.textContent = 'Resumen de clientes';
   if (date) date.textContent = homeDateText();
 
   var attention = homeAttentionClients();
@@ -578,7 +578,7 @@ function setBottomNavActive(key) {
 
 function navHome() {
   setBottomNavActive('home');
-  homeAttentionExpanded = false;
+  if (typeof homeAttentionExpanded !== 'undefined') homeAttentionExpanded = false;
   filterSt = '';
   filterSvc = '';
   activeTagFilter = '';
@@ -586,10 +586,15 @@ function navHome() {
   var sb = document.getElementById('searchBox');
   if (sb) sb.value = '';
   renderTagFilterBar();
-  renderHomeDashboard();
-  renderCards();
+  if (typeof renderHomeDashboard === 'function') renderHomeDashboard();
+  var container = document.getElementById('cardsContainer');
+  if (container) container.innerHTML = '';
+  var empty = document.getElementById('emptyState');
+  if (empty) empty.style.display = 'none';
   var bar = document.getElementById('activeFilterBar');
   if (bar) bar.style.display = 'none';
+  var results = document.getElementById('homeResultsBlock');
+  if (results) results.style.display = 'none';
   var sc = document.getElementById('mainScroll');
   if (sc) sc.scrollTo({top: 0, behavior: 'smooth'});
 }
@@ -819,6 +824,143 @@ function renderClientBrowser(direction) {
   if (counter) counter.textContent = (clientBrowserIndex + 1) + ' / ' + clientBrowserList.length + (clientBrowserSearchTerm ? ' filtrados' : '');
   stage.innerHTML = clientBrowserCardHtml(c, direction || 'next');
 }
+
+
+// ========== LISTAS DESDE PANTALLA PRINCIPAL ==========
+var homeStatusListType = '';
+
+function homeStatusListConfig(type) {
+  if (type === 'warn') return {
+    title: 'Caducan pronto',
+    intro: 'Clientes que caducan en 15 días o menos.',
+    cls: 'warn',
+    empty: 'No hay clientes que caduquen pronto.',
+    filter: function(c){ return getStatus(c.expiry) === 'warn'; }
+  };
+  if (type === 'exp') return {
+    title: 'Expirados',
+    intro: 'Clientes con el servicio ya caducado.',
+    cls: 'expired',
+    empty: 'No hay clientes expirados.',
+    filter: function(c){ return getStatus(c.expiry) === 'exp'; }
+  };
+  if (type === 'paypend') return {
+    title: 'Pagos pendientes',
+    intro: 'Clientes con alguna renovación marcada como paga más tarde.',
+    cls: 'pending',
+    empty: 'No hay pagos pendientes.',
+    filter: function(c){ return clientHasPendingPayment(c); }
+  };
+  return {
+    title: 'Clientes',
+    intro: 'Listado de clientes.',
+    cls: '',
+    empty: 'No hay clientes.',
+    filter: function(){ return true; }
+  };
+}
+
+function openHomeStatusList(type) {
+  homeStatusListType = type || '';
+  var input = document.getElementById('homeStatusListSearch');
+  if (input) input.value = '';
+  renderHomeStatusList();
+  openSheet('homeStatusListSheet','homeStatusListOverlay');
+  setTimeout(function(){ var inp = document.getElementById('homeStatusListSearch'); if (inp) inp.focus(); }, 260);
+}
+
+function clearHomeStatusListSearch() {
+  var input = document.getElementById('homeStatusListSearch');
+  if (input) input.value = '';
+  renderHomeStatusList();
+}
+
+function homeStatusListSearchMatch(c, term) {
+  if (!term) return true;
+  term = String(term || '').toLowerCase().trim();
+  var appsText = (c.apps || []).map(function(a){
+    return [a.name, a.customName, a.mac, a.code].filter(Boolean).join(' ');
+  }).join(' ');
+  var text = [c.name, c.user, c.pass, c.phone, c.service, formatDate(c.expiry), getClientMainApp(c), appsText].filter(Boolean).join(' ').toLowerCase();
+  return text.indexOf(term) >= 0;
+}
+
+function homeStatusListSubtitle(c, type) {
+  if (type === 'warn') {
+    var d = getDaysLeft(c.expiry);
+    return d === 0 ? 'Caduca hoy' : 'Caduca en ' + d + ' día(s)';
+  }
+  if (type === 'exp') {
+    var ex = Math.abs(getDaysLeft(c.expiry));
+    return 'Expirado hace ' + ex + ' día(s)';
+  }
+  if (type === 'paypend') {
+    var r = getPendingPaymentRenewalForClient(c.id);
+    return r ? ('Pago pendiente' + (Number(r.amount || 0) > 0 ? ' · ' + euro(r.amount) : '')) : 'Pago pendiente';
+  }
+  return clientBrowserStatusText(c);
+}
+
+function homeStatusListItemHtml(c, type) {
+  var svcLabel = c.service === 'ESPANA' ? 'ESPAÑA' : esc(c.service || '-');
+  return '<div class="homeStatusListItem '+esc(type || '')+'">' +
+    '<div class="homeStatusListAvatar">'+esc(avatarLetter(c.name))+'</div>' +
+    '<div class="homeStatusListInfo">' +
+      '<strong>'+esc(c.name)+'</strong>' +
+      '<span>'+esc(getClientMainApp(c) || c.user || '-')+'</span>' +
+      '<div class="homeStatusListBadges"><span class="badge '+(c.service==='TODO'?'badgeTodo':'badgeEs')+'">'+svcLabel+'</span>'+statusBadge(c.expiry)+(clientHasPendingPayment(c)?' <span class="badge badgePayPending">Pago pendiente</span>':'')+renewalReplyBadgeHtml(c)+'</div>' +
+      '<small>'+esc(homeStatusListSubtitle(c, type))+' · Expira: '+formatDate(c.expiry)+'</small>' +
+    '</div>' +
+    '<div class="homeStatusListActions">' +
+      '<button data-id="'+esc(c.id)+'" onclick="homeStatusListOpenFull(this.dataset.id)">Ver</button>' +
+      '<button data-id="'+esc(c.id)+'" onclick="homeStatusListRenew(this.dataset.id)">Renovar</button>' +
+      '<button data-id="'+esc(c.id)+'" onclick="homeStatusListMessages(this.dataset.id)">Msg</button>' +
+      '<button data-id="'+esc(c.id)+'" onclick="homeStatusListEdit(this.dataset.id)">Editar</button>' +
+      '<button data-id="'+esc(c.id)+'" onclick="homeStatusListMore(this.dataset.id)">⋮</button>' +
+    '</div>' +
+  '</div>';
+}
+
+function renderHomeStatusList() {
+  var cfg = homeStatusListConfig(homeStatusListType);
+  var title = document.getElementById('homeStatusListTitle');
+  var intro = document.getElementById('homeStatusListIntro');
+  var content = document.getElementById('homeStatusListContent');
+  var input = document.getElementById('homeStatusListSearch');
+  if (title) title.textContent = cfg.title;
+  if (intro) intro.innerHTML = '<strong>'+esc(cfg.title)+'</strong><span>'+esc(cfg.intro)+'</span>';
+  if (!content) return;
+  var term = input ? input.value.trim() : '';
+  var list = sortClientsByExpiryAsc((clients || []).filter(cfg.filter)).filter(function(c){ return homeStatusListSearchMatch(c, term); });
+  if (!list.length) {
+    content.innerHTML = '<div class="homeStatusListEmpty"><div class="ico">&#128064;</div><strong>'+esc(term ? 'No hay resultados' : cfg.empty)+'</strong><span>'+esc(term ? 'Prueba con otra búsqueda dentro de esta lista.' : 'Puedes volver al inicio o revisar el botón Clientes.')+'</span></div>';
+    return;
+  }
+  content.innerHTML = list.map(function(c){ return homeStatusListItemHtml(c, homeStatusListType); }).join('');
+}
+
+function homeStatusListOpenFull(id) {
+  closeSheet('homeStatusListSheet','homeStatusListOverlay');
+  setTimeout(function(){ viewClient(id); }, 260);
+}
+function homeStatusListRenew(id) {
+  closeSheet('homeStatusListSheet','homeStatusListOverlay');
+  setTimeout(function(){ openRenew(id); }, 260);
+}
+function homeStatusListMessages(id) {
+  closeSheet('homeStatusListSheet','homeStatusListOverlay');
+  setTimeout(function(){ openClientMessages(id); }, 260);
+}
+function homeStatusListEdit(id) {
+  closeSheet('homeStatusListSheet','homeStatusListOverlay');
+  setTimeout(function(){ editClient(id); }, 260);
+}
+function homeStatusListMore(id) {
+  closeSheet('homeStatusListSheet','homeStatusListOverlay');
+  setTimeout(function(){ openClientMoreActions(id); }, 260);
+}
+// ========== FIN LISTAS DESDE PANTALLA PRINCIPAL ==========
+
 
 function showElegantLoading(message) {
   var ov = document.getElementById('loadingOverlay');
@@ -3156,15 +3298,20 @@ function formatMacInput(input) {
 }
 
 function renderCards() {
-  var search = document.getElementById('searchBox').value.toLowerCase();
+  var searchBox = document.getElementById('searchBox');
+  var search = searchBox ? searchBox.value.toLowerCase() : '';
   var container = document.getElementById('cardsContainer');
   var empty = document.getElementById('emptyState');
   if (!hasSelectedClientFilter && !search) {
     if (container) container.innerHTML = '';
     if (empty) empty.style.display = 'none';
+    var resultsBlock = document.getElementById('homeResultsBlock');
+    if (resultsBlock) resultsBlock.style.display = 'none';
     return;
   }
   if (search) hasSelectedClientFilter = true;
+  var resultsBlock = document.getElementById('homeResultsBlock');
+  if (resultsBlock) resultsBlock.style.display = 'block';
   var filtered = clients.filter(function(c) {
     var tagText = normalizeClientTags(c.tags).join(' ').toLowerCase();
     var ms = !search || c.name.toLowerCase().indexOf(search)>=0 || (c.user||'').toLowerCase().indexOf(search)>=0 || (c.phone||'').toLowerCase().indexOf(search)>=0 || tagText.indexOf(search)>=0;

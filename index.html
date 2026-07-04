@@ -82,83 +82,67 @@
     </div>
   </div>
 
-  <div id="mainScroll" class="homeOptionOne">
-    <section class="homeHeroControl">
+  <div id="mainScroll" class="homeStatusOnly">
+    <section class="homeHeroControl homeHeroSimple">
       <div>
         <span class="homeEyebrow" id="homeTodayDate">Panel general</span>
-        <h2 id="homeGreeting">Hoy tengo que revisar...</h2>
-        <p>Resumen rápido de clientes, renovaciones y pagos que necesitan atención.</p>
+        <h2 id="homeGreeting">Resumen de clientes</h2>
+        <p>Vista rápida del estado de tus clientes. Pulsa en caducan pronto, expirados o pagos pendientes para gestionarlos.</p>
       </div>
-      <button class="homeHeroBtn" onclick="openClientBrowser()">Ver clientes</button>
     </section>
 
-    <section class="homeStatusGrid">
-      <button class="homeStatusCard active" onclick="quickFilter('ok')">
+    <section class="homeStatusGrid homeStatusGridMain">
+      <div class="homeStatusCard active infoOnly" role="status" aria-label="Clientes activos">
         <span class="homeStatusIcon">&#10003;</span>
         <small>Activos</small>
         <strong id="stActive">0</strong>
-      </button>
-      <button class="homeStatusCard warn" onclick="quickFilter('warn')">
+        <em>Solo aviso</em>
+      </div>
+      <button class="homeStatusCard warn" onclick="openHomeStatusList('warn')">
         <span class="homeStatusIcon">&#9888;</span>
         <small>Caducan pronto</small>
         <strong id="stSoon">0</strong>
+        <em>Ver clientes</em>
       </button>
-      <button class="homeStatusCard expired" onclick="quickFilter('exp')">
+      <button class="homeStatusCard expired" onclick="openHomeStatusList('exp')">
         <span class="homeStatusIcon">&#128683;</span>
         <small>Expirados</small>
         <strong id="stExp">0</strong>
+        <em>Ver clientes</em>
       </button>
-      <button class="homeStatusCard pending" onclick="quickFilter('paypend')">
+      <button class="homeStatusCard pending" onclick="openHomeStatusList('paypend')">
         <span class="homeStatusIcon">&#9203;</span>
         <small>Pagos pendientes</small>
         <strong id="stPendingPay">0</strong>
+        <em>Ver clientes</em>
       </button>
     </section>
 
-    <section class="homeTodayCard">
-      <div class="homeTodayHeader">
-        <div>
-          <span>Estado de hoy</span>
-          <strong id="homeTodayTitle">Todo bajo control</strong>
-        </div>
-        <div class="homeTotalBubble" onclick="quickFilter('')">
-          <small>Total</small>
-          <strong id="stTotal">0</strong>
-        </div>
+    <section class="homeStatusHint">
+      <div>
+        <strong>Clientes uno a uno</strong>
+        <span>Usa el botón inferior “Clientes” para ver tus fichas deslizando.</span>
       </div>
-      <div class="homeTodayMetrics">
-        <div><span>Sin contestar</span><strong id="stNoAnswer">0</strong></div>
-        <div><span>No renuevan</span><strong id="homeNoRenewCount">0</strong></div>
-        <div><span>Ingresos mes</span><strong id="miniMonthIncome">0,00 €</strong></div>
-        <div><span>Beneficio</span><strong id="miniMonthProfit">0,00 €</strong></div>
-      </div>
+      <button onclick="openClientBrowser()">Abrir</button>
     </section>
 
-    <section class="homeAttentionBlock">
-      <div class="homeSectionHead">
-        <div>
-          <span>Prioridad</span>
-          <h3>Requieren atención</h3>
-        </div>
-        <button id="homeAttentionToggleTop" onclick="toggleHomeAttentionMore()">Ver todos</button>
-      </div>
-      <div id="homeAttentionList" class="homeAttentionList">
-        <div class="homeAttentionEmpty">Cargando revisión...</div>
-      </div>
-    </section>
-
-    <section class="homeQuickActions">
+    <section class="homeQuickActions homeQuickActionsCompact">
       <button onclick="openNewClient()"><span>+</span><strong>Cliente</strong></button>
-      <button onclick="openClientBrowser()"><span>&#128101;</span><strong>Deslizar</strong></button>
       <button onclick="openFinanceBalance()"><span>&#128202;</span><strong>Balance</strong></button>
       <button onclick="openCartelera()"><span>&#127916;</span><strong>Cartelera</strong></button>
+      <button onclick="openBackupCenter()"><span>&#128190;</span><strong>Backup</strong></button>
     </section>
 
     <div class="homeHiddenCounters" aria-hidden="true">
+      <span id="stTotal">0</span>
       <span id="stAdvised">0</span>
       <span id="stAnswered">0</span>
+      <span id="stNoAnswer">0</span>
+      <span id="homeNoRenewCount">0</span>
       <span id="miniSoon">0</span>
       <span id="miniPendingPay">0</span>
+      <span id="miniMonthIncome">0,00 €</span>
+      <span id="miniMonthProfit">0,00 €</span>
     </div>
 
     <div class="backupNotice" id="backupNotice" style="display:none">
@@ -169,17 +153,15 @@
       <button onclick="openBackupCenter()">Exportar</button>
     </div>
 
-    <section class="homeResultsBlock" id="homeResultsBlock">
+    <div class="homeResultsBlock" id="homeResultsBlock" style="display:none">
       <div id="activeFilterBar" class="activeFilterBar">
         <span id="activeFilterLabel"></span>
         <button onclick="quickFilter('')">&#10005; Quitar filtro</button>
       </div>
-
       <div class="searchBar">
         <input type="search" id="searchBox" placeholder="Buscar cliente..." oninput="renderCards()"/>
         <button class="filterBtn" id="filterToggleBtn" onclick="toggleFilters()">&#9881;</button>
       </div>
-
       <div class="filterPills" id="filterPills" style="display:none">
         <div class="pill active" data-svc="" onclick="setPillSvc(this,'')">Todos</div>
         <div class="pill" data-svc="TODO" onclick="setPillSvc(this,'TODO')">TODO</div>
@@ -190,7 +172,7 @@
         <div class="ico">&#128250;</div>
         <div>No hay clientes</div>
       </div>
-    </section>
+    </div>
   </div>
 
   <nav class="bottomNav" id="bottomNav">
@@ -310,6 +292,27 @@
   </div>
 </div>
 
+
+
+
+<!-- HOME STATUS LIST SHEET -->
+<div class="sheet-overlay" id="homeStatusListOverlay" onclick="closeSheet('homeStatusListSheet','homeStatusListOverlay')"></div>
+<div class="sheet homeStatusListSheet" id="homeStatusListSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <h3 id="homeStatusListTitle">Clientes</h3>
+    <button class="sheet-close" onclick="closeSheet('homeStatusListSheet','homeStatusListOverlay')">x</button>
+  </div>
+  <div class="sheet-body homeStatusListBody">
+    <div class="homeStatusListIntro" id="homeStatusListIntro"></div>
+    <div class="homeStatusListSearch">
+      <span>&#128269;</span>
+      <input type="search" id="homeStatusListSearch" placeholder="Buscar dentro de esta lista..." oninput="renderHomeStatusList()"/>
+      <button type="button" onclick="clearHomeStatusListSearch()">x</button>
+    </div>
+    <div id="homeStatusListContent" class="homeStatusListContent"></div>
+  </div>
+</div>
 
 
 <!-- CLIENT BROWSER SHEET -->
