@@ -19,6 +19,15 @@
 </head>
 <body>
 
+<div id="loadingOverlay" class="loadingOverlay" style="display:none">
+  <div class="loadingCard">
+    <img src="assets/logo.png" alt="M17LIV3" id="loadingLogo"/>
+    <div class="loadingTitle" id="loadingTitle">M17LIV3</div>
+    <div class="loadingText" id="loadingText">Cargando clientes...</div>
+    <div class="loadingDots"><span></span><span></span><span></span></div>
+  </div>
+</div>
+
 <div id="loginPage">
   <div id="loginBox">
     <img src="assets/logo.png" alt="M17LIV3"/>
@@ -164,6 +173,14 @@
     </div>
   </div>
 
+  <nav class="bottomNav" id="bottomNav">
+    <button class="bottomNavItem active" data-nav="home" onclick="navHome()"><span>&#8962;</span><small>Inicio</small></button>
+    <button class="bottomNavItem" data-nav="clients" onclick="navClients()"><span>&#128101;</span><small>Clientes</small></button>
+    <button class="bottomNavItem" data-nav="balance" onclick="navBalance()"><span>&#128202;</span><small>Balance</small></button>
+    <button class="bottomNavItem" data-nav="cartelera" onclick="navCartelera()"><span>&#127916;</span><small>Cartelera</small></button>
+    <button class="bottomNavItem" data-nav="menu" onclick="navMenu()"><span>&#9776;</span><small>Menú</small></button>
+  </nav>
+
   <button class="fab fabPremium" onclick="openNewClient()" aria-label="Añadir cliente"><span class="fabPlus">+</span><span class="fabLabel">Cliente</span></button>
 </div>
 
@@ -183,6 +200,7 @@
     <div class="menuItem" onclick="openIboPanel()"><span class="ico2">&#127760;</span> Panel APP IBO</div>
     <div class="menuItem" onclick="openFixedAppImage()"><span class="ico2">&#128444;</span> Links fijos APP</div>
     <div class="menuItem" onclick="openCartelera()"><span class="ico2">&#128249;</span> Cartelera del dia</div>
+    <div class="menuItem" onclick="openCustomization()"><span class="ico2">&#9881;</span> Personalizar app</div>
     <div class="menuItem" onclick="openMovieTemplates()"><span class="ico2">&#127916;</span> Plantillas Peliculas</div>
     <div class="menuItem" onclick="openSeriesTemplates()"><span class="ico2">&#127909;</span> Plantillas Series</div>
     <div class="menuItem" id="pwaInstallMenuItem" onclick="installPWA()"><span class="ico2">&#128241;</span> Instalar como app</div>
@@ -190,6 +208,90 @@
     <input type="file" id="importInput" accept=".xlsx,.xls" onchange="importExcel(event)"/>
   </div>
 </div>
+
+
+<!-- CLIENT MORE ACTIONS SHEET -->
+<div class="sheet-overlay" id="clientMoreOverlay" onclick="closeSheet('clientMoreSheet','clientMoreOverlay')"></div>
+<div class="sheet compactSheet" id="clientMoreSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <h3 id="clientMoreTitle">Opciones cliente</h3>
+    <button class="sheet-close" onclick="closeSheet('clientMoreSheet','clientMoreOverlay')">x</button>
+  </div>
+  <div class="sheet-body">
+    <div class="premiumOptionList">
+      <button onclick="clientMoreEdit()"><span>&#9998;</span><strong>Editar cliente</strong><small>Cambiar datos, apps, etiquetas o fecha</small></button>
+      <button onclick="clientMoreCopy('user')"><span>&#128203;</span><strong>Copiar usuario</strong><small>Copiar el usuario al portapapeles</small></button>
+      <button onclick="clientMoreCopy('pass')"><span>&#128273;</span><strong>Copiar contraseña</strong><small>Copiar la contraseña al portapapeles</small></button>
+      <button class="danger" onclick="clientMoreDelete()"><span>&#128465;</span><strong>Borrar cliente</strong><small>Eliminar el cliente de la base de datos</small></button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM PREMIUM SHEET -->
+<div class="sheet-overlay" id="confirmOverlay" onclick="closePrettyConfirm()"></div>
+<div class="sheet compactSheet confirmPremiumSheet" id="confirmSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <h3 id="confirmTitle">Confirmar acción</h3>
+    <button class="sheet-close" onclick="closePrettyConfirm()">x</button>
+  </div>
+  <div class="sheet-body">
+    <p class="confirmMessage" id="confirmMessage">¿Quieres continuar?</p>
+    <div class="confirmButtons">
+      <button class="btnFull gray" onclick="closePrettyConfirm()">Cancelar</button>
+      <button class="btnFull primary" id="confirmOkBtn" onclick="runPrettyConfirm()">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- CUSTOMIZATION SHEET -->
+<div class="sheet-overlay" id="customOverlay" onclick="closeSheet('customSheet','customOverlay')"></div>
+<div class="sheet" id="customSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <h3>&#9881; Personalizar app</h3>
+    <button class="sheet-close" onclick="closeSheet('customSheet','customOverlay')">x</button>
+  </div>
+  <div class="sheet-body">
+    <div class="customIntro">Cambia el nombre visible, color principal y logo en este dispositivo.</div>
+
+    <div class="formGroup">
+      <label>Nombre visible</label>
+      <input type="text" id="customAppName" placeholder="Ej: M17LIV3 Gestión Clientes"/>
+    </div>
+
+    <div class="formGroup">
+      <label>Color principal</label>
+      <select id="customAccent">
+        <option value="#00e5ff">Azul neón</option>
+        <option value="#69ff47">Verde neón</option>
+        <option value="#a78bfa">Morado premium</option>
+        <option value="#ffb020">Ámbar</option>
+        <option value="#ff4d8d">Rosa neón</option>
+      </select>
+    </div>
+
+    <div class="customLogoBox">
+      <div>
+        <strong>Logo</strong>
+        <span>Sube un PNG/JPG cuadrado si quieres cambiarlo visualmente.</span>
+      </div>
+      <button onclick="document.getElementById('customLogoFile').click()">Elegir logo</button>
+      <input type="file" id="customLogoFile" accept="image/*" style="display:none" onchange="handleCustomLogoFile(event)"/>
+    </div>
+
+    <div class="customLogoPreview">
+      <img src="assets/logo.png" alt="Logo" id="customLogoPreview"/>
+      <span id="customLogoStatus">Logo actual</span>
+    </div>
+
+    <button class="btnFull primary" onclick="saveCustomization()">&#128190; Guardar personalización</button>
+    <button class="btnFull gray" onclick="resetCustomization()" style="margin-top:8px">&#8634; Restaurar diseño original</button>
+    <button class="btnFull gray" onclick="closeSheet('customSheet','customOverlay')" style="margin-top:8px">Cerrar</button>
+  </div>
+</div>
+
 
 <!-- CLIENT SHEET -->
 <div class="sheet-overlay" id="clientOverlay" onclick="closeSheet('clientSheet','clientOverlay')"></div>

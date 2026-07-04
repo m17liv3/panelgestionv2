@@ -480,6 +480,262 @@ function updateHomeMiniPanel() {
 // ========== FIN MINI PANEL INICIO ==========
 
 
+
+// ========== DISEÑO APP: NAV, CARGA, CONFIRMACIONES Y PERSONALIZACIÓN ==========
+var clientMoreTargetId = '';
+var prettyConfirmCallback = null;
+var CUSTOMIZATION_KEY = 'm17_app_customization_v1';
+
+function setBottomNavActive(key) {
+  try {
+    Array.prototype.slice.call(document.querySelectorAll('.bottomNavItem')).forEach(function(btn){
+      btn.classList.toggle('active', btn.getAttribute('data-nav') === key);
+    });
+  } catch(e) {}
+}
+
+function navHome() {
+  setBottomNavActive('home');
+  filterSt = '';
+  filterSvc = '';
+  activeTagFilter = '';
+  hasSelectedClientFilter = false;
+  var sb = document.getElementById('searchBox');
+  if (sb) sb.value = '';
+  renderTagFilterBar();
+  renderCards();
+  var bar = document.getElementById('activeFilterBar');
+  if (bar) bar.style.display = 'none';
+  var sc = document.getElementById('mainScroll');
+  if (sc) sc.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+function navClients() {
+  setBottomNavActive('clients');
+  quickFilter('');
+}
+
+function navBalance() {
+  setBottomNavActive('balance');
+  openFinanceBalance();
+}
+
+function navCartelera() {
+  setBottomNavActive('cartelera');
+  openCartelera();
+}
+
+function navMenu() {
+  setBottomNavActive('menu');
+  openMenu();
+}
+
+function showElegantLoading(message) {
+  var ov = document.getElementById('loadingOverlay');
+  var txt = document.getElementById('loadingText');
+  if (txt) txt.textContent = message || 'Cargando...';
+  if (ov) {
+    ov.style.display = 'flex';
+    setTimeout(function(){ ov.classList.add('active'); }, 10);
+  }
+}
+
+function hideElegantLoading() {
+  var ov = document.getElementById('loadingOverlay');
+  if (!ov) return;
+  ov.classList.remove('active');
+  setTimeout(function(){ ov.style.display = 'none'; }, 260);
+}
+
+function showPrettyConfirm(opts) {
+  opts = opts || {};
+  prettyConfirmCallback = typeof opts.onConfirm === 'function' ? opts.onConfirm : null;
+  var title = document.getElementById('confirmTitle');
+  var msg = document.getElementById('confirmMessage');
+  var btn = document.getElementById('confirmOkBtn');
+  if (title) title.textContent = opts.title || 'Confirmar acción';
+  if (msg) msg.textContent = opts.message || '¿Quieres continuar?';
+  if (btn) {
+    btn.textContent = opts.confirmText || 'Confirmar';
+    btn.className = 'btnFull ' + (opts.danger ? 'danger' : 'primary');
+  }
+  openSheet('confirmSheet','confirmOverlay');
+}
+
+function closePrettyConfirm() {
+  prettyConfirmCallback = null;
+  closeSheet('confirmSheet','confirmOverlay');
+}
+
+async function runPrettyConfirm() {
+  var cb = prettyConfirmCallback;
+  prettyConfirmCallback = null;
+  closeSheet('confirmSheet','confirmOverlay');
+  if (cb) {
+    try { await cb(); }
+    catch(ex) { if (typeof showToast === 'function') showToast('Error: ' + (ex && ex.message ? ex.message : ex), 'error'); }
+  }
+}
+
+function openClientMoreActions(id) {
+  clientMoreTargetId = id || '';
+  var c = clients.find(function(x){ return x.id === clientMoreTargetId; });
+  var title = document.getElementById('clientMoreTitle');
+  if (title) title.textContent = c ? ('Opciones · ' + c.name) : 'Opciones cliente';
+  openSheet('clientMoreSheet','clientMoreOverlay');
+}
+
+function clientMoreEdit() {
+  var id = clientMoreTargetId;
+  closeSheet('clientMoreSheet','clientMoreOverlay');
+  if (id) editClient(id);
+}
+
+function clientMoreCopy(kind) {
+  var c = clients.find(function(x){ return x.id === clientMoreTargetId; });
+  if (!c) return;
+  var txt = kind === 'pass' ? (c.pass || '') : (c.user || '');
+  if (!txt) { showToast(kind === 'pass' ? 'No hay contraseña para copiar' : 'No hay usuario para copiar', 'error'); return; }
+  var fakeBtn = { textContent:'', classList:{add:function(){},remove:function(){}} };
+  copyText(txt, fakeBtn);
+  showToast(kind === 'pass' ? 'Contraseña copiada' : 'Usuario copiado');
+}
+
+function clientMoreDelete() {
+  var id = clientMoreTargetId;
+  var c = clients.find(function(x){ return x.id === id; });
+  if (!c) return;
+  closeSheet('clientMoreSheet','clientMoreOverlay');
+  showPrettyConfirm({
+    title: 'Eliminar cliente',
+    message: 'Vas a borrar a "' + c.name + '". Esta acción no se puede deshacer.',
+    confirmText: 'Eliminar',
+    danger: true,
+    onConfirm: async function(){
+      await deleteClientFromStore(id);
+      clients = clients.filter(function(x){ return x.id !== id; });
+      saveData();
+      renderCards();
+      updateStats();
+      showToast('Cliente eliminado');
+    }
+  });
+}
+
+function openDelete(id) {
+  var c = clients.find(function(x){ return x.id === id; });
+  showPrettyConfirm({
+    title: 'Eliminar cliente',
+    message: c ? ('Vas a borrar a "' + c.name + '". Esta acción no se puede deshacer.') : 'Esta acción no se puede deshacer.',
+    confirmText: 'Eliminar',
+    danger: true,
+    onConfirm: async function(){
+      await deleteClientFromStore(id);
+      clients = clients.filter(function(x){ return x.id !== id; });
+      saveData();
+      renderCards();
+      updateStats();
+      showToast('Cliente eliminado');
+    }
+  });
+}
+
+function getCustomization() {
+  try { return JSON.parse(localStorage.getItem(CUSTOMIZATION_KEY) || '{}') || {}; }
+  catch(e) { return {}; }
+}
+
+function setLogoSrc(src) {
+  if (!src) src = 'assets/logo.png';
+  ['#loginBox img', '#mfaBox img', '.topbar img', '#loadingLogo', '#customLogoPreview'].forEach(function(sel){
+    var el = document.querySelector(sel);
+    if (el) el.src = src;
+  });
+}
+
+function applyAppCustomization() {
+  var c = getCustomization();
+  var name = c.name || 'M17LIV3 Gestión Clientes';
+  var accent = c.accent || '#00e5ff';
+  var logo = c.logoData || 'assets/logo.png';
+
+  document.title = name;
+  var top = document.querySelector('.topbar-title');
+  if (top) top.textContent = name;
+  var loadingTitle = document.getElementById('loadingTitle');
+  if (loadingTitle) loadingTitle.textContent = name.split(' ')[0] || 'M17LIV3';
+
+  document.documentElement.style.setProperty('--cyan', accent);
+  var metaTheme = document.querySelector('meta[name="theme-color"]');
+  if (metaTheme) metaTheme.setAttribute('content', accent);
+
+  setLogoSrc(logo);
+}
+
+function openCustomization() {
+  closeSheet('menuSheet','menuOverlay');
+  var c = getCustomization();
+  var nameEl = document.getElementById('customAppName');
+  var accentEl = document.getElementById('customAccent');
+  var status = document.getElementById('customLogoStatus');
+  if (nameEl) nameEl.value = c.name || 'M17LIV3 Gestión Clientes';
+  if (accentEl) accentEl.value = c.accent || '#00e5ff';
+  if (status) status.textContent = c.logoData ? 'Logo personalizado cargado' : 'Logo original';
+  setLogoSrc(c.logoData || 'assets/logo.png');
+  openSheet('customSheet','customOverlay');
+}
+
+function handleCustomLogoFile(event) {
+  var file = event && event.target && event.target.files ? event.target.files[0] : null;
+  if (!file) return;
+  if (!file.type || file.type.indexOf('image/') !== 0) {
+    showToast('Elige una imagen válida', 'error');
+    return;
+  }
+  var reader = new FileReader();
+  reader.onload = function(e){
+    var data = e.target.result;
+    var c = getCustomization();
+    c.logoData = data;
+    localStorage.setItem(CUSTOMIZATION_KEY, JSON.stringify(c));
+    setLogoSrc(data);
+    var status = document.getElementById('customLogoStatus');
+    if (status) status.textContent = 'Nuevo logo cargado. Pulsa Guardar.';
+    showToast('Logo preparado');
+  };
+  reader.readAsDataURL(file);
+}
+
+function saveCustomization() {
+  var c = getCustomization();
+  var nameEl = document.getElementById('customAppName');
+  var accentEl = document.getElementById('customAccent');
+  c.name = nameEl && nameEl.value ? nameEl.value.trim() : 'M17LIV3 Gestión Clientes';
+  c.accent = accentEl && accentEl.value ? accentEl.value : '#00e5ff';
+  localStorage.setItem(CUSTOMIZATION_KEY, JSON.stringify(c));
+  applyAppCustomization();
+  showToast('Personalización guardada');
+  closeSheet('customSheet','customOverlay');
+}
+
+function resetCustomization() {
+  showPrettyConfirm({
+    title: 'Restaurar diseño original',
+    message: 'Se quitará el nombre, color y logo personalizados de este dispositivo.',
+    confirmText: 'Restaurar',
+    danger: false,
+    onConfirm: function(){
+      localStorage.removeItem(CUSTOMIZATION_KEY);
+      applyAppCustomization();
+      var input = document.getElementById('customLogoFile');
+      if (input) input.value = '';
+      showToast('Diseño original restaurado');
+      closeSheet('customSheet','customOverlay');
+    }
+  });
+}
+// ========== FIN DISEÑO APP ==========
+
 function showAppAfterLogin() {
   var lp = document.getElementById('loginPage');
   var ap = document.getElementById('appPage');
@@ -488,6 +744,8 @@ function showAppAfterLogin() {
   ap.style.display = 'flex';
   ap.style.flexDirection = 'column';
   ap.style.height = '100vh';
+  applyAppCustomization();
+  setBottomNavActive('home');
   renderCards();
   updateStats();
   updateBackupReminder();
@@ -558,13 +816,18 @@ async function completeSupabaseLogin(fromSavedSession) {
     setRememberDevice(rememberDeviceWanted(), userEmail);
   } catch(e) {}
 
-  await loadClientsFromStore();
-  await loadRenewals(false);
-  try { if (typeof loadFinanceMovements === 'function') await loadFinanceMovements(false); } catch(e) { console.warn('No se pudo cargar finanzas para inicio', e); }
-  setMfaVisible(false);
-  clearLoginLoading();
-  showAppAfterLogin();
-  if (typeof showToast === 'function') showToast(fromSavedSession ? 'Entrando con sesión guardada' : 'Conectado a Supabase');
+  showElegantLoading('Cargando clientes...');
+  try {
+    await loadClientsFromStore();
+    await loadRenewals(false);
+    try { if (typeof loadFinanceMovements === 'function') await loadFinanceMovements(false); } catch(e) { console.warn('No se pudo cargar finanzas para inicio', e); }
+    setMfaVisible(false);
+    clearLoginLoading();
+    showAppAfterLogin();
+    if (typeof showToast === 'function') showToast(fromSavedSession ? 'Entrando con sesión guardada' : 'Conectado a Supabase');
+  } finally {
+    hideElegantLoading();
+  }
 }
 
 async function handleMfaAfterPasswordLogin() {
@@ -797,6 +1060,7 @@ async function doLogin() {
   }
 }
 document.addEventListener('DOMContentLoaded', function() {
+  applyAppCustomization();
   syncRememberCheckboxes();
   setTimeout(function(){ tryRestoreSupabaseSession(); }, 350);
   var lp = document.getElementById('lPass');
@@ -2548,12 +2812,11 @@ function renderCards() {
       clientTagsHtml(c) +
       renewalNoticeHtml(c, 'card') +
       pendingPaymentNoticeHtml(c, 'card') +
-      '<div class="clientCard-actions">' +
+      '<div class="clientCard-actions clientCard-actions-clean">' +
         '<button class="act-ver" data-id="'+c.id+'" onclick="viewClient(this.dataset.id)">&#128065; Ver</button>' +
-        '<button class="act-edit" data-id="'+c.id+'" onclick="editClient(this.dataset.id)">&#9998; Editar</button>' +
         '<button class="act-renew" data-id="'+c.id+'" onclick="openRenew(this.dataset.id)">&#8635; Renovar</button>' +
         '<button class="act-msg" data-id="'+c.id+'" onclick="openClientMessages(this.dataset.id)">&#128203; Msg</button>' +
-        '<button class="act-del" data-id="'+c.id+'" onclick="openDelete(this.dataset.id)">&#128465; Borrar</button>' +
+        '<button class="act-more" data-id="'+c.id+'" onclick="openClientMoreActions(this.dataset.id)">&#8942;</button>' +
       '</div>';
     container.appendChild(div);
   });
@@ -3252,7 +3515,7 @@ async function copyClientMessage(type, btn) {
   copyMessageText(txt, btn);
 }
 
-function openDelete(id) { deleteTargetId=id; openSheet('deleteSheet','deleteOverlay'); }
+/* openDelete reemplazado por confirmación premium */
 async function confirmDelete() {
   try {
     await deleteClientFromStore(deleteTargetId);
@@ -3655,13 +3918,16 @@ async function refreshWebApp() {
 function showToast(msg, type) {
   var el = document.getElementById('toastMsg');
   if (!el) { alert(msg); return; }
-  el.textContent = msg;
-  el.style.borderColor = type === 'error' ? 'rgba(255,77,77,0.5)' : 'rgba(57,255,20,0.4)';
-  el.style.color = type === 'error' ? '#ff4d4d' : '#69ff47';
+  var isError = type === 'error';
+  var isWarn = type === 'warning';
+  var icon = isError ? '❌' : (isWarn ? '⚠️' : '✅');
+  el.className = 'toastMsg toastVisible ' + (isError ? 'toastError' : (isWarn ? 'toastWarning' : 'toastOk'));
+  el.innerHTML = '<span class="toastIcon">'+icon+'</span><span>'+esc(msg || '')+'</span>';
   el.style.transform = 'translateX(-50%) translateY(0)';
   clearTimeout(window._toastTimer);
   window._toastTimer = setTimeout(function() {
-    el.style.transform = 'translateX(-50%) translateY(100px)';
+    el.style.transform = 'translateX(-50%) translateY(110px)';
+    el.classList.remove('toastVisible');
   }, 2800);
 }
 

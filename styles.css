@@ -1702,3 +1702,288 @@ button:active,
     transition: none !important;
   }
 }
+
+
+/* ===== Barra inferior tipo app móvil ===== */
+#mainScroll {
+  padding-bottom: 142px;
+}
+.bottomNav {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: calc(10px + var(--safe));
+  z-index: 88;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+  padding: 8px;
+  border-radius: 24px;
+  background: rgba(14,16,28,.86);
+  border: 1px solid rgba(0,229,255,.18);
+  box-shadow: 0 18px 50px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.06);
+  backdrop-filter: blur(18px);
+}
+.bottomNavItem {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  border-radius: 17px;
+  padding: 8px 4px;
+  min-width: 0;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  font-weight: 800;
+}
+.bottomNavItem span {
+  font-size: 1.12rem;
+  line-height: 1;
+}
+.bottomNavItem small {
+  font-size: .64rem;
+  white-space: nowrap;
+}
+.bottomNavItem.active {
+  background: linear-gradient(135deg, rgba(0,229,255,.16), rgba(105,255,71,.10));
+  color: var(--cyan);
+  box-shadow: inset 0 0 0 1px rgba(0,229,255,.14);
+}
+
+/* Ajuste FAB con barra inferior */
+.fab.fabPremium {
+  bottom: calc(84px + var(--safe));
+  right: 18px;
+}
+
+/* ===== Botón tres puntos en tarjetas ===== */
+.clientCard-actions-clean {
+  grid-template-columns: 1fr 1fr 1fr 44px;
+}
+.clientCard-actions .act-more {
+  font-size: 1.35rem;
+  line-height: 1;
+  padding: 0;
+  background: rgba(255,255,255,.06);
+  color: var(--cyan);
+  border-color: rgba(0,229,255,.20);
+}
+
+/* ===== Pantalla de carga elegante ===== */
+.loadingOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(circle at 50% 28%, rgba(0,229,255,.18), transparent 34%),
+    radial-gradient(circle at 70% 70%, rgba(105,255,71,.10), transparent 38%),
+    rgba(5,7,14,.88);
+  backdrop-filter: blur(16px);
+  opacity: 0;
+  transition: opacity .25s ease;
+}
+.loadingOverlay.active {
+  opacity: 1;
+}
+.loadingCard {
+  width: min(300px, calc(100vw - 48px));
+  border: 1px solid rgba(0,229,255,.20);
+  background: rgba(20,23,37,.86);
+  border-radius: 26px;
+  padding: 26px 20px;
+  text-align: center;
+  box-shadow: 0 20px 70px rgba(0,0,0,.55);
+}
+.loadingCard img {
+  width: 74px;
+  height: 74px;
+  object-fit: contain;
+  margin-bottom: 12px;
+  filter: drop-shadow(0 0 18px rgba(0,229,255,.25));
+}
+.loadingTitle {
+  color: var(--cyan);
+  font-weight: 950;
+  font-size: 1.1rem;
+}
+.loadingText {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: .88rem;
+}
+.loadingDots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 16px;
+}
+.loadingDots span {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--cyan);
+  animation: loadingDot 1s infinite ease-in-out;
+}
+.loadingDots span:nth-child(2) { animation-delay: .15s; }
+.loadingDots span:nth-child(3) { animation-delay: .30s; }
+@keyframes loadingDot {
+  0%, 80%, 100% { opacity: .25; transform: translateY(0); }
+  40% { opacity: 1; transform: translateY(-6px); }
+}
+
+/* ===== Opciones de cliente y confirmaciones premium ===== */
+.compactSheet {
+  max-height: 78vh;
+}
+.premiumOptionList {
+  display: grid;
+  gap: 9px;
+}
+.premiumOptionList button {
+  width: 100%;
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.045);
+  color: var(--text);
+  border-radius: 17px;
+  padding: 12px;
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  gap: 2px 10px;
+  text-align: left;
+  cursor: pointer;
+}
+.premiumOptionList button span {
+  grid-row: 1 / 3;
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,229,255,.08);
+}
+.premiumOptionList button strong {
+  font-size: .94rem;
+}
+.premiumOptionList button small {
+  color: var(--muted);
+  font-size: .75rem;
+}
+.premiumOptionList button.danger {
+  border-color: rgba(255,77,77,.22);
+}
+.premiumOptionList button.danger span,
+.premiumOptionList button.danger strong {
+  color: var(--red);
+}
+.confirmMessage {
+  color: var(--muted);
+  line-height: 1.45;
+  margin-bottom: 14px;
+}
+.confirmButtons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+/* ===== Toasts mejorados ===== */
+#toastMsg.toastMsg {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: min(360px, calc(100vw - 32px));
+  justify-content: center;
+  border-radius: 18px !important;
+  padding: 13px 16px !important;
+  white-space: normal !important;
+  text-align: center;
+  background: rgba(20,23,37,.94) !important;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 16px 45px rgba(0,0,0,.48) !important;
+}
+#toastMsg.toastOk {
+  border-color: rgba(105,255,71,.35) !important;
+  color: var(--green) !important;
+}
+#toastMsg.toastError {
+  border-color: rgba(255,77,77,.42) !important;
+  color: var(--red) !important;
+}
+#toastMsg.toastWarning {
+  border-color: rgba(255,170,0,.42) !important;
+  color: var(--orange) !important;
+}
+.toastIcon {
+  font-size: 1rem;
+}
+
+/* ===== Personalización app ===== */
+.customIntro {
+  border: 1px solid rgba(0,229,255,.14);
+  background: rgba(0,229,255,.05);
+  color: var(--muted);
+  border-radius: 16px;
+  padding: 12px;
+  margin-bottom: 14px;
+  line-height: 1.4;
+}
+.customLogoBox {
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.04);
+  border-radius: 16px;
+  padding: 12px;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.customLogoBox strong {
+  display: block;
+  color: var(--text);
+}
+.customLogoBox span {
+  display: block;
+  color: var(--muted);
+  font-size: .78rem;
+  margin-top: 3px;
+}
+.customLogoBox button {
+  flex-shrink: 0;
+  border: 1px solid rgba(0,229,255,.22);
+  background: rgba(0,229,255,.08);
+  color: var(--cyan);
+  border-radius: 12px;
+  padding: 9px 10px;
+  font-weight: 900;
+}
+.customLogoPreview {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  margin-bottom: 14px;
+}
+.customLogoPreview img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  border-radius: 14px;
+  background: rgba(0,0,0,.18);
+  border: 1px solid rgba(255,255,255,.08);
+  padding: 5px;
+}
+
+@media (max-width: 360px) {
+  .bottomNavItem small {
+    font-size: .58rem;
+  }
+  .clientCard-actions-clean {
+    grid-template-columns: 1fr 1fr 1fr 40px;
+  }
+}
