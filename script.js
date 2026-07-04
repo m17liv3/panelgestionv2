@@ -1207,8 +1207,8 @@ function renewalResponseValue(c) {
 }
 function renewalResponseLabel(c) {
   var r = renewalResponseValue(c);
-  if (r === 'renueva') return 'Va a renovar';
-  if (r === 'no_renueva') return 'No va a renovar';
+  if (r === 'renueva') return '✓ Va a renovar';
+  if (r === 'no_renueva') return '✕ No va a renovar';
   return 'Contestó';
 }
 function renewalResponseBadgeClass(c) {

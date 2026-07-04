@@ -2054,3 +2054,44 @@ button:active,
   0%,100% { transform: scaleX(.45); opacity: .45; }
   50% { transform: scaleX(1); opacity: 1; }
 }
+
+
+/* ===== Colores claros respuesta renovación ===== */
+.badgeAnswered {
+  background: rgba(105,255,71,.14) !important;
+  color: var(--green) !important;
+  border-color: rgba(105,255,71,.34) !important;
+}
+.badgeNoRenew {
+  background: rgba(255,77,77,.15) !important;
+  color: var(--red) !important;
+  border-color: rgba(255,77,77,.38) !important;
+}
+.renewNotice.willRenew,
+.renewNotice.answered.willRenew {
+  border-color: rgba(105,255,71,.32) !important;
+  background: linear-gradient(135deg, rgba(105,255,71,.10), rgba(105,255,71,.035)) !important;
+}
+.renewNotice.willRenew strong,
+.renewNotice.willRenew span {
+  color: var(--green) !important;
+}
+.renewNotice.noRenew,
+.renewNotice.answered.noRenew {
+  border-color: rgba(255,77,77,.34) !important;
+  background: linear-gradient(135deg, rgba(255,77,77,.11), rgba(255,77,77,.035)) !important;
+}
+.renewNotice.noRenew strong,
+.renewNotice.noRenew span {
+  color: var(--red) !important;
+}
+.noticeActions .willRenewBtn {
+  background: rgba(105,255,71,.10) !important;
+  color: var(--green) !important;
+  border-color: rgba(105,255,71,.34) !important;
+}
+.noticeActions .noRenewBtn {
+  background: rgba(255,77,77,.10) !important;
+  color: var(--red) !important;
+  border-color: rgba(255,77,77,.34) !important;
+}
