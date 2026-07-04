@@ -1200,3 +1200,10 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, 'S
     grid-template-columns: 1fr 1fr;
   }
 }
+
+
+/* Balance: renovaciones incluidas en historial */
+.financeItem.financeRenewal {
+  border-color: rgba(0,229,255,.24);
+  background: rgba(0,229,255,.04);
+}

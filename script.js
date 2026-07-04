@@ -292,7 +292,6 @@ function showAppAfterLogin() {
   updateStats();
   updateBackupReminder();
   renderTagFilterBar();
-  renderAutoAlerts();
 }
 
 
@@ -1866,7 +1865,9 @@ function renderFinanceDashboard() {
   set('finIncomeYear', euro(incomeYear));
   set('finExpenseYear', euro(expenseYear));
   set('finProfitYear', euro(profitYear));
-  set('finMovementCountMonth', String((financeMovements || []).filter(function(m){ return p.inPeriod(m.date); }).length));
+  var historyRenewalCount = financePaidRenewals().filter(function(r){ return p.inPeriod(financeRenewalDate(r)); }).length;
+  var historyExternalCount = (financeMovements || []).filter(function(m){ return p.inPeriod(m.date); }).length;
+  set('finMovementCountMonth', String(historyRenewalCount + historyExternalCount));
 
   ['finProfitMonth','finProfitYear'].forEach(function(id){
     var el = document.getElementById(id);
@@ -1886,39 +1887,94 @@ function renderFinanceDashboard() {
   if (chartHeader) chartHeader.style.display = p.isYearView ? '' : 'none';
 
   if (!box) return;
-  var list = (financeMovements || []).filter(function(m){ return p.inPeriod(m.date); });
+
+  var renewalHistory = financePaidRenewals()
+    .filter(function(r){ return p.inPeriod(financeRenewalDate(r)); })
+    .map(function(r){
+      return {
+        source: 'renewal',
+        id: r.id || '',
+        type: 'ingreso',
+        concept: 'Renovación · ' + (r.clientName || 'Cliente'),
+        category: 'Renovaciones clientes',
+        amount: Number(r.amount || 0),
+        date: financeRenewalDate(r) ? String(financeRenewalDate(r)).split('T')[0] : '',
+        notes: r.notes || '',
+        paymentMethod: r.paymentMethod || '',
+        previousExpiry: r.previousExpiry || '',
+        newExpiry: r.newExpiry || ''
+      };
+    });
+
+  var externalHistory = (financeMovements || [])
+    .filter(function(m){ return p.inPeriod(m.date); })
+    .map(function(m){
+      return {
+        source: 'manual',
+        id: m.id || '',
+        type: m.type || 'ingreso',
+        concept: m.concept || m.concepto || m.category || 'Movimiento',
+        category: m.category || 'Otro',
+        amount: Number(m.amount || 0),
+        date: m.date || '',
+        notes: m.notes || '',
+        paymentMethod: ''
+      };
+    });
+
+  var list = renewalHistory.concat(externalHistory);
   list.sort(function(a,b){ return String(b.date || '').localeCompare(String(a.date || '')); });
 
   if (!list.length) {
-    var otherPeriods = (financeMovements || []).map(function(m){
-      return p.isYearView ? String(m.date || '').slice(0,4) : financeMonthKeyFromDate(m.date);
-    }).filter(Boolean);
+    var otherPeriods = []
+      .concat((financeMovements || []).map(function(m){
+        return p.isYearView ? String(m.date || '').slice(0,4) : financeMonthKeyFromDate(m.date);
+      }))
+      .concat(financePaidRenewals().map(function(r){
+        var d = financeRenewalDate(r);
+        return p.isYearView ? String(d || '').slice(0,4) : financeMonthKeyFromDate(d);
+      }))
+      .filter(Boolean);
+
     var uniquePeriods = Array.from(new Set(otherPeriods)).sort().reverse();
 
     if (uniquePeriods.length) {
-      box.innerHTML = '<div class="emptyMini">No hay ingresos/gastos externos para esta vista. Hay movimientos en: ' +
+      box.innerHTML = '<div class="emptyMini">No hay movimientos para esta vista. Hay movimientos en: ' +
         uniquePeriods.slice(0,8).map(function(k){
           return p.isYearView ? k : (k.slice(5,7) + '/' + k.slice(0,4));
         }).join(', ') +
         '. Cambia los filtros de arriba para verlos.</div>';
     } else {
-      box.innerHTML = '<div class="emptyMini">No hay ingresos/gastos externos registrados.</div>';
+      box.innerHTML = '<div class="emptyMini">No hay movimientos registrados todavía.</div>';
     }
     return;
   }
 
   box.innerHTML = list.map(function(m){
     var isExpense = m.type === 'gasto';
-    return '<div class="paymentItem financeItem '+(isExpense?'financeExpense':'financeIncome')+'">' +
+    var isRenewal = m.source === 'renewal';
+    var amountClass = isExpense ? 'paymentAmount expense' : 'paymentAmount';
+    var amountPrefix = isExpense ? '- ' : '+ ';
+    var metaType = isRenewal ? 'Ingreso renovación cliente' : (isExpense ? 'Gasto' : 'Ingreso externo');
+    var extraMeta = '';
+
+    if (isRenewal) {
+      extraMeta = '<div class="paymentMeta">Periodo: ' + formatDate(m.previousExpiry) + ' → ' + formatDate(m.newExpiry) + (m.paymentMethod ? ' · ' + esc(m.paymentMethod) : '') + '</div>';
+    }
+
+    return '<div class="paymentItem financeItem '+(isExpense?'financeExpense':'financeIncome')+' '+(isRenewal?'financeRenewal':'')+'">' +
       '<div class="paymentItemTop">' +
-        '<div class="paymentName">'+esc(m.concept || m.concepto || m.category || 'Movimiento')+'</div>' +
-        '<div class="'+(isExpense?'paymentAmount expense':'paymentAmount')+'">'+(isExpense?'- ':'+ ')+euro(m.amount)+'</div>' +
+        '<div class="paymentName">'+esc(m.concept)+'</div>' +
+        '<div class="'+amountClass+'">'+amountPrefix+euro(m.amount)+'</div>' +
       '</div>' +
-      '<div class="paymentMeta">'+(isExpense?'Gasto':'Ingreso')+' · '+formatDate(m.date)+' · '+esc(m.category || 'Otro')+'</div>' +
+      '<div class="paymentMeta">'+metaType+' · '+formatDate(m.date)+' · '+esc(m.category || 'Otro')+'</div>' +
+      extraMeta +
       (m.notes ? '<div class="paymentMeta">Notas: '+esc(m.notes)+'</div>' : '') +
       '<div class="paymentActions">' +
-        '<button onclick="editFinanceMovement(\''+esc(m.id)+'\')">&#9998; Editar</button>' +
-        '<button class="paymentDeleteBtn" onclick="deleteFinanceMovement(\''+esc(m.id)+'\', this)">&#128465; Borrar</button>' +
+        (isRenewal
+          ? '<button class="paymentEditBtn" data-renewal-id="'+esc(m.id)+'" onclick="openEditRenewal(this.dataset.renewalId)">&#9998; Editar renovación</button><button class="paymentDeleteBtn" data-renewal-id="'+esc(m.id)+'" onclick="deleteRenewalFromStore(this.dataset.renewalId, this)">&#128465; Borrar</button>'
+          : '<button onclick="editFinanceMovement(\''+esc(m.id)+'\')">&#9998; Editar</button><button class="paymentDeleteBtn" onclick="deleteFinanceMovement(\''+esc(m.id)+'\', this)">&#128465; Borrar</button>'
+        ) +
       '</div>' +
     '</div>';
   }).join('');
@@ -2095,7 +2151,6 @@ function renderAutoAlerts() {
 
 function openAlertsPanel() {
   closeSheet('menuSheet','menuOverlay');
-  renderAutoAlerts();
   renderAlertsPanelContent();
   openSheet('alertsSheet','alertsOverlay');
 }
@@ -5397,7 +5452,6 @@ document.addEventListener('DOMContentLoaded', function(){
 
 function finalEnhancementsBoot() {
   try { renderTagFilterBar(); } catch(e) {}
-  try { renderAutoAlerts(); } catch(e) {}
 }
 document.addEventListener('DOMContentLoaded', function(){
   setTimeout(finalEnhancementsBoot, 800);

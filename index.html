@@ -115,8 +115,6 @@
       <button onclick="openBackupCenter()">Exportar</button>
     </div>
 
-    <div class="autoAlerts" id="autoAlerts"></div>
-
     <div id="activeFilterBar" class="activeFilterBar">
       <span id="activeFilterLabel"></span>
       <button onclick="quickFilter('')">&#10005; Quitar filtro</button>
@@ -157,7 +155,6 @@
     <div class="menuItem" onclick="openDeleteAllClients()" style="color:var(--red)"><span class="ico2">&#128465;</span> Borrar todos los clientes</div>
     <div class="menuItem" onclick="openPayments()"><span class="ico2">&#128176;</span> Ingresos / renovaciones</div>
     <div class="menuItem" onclick="openFinanceBalance()"><span class="ico2">&#128202;</span> Balance / finanzas</div>
-    <div class="menuItem" onclick="openAlertsPanel()"><span class="ico2">&#128276;</span> Avisos automáticos</div>
     <div class="menuItem" onclick="openRaffles()"><span class="ico2">&#127873;</span> Sorteos clientes</div>
     <div class="menuItem" onclick="openIboPanel()"><span class="ico2">&#127760;</span> Panel APP IBO</div>
     <div class="menuItem" onclick="openMfaSecurity()"><span class="ico2">&#128274;</span> Seguridad Google Authenticator</div>
@@ -483,23 +480,6 @@
 
 
 
-
-<!-- ALERTS PANEL SHEET -->
-<div class="sheet-overlay" id="alertsOverlay" onclick="closeSheet('alertsSheet','alertsOverlay')"></div>
-<div class="sheet" id="alertsSheet">
-  <div class="sheet-handle"></div>
-  <div class="sheet-header">
-    <h3>&#128276; Avisos automáticos</h3>
-    <button class="sheet-close" onclick="closeSheet('alertsSheet','alertsOverlay')">x</button>
-  </div>
-  <div class="sheet-body">
-    <p style="color:var(--muted);font-size:.88rem;margin-bottom:12px">
-      Resumen rápido de cosas que requieren atención. Pulsa cualquier aviso para filtrar clientes.
-    </p>
-    <div id="alertsPanelContent"></div>
-    <button class="btnFull gray" onclick="closeSheet('alertsSheet','alertsOverlay')" style="margin-top:8px">Cerrar</button>
-  </div>
-</div>
 
 <!-- FINANCE BALANCE SHEET -->
 <div class="sheet-overlay" id="financeOverlay" onclick="closeSheet('financeSheet','financeOverlay')"></div>
