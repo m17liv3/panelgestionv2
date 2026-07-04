@@ -958,6 +958,11 @@
         <strong id="dailyPromptDatePreview">Cargando fecha...</strong>
       </div>
 
+      <div class="dailyPromptLogoNote">
+        <strong>Logo personal</strong>
+        <span>El prompt ya pedirá usar tu logo. Cuando pegues el prompt en ChatGPT, adjunta también tu logo de M17LIV3.</span>
+      </div>
+
       <label class="dailyPromptLabel">Eventos del día, sin fecha</label>
       <textarea id="dailyPromptEvents" class="dailyPromptTextarea" placeholder="Pega aquí solo los eventos del día. Ejemplo:
 
@@ -974,6 +979,7 @@
         <button type="button" onclick="dailyPromptUseCartText()">Usar texto de cartelera</button>
         <button type="button" class="primary" onclick="dailyPromptBuild()">Generar prompt</button>
         <button type="button" class="success" onclick="dailyPromptCopy()">Copiar prompt</button>
+        <button type="button" class="danger" onclick="dailyPromptClear()">Borrar prompt</button>
       </div>
 
       <label class="dailyPromptLabel">Prompt generado</label>

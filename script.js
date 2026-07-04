@@ -5334,6 +5334,9 @@ function dailyPromptBuildText(eventsText) {
     eventsText,
     '',
     'REQUISITOS DE COMPOSICIÓN:',
+    '- Usa el logo adjunto de M17LIV3 como referencia exacta.',
+    '- Incluye el logo en la cartela de forma elegante y profesional, preferiblemente en la parte superior o integrado en el encabezado.',
+    '- No deformes el logo, no cambies sus colores, no cambies sus proporciones y no lo redibujes.',
     '- Mantén exactamente los horarios, equipos, canales y categorías que aparecen en el contenido.',
     '- Respeta emojis como ⚽, ⏰, 📺 y 🗂 si ayudan a la legibilidad.',
     '- Destaca los partidos principales con más presencia visual.',
@@ -5448,6 +5451,32 @@ async function dailyPromptUploadFinalImage() {
   }
   if (btn) { btn.disabled = false; btn.textContent = 'Subir imagen final a HORARIOS MUNDIAL'; }
 }
+
+function dailyPromptClear() {
+  var ok = true;
+  if (typeof showConfirm === 'function') {
+    // Fallback handled below because showConfirm in this app may be async/custom.
+  }
+  ok = confirm('¿Borrar el texto de eventos, el prompt generado y la imagen final seleccionada?');
+  if (!ok) return;
+
+  var eventsEl = document.getElementById('dailyPromptEvents');
+  var out = document.getElementById('dailyGeneratedPrompt');
+  var input = document.getElementById('dailyFinalImageFile');
+  var preview = document.getElementById('dailyPromptFinalPreview');
+  var previewImg = document.getElementById('dailyPromptFinalPreviewImg');
+
+  if (eventsEl) eventsEl.value = '';
+  if (out) out.value = '';
+  if (input) input.value = '';
+  if (preview) preview.style.display = 'none';
+  if (previewImg) previewImg.removeAttribute('src');
+
+  dailyPromptRefreshDate();
+  dailyPromptStatus('Prompt borrado. Mañana solo pega los nuevos eventos y genera otro.', 'ok');
+  showToast('Prompt borrado');
+}
+
 // ========== FIN PROMPT CHATGPT CARTELERA DIARIA ==========
 
 // ========== FIN CARTELERA ADMIN ==========
