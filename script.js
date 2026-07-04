@@ -504,13 +504,17 @@ function navMenu() {
 }
 
 
+var clientBrowserAllList = [];
 var clientBrowserList = [];
 var clientBrowserIndex = 0;
+var clientBrowserSearchTerm = '';
 var clientBrowserTouchStartX = 0;
 var clientBrowserTouchStartY = 0;
 
 function openClientBrowser(startId) {
-  clientBrowserList = sortClientsByExpiryAsc((clients || []).slice());
+  clientBrowserAllList = sortClientsByExpiryAsc((clients || []).slice());
+  clientBrowserSearchTerm = '';
+  clientBrowserList = clientBrowserAllList.slice();
   if (!clientBrowserList.length) {
     showToast('No hay clientes para mostrar', 'warning');
     return;
@@ -522,8 +526,63 @@ function openClientBrowser(startId) {
   }
   renderClientBrowser();
   openSheet('clientBrowserSheet','clientBrowserOverlay');
-  setTimeout(setupClientBrowserSwipe, 80);
+  setTimeout(function(){
+    setupClientBrowserSwipe();
+    var input = document.getElementById('clientBrowserSearch');
+    if (input) input.value = '';
+  }, 80);
 }
+
+
+function clientBrowserMatchesSearch(c, term) {
+  if (!term) return true;
+  term = String(term || '').toLowerCase().trim();
+  if (!term) return true;
+  var appsText = (c.apps || []).map(function(a){
+    return [a.name, a.customName, a.mac, a.code].filter(Boolean).join(' ');
+  }).join(' ');
+  var haystack = [
+    c.name,
+    c.user,
+    c.pass,
+    c.phone,
+    c.service,
+    formatDate(c.expiry),
+    clientBrowserStatusText(c),
+    appsText
+  ].filter(Boolean).join(' ').toLowerCase();
+  return haystack.indexOf(term) >= 0;
+}
+
+function clientBrowserApplySearch(keepCurrent) {
+  var currentId = keepCurrent && clientBrowserList[clientBrowserIndex] ? clientBrowserList[clientBrowserIndex].id : '';
+  clientBrowserList = clientBrowserAllList.filter(function(c){ return clientBrowserMatchesSearch(c, clientBrowserSearchTerm); });
+  if (currentId) {
+    var idx = clientBrowserList.findIndex(function(c){ return String(c.id) === String(currentId); });
+    clientBrowserIndex = idx >= 0 ? idx : 0;
+  } else {
+    clientBrowserIndex = 0;
+  }
+  renderClientBrowser('next');
+}
+
+function clientBrowserSearchChanged() {
+  var input = document.getElementById('clientBrowserSearch');
+  clientBrowserSearchTerm = input ? input.value.trim() : '';
+  var clearBtn = document.getElementById('clientBrowserSearchClear');
+  if (clearBtn) clearBtn.style.display = clientBrowserSearchTerm ? 'flex' : 'none';
+  clientBrowserApplySearch(false);
+}
+
+function clientBrowserClearSearch() {
+  var input = document.getElementById('clientBrowserSearch');
+  if (input) input.value = '';
+  clientBrowserSearchTerm = '';
+  var clearBtn = document.getElementById('clientBrowserSearchClear');
+  if (clearBtn) clearBtn.style.display = 'none';
+  clientBrowserApplySearch(false);
+}
+
 
 function setupClientBrowserSwipe() {
   var stage = document.getElementById('clientBrowserStage');
@@ -638,14 +697,15 @@ function renderClientBrowser(direction) {
   var counter = document.getElementById('clientBrowserCounter');
   if (!stage) return;
   if (!clientBrowserList.length) {
-    stage.innerHTML = '<div class="emptyMini">No hay clientes.</div>';
-    if (counter) counter.textContent = '0 / 0';
+    var total = clientBrowserAllList.length || 0;
+    stage.innerHTML = '<div class="clientBrowserNoResults"><div class="ico">&#128269;</div><strong>No hay resultados</strong><span>Prueba con otro nombre, usuario, teléfono o app.</span></div>';
+    if (counter) counter.textContent = clientBrowserSearchTerm ? ('0 / ' + total) : '0 / 0';
     return;
   }
   if (clientBrowserIndex < 0) clientBrowserIndex = 0;
   if (clientBrowserIndex >= clientBrowserList.length) clientBrowserIndex = clientBrowserList.length - 1;
   var c = clientBrowserList[clientBrowserIndex];
-  if (counter) counter.textContent = (clientBrowserIndex + 1) + ' / ' + clientBrowserList.length;
+  if (counter) counter.textContent = (clientBrowserIndex + 1) + ' / ' + clientBrowserList.length + (clientBrowserSearchTerm ? ' filtrados' : '');
   stage.innerHTML = clientBrowserCardHtml(c, direction || 'next');
 }
 

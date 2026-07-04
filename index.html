@@ -301,10 +301,17 @@
     <div class="clientBrowserTop">
       <div>
         <strong>Vista deslizante</strong>
-        <span>Desliza a izquierda o derecha para ver cada cliente.</span>
+        <span>Busca un cliente o desliza a izquierda/derecha.</span>
       </div>
       <div class="clientBrowserCounter" id="clientBrowserCounter">0 / 0</div>
     </div>
+
+    <div class="clientBrowserSearchBox">
+      <span>&#128269;</span>
+      <input type="search" id="clientBrowserSearch" placeholder="Buscar cliente, usuario, teléfono o app..." oninput="clientBrowserSearchChanged()"/>
+      <button type="button" onclick="clientBrowserClearSearch()" id="clientBrowserSearchClear">x</button>
+    </div>
+
     <div class="clientBrowserStage" id="clientBrowserStage"></div>
     <div class="clientBrowserControls">
       <button onclick="clientBrowserPrev()">&#8592; Anterior</button>
