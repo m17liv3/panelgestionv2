@@ -485,7 +485,7 @@ function navHome() {
 
 function navClients() {
   setBottomNavActive('clients');
-  quickFilter('');
+  openClientBrowser();
 }
 
 function navBalance() {
@@ -501,6 +501,152 @@ function navCartelera() {
 function navMenu() {
   setBottomNavActive('menu');
   openMenu();
+}
+
+
+var clientBrowserList = [];
+var clientBrowserIndex = 0;
+var clientBrowserTouchStartX = 0;
+var clientBrowserTouchStartY = 0;
+
+function openClientBrowser(startId) {
+  clientBrowserList = sortClientsByExpiryAsc((clients || []).slice());
+  if (!clientBrowserList.length) {
+    showToast('No hay clientes para mostrar', 'warning');
+    return;
+  }
+  clientBrowserIndex = 0;
+  if (startId) {
+    var idx = clientBrowserList.findIndex(function(c){ return String(c.id) === String(startId); });
+    if (idx >= 0) clientBrowserIndex = idx;
+  }
+  renderClientBrowser();
+  openSheet('clientBrowserSheet','clientBrowserOverlay');
+  setTimeout(setupClientBrowserSwipe, 80);
+}
+
+function setupClientBrowserSwipe() {
+  var stage = document.getElementById('clientBrowserStage');
+  if (!stage || stage.dataset.swipeReady === '1') return;
+  stage.dataset.swipeReady = '1';
+  stage.addEventListener('touchstart', function(e){
+    if (!e.touches || !e.touches.length) return;
+    clientBrowserTouchStartX = e.touches[0].clientX;
+    clientBrowserTouchStartY = e.touches[0].clientY;
+  }, { passive: true });
+  stage.addEventListener('touchend', function(e){
+    if (!e.changedTouches || !e.changedTouches.length) return;
+    var dx = e.changedTouches[0].clientX - clientBrowserTouchStartX;
+    var dy = e.changedTouches[0].clientY - clientBrowserTouchStartY;
+    if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.25) {
+      if (dx < 0) clientBrowserNext(); else clientBrowserPrev();
+    }
+  }, { passive: true });
+}
+
+function clientBrowserPrev() {
+  if (!clientBrowserList.length) return;
+  if (clientBrowserIndex > 0) clientBrowserIndex--;
+  else clientBrowserIndex = clientBrowserList.length - 1;
+  renderClientBrowser('prev');
+}
+
+function clientBrowserNext() {
+  if (!clientBrowserList.length) return;
+  if (clientBrowserIndex < clientBrowserList.length - 1) clientBrowserIndex++;
+  else clientBrowserIndex = 0;
+  renderClientBrowser('next');
+}
+
+function clientBrowserOpenFull(id) {
+  closeSheet('clientBrowserSheet','clientBrowserOverlay');
+  setTimeout(function(){ viewClient(id); }, 260);
+}
+
+function clientBrowserEdit(id) {
+  closeSheet('clientBrowserSheet','clientBrowserOverlay');
+  setTimeout(function(){ editClient(id); }, 260);
+}
+
+function clientBrowserRenew(id) {
+  closeSheet('clientBrowserSheet','clientBrowserOverlay');
+  setTimeout(function(){ openRenew(id); }, 260);
+}
+
+function clientBrowserMessages(id) {
+  closeSheet('clientBrowserSheet','clientBrowserOverlay');
+  setTimeout(function(){ openClientMessages(id); }, 260);
+}
+
+function clientBrowserStatusText(c) {
+  var s = getStatus(c && c.expiry);
+  var d = getDaysLeft(c && c.expiry);
+  if (s === 'exp') return 'Expirado hace ' + Math.abs(d) + ' día(s)';
+  if (s === 'warn') return d === 0 ? 'Caduca hoy' : 'Caduca en ' + d + ' día(s)';
+  return 'Activo hasta ' + formatDate(c.expiry);
+}
+
+function clientBrowserCardHtml(c, direction) {
+  if (!c) return '<div class="emptyMini">No hay cliente seleccionado.</div>';
+  var svcLabel = c.service === 'ESPANA' ? 'ESPAÑA' : esc(c.service || '-');
+  var status = getStatus(c.expiry);
+  var heroClass = status === 'exp' ? 'expired' : (status === 'warn' ? 'warning' : 'active');
+  var mainApp = getClientMainApp(c);
+  var html = '';
+  html += '<div class="clientBrowserCardShell '+(direction === 'prev' ? 'fromLeft' : 'fromRight')+'">';
+  html +=   '<div class="premiumClientHero '+heroClass+' clientBrowserHero">';
+  html +=     '<div class="premiumHeroTop">';
+  html +=       '<div class="premiumAvatar">'+esc(avatarLetter(c.name))+'</div>';
+  html +=       '<div class="premiumHeroInfo">';
+  html +=         '<div class="premiumClientName">'+esc(c.name)+'</div>';
+  html +=         '<div class="premiumClientSub">'+esc(mainApp || '-')+'</div>';
+  html +=       '</div>';
+  html +=     '</div>';
+  html +=     '<div class="premiumHeroBadges"><span class="badge '+(c.service==='TODO'?'badgeTodo':'badgeEs')+'">'+svcLabel+'</span>'+statusBadge(c.expiry)+(clientHasPendingPayment(c)?' <span class="badge badgePayPending">Pago pendiente</span>':'')+(clientHasRenewalNotice(c)?' <span class="badge badgeAdvised">Avisado</span>':'')+renewalReplyBadgeHtml(c)+'</div>';
+  html +=     '<div class="premiumExpiryLine"><span>Estado</span><strong>'+esc(clientBrowserStatusText(c))+'</strong><small>Expira: '+formatDate(c.expiry)+'</small></div>';
+  html +=   '</div>';
+  html += renewalNoticeHtml(c, 'view');
+  html += pendingPaymentNoticeHtml(c, 'view');
+  html +=   '<div class="premiumSectionTitle">Datos rápidos</div>';
+  html +=   '<div class="premiumDataGrid">';
+  html +=     premiumDataCard('Usuario', c.user || '-', c.user || '', 'cyan');
+  html +=     premiumDataCard('Contraseña', c.pass || '-', c.pass || '', '');
+  if (c.phone) html += premiumDataCard('Teléfono', c.phone, c.phone, 'green');
+  html +=     premiumDataCard('Servicio', c.service === 'ESPANA' ? 'ESPAÑA' : (c.service || '-'), '', '');
+  html +=   '</div>';
+  if ((c.apps || []).length) {
+    html += '<div class="premiumSectionTitle">Apps</div><div class="clientBrowserApps">';
+    (c.apps || []).slice(0, 4).forEach(function(a, i){
+      html += '<div class="clientBrowserApp"><strong>'+esc(a.customName || a.name || '-')+'</strong>'+(i===0?'<span>Principal</span>':'')+'</div>';
+    });
+    if ((c.apps || []).length > 4) html += '<div class="clientBrowserMoreApps">+'+((c.apps || []).length - 4)+' app(s) más</div>';
+    html += '</div>';
+  }
+  html += '<div class="clientBrowserActions">';
+  html +=   '<button class="primary" data-id="'+esc(c.id)+'" onclick="clientBrowserRenew(this.dataset.id)">&#8635; Renovar</button>';
+  html +=   '<button data-id="'+esc(c.id)+'" onclick="clientBrowserOpenFull(this.dataset.id)">&#128065; Ver ficha</button>';
+  html +=   '<button data-id="'+esc(c.id)+'" onclick="clientBrowserMessages(this.dataset.id)">&#128203; Msg</button>';
+  html +=   '<button data-id="'+esc(c.id)+'" onclick="clientBrowserEdit(this.dataset.id)">&#9998; Editar</button>';
+  html += '</div>';
+  html += '<div class="clientBrowserHint">Desliza para cambiar de cliente</div>';
+  html += '</div>';
+  return html;
+}
+
+function renderClientBrowser(direction) {
+  var stage = document.getElementById('clientBrowserStage');
+  var counter = document.getElementById('clientBrowserCounter');
+  if (!stage) return;
+  if (!clientBrowserList.length) {
+    stage.innerHTML = '<div class="emptyMini">No hay clientes.</div>';
+    if (counter) counter.textContent = '0 / 0';
+    return;
+  }
+  if (clientBrowserIndex < 0) clientBrowserIndex = 0;
+  if (clientBrowserIndex >= clientBrowserList.length) clientBrowserIndex = clientBrowserList.length - 1;
+  var c = clientBrowserList[clientBrowserIndex];
+  if (counter) counter.textContent = (clientBrowserIndex + 1) + ' / ' + clientBrowserList.length;
+  stage.innerHTML = clientBrowserCardHtml(c, direction || 'next');
 }
 
 function showElegantLoading(message) {

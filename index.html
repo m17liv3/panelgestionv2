@@ -288,6 +288,32 @@
 </div>
 
 
+
+<!-- CLIENT BROWSER SHEET -->
+<div class="sheet-overlay" id="clientBrowserOverlay" onclick="closeSheet('clientBrowserSheet','clientBrowserOverlay')"></div>
+<div class="sheet clientBrowserSheet" id="clientBrowserSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header clientBrowserHeader">
+    <h3>Clientes</h3>
+    <button class="sheet-close" onclick="closeSheet('clientBrowserSheet','clientBrowserOverlay')">x</button>
+  </div>
+  <div class="sheet-body clientBrowserBody">
+    <div class="clientBrowserTop">
+      <div>
+        <strong>Vista deslizante</strong>
+        <span>Desliza a izquierda o derecha para ver cada cliente.</span>
+      </div>
+      <div class="clientBrowserCounter" id="clientBrowserCounter">0 / 0</div>
+    </div>
+    <div class="clientBrowserStage" id="clientBrowserStage"></div>
+    <div class="clientBrowserControls">
+      <button onclick="clientBrowserPrev()">&#8592; Anterior</button>
+      <button onclick="clientBrowserNext()">Siguiente &#8594;</button>
+    </div>
+  </div>
+</div>
+
+
 <!-- CLIENT SHEET -->
 <div class="sheet-overlay" id="clientOverlay" onclick="closeSheet('clientSheet','clientOverlay')"></div>
 <div class="sheet" id="clientSheet">
