@@ -4,6 +4,7 @@ var ADMIN_USER = CONFIG.adminUser || 'admin';
 var ADMIN_PASS_HASH = CONFIG.adminPassHash || '';
 var USE_SUPABASE = !!(CONFIG.useSupabase && CONFIG.supabaseUrl && CONFIG.supabaseKey);
 var SUPABASE_TABLE = CONFIG.supabaseTable || 'clientes';
+var SUPABASE_APP_SETTINGS_TABLE = CONFIG.supabaseAppSettingsTable || 'app_settings';
 var supabaseDb = null;
 var APPS = [
   { name: 'M17LIV3', needsMac: false, needsCode: false },
@@ -108,13 +109,7 @@ function normalizeClientTags(value) {
     });
 }
 
-function clientTagsHtml(c) {
-  var tags = normalizeClientTags(c && c.tags);
-  if (!tags.length) return '';
-  return '<div class="clientTags">' + tags.map(function(t){
-    return '<button type="button" class="clientTag" onclick="setTagFilter(&quot;'+esc(t)+'&quot;)">'+esc(t)+'</button>';
-  }).join('') + '</div>';
-}
+function clientTagsHtml(c) { return ''; }
 
 function renderClientTagsInput(tags) {
   var box = document.getElementById('clientTagsEditor');
@@ -137,15 +132,7 @@ function toggleClientTagPick(btn) {
   btn.classList.toggle('selected');
 }
 
-function getSelectedClientTags() {
-  var tags = [];
-  document.querySelectorAll('#clientTagsEditor .tagPick.selected').forEach(function(btn){
-    tags.push(btn.dataset.tag || btn.textContent || '');
-  });
-  var custom = document.getElementById('fCustomTags');
-  if (custom && custom.value) tags = tags.concat(custom.value.split(','));
-  return normalizeClientTags(tags);
-}
+function getSelectedClientTags() { return []; }
 
 function setTagFilter(tag) {
   activeTagFilter = tag || '';
@@ -168,23 +155,7 @@ function allClientTags() {
   return normalizeClientTags(tags).sort(function(a,b){ return a.localeCompare(b); });
 }
 
-function renderTagFilterBar() {
-  var box = document.getElementById('tagFilterBar');
-  if (!box) return;
-  var tags = allClientTags();
-  if (!tags.length) {
-    box.innerHTML = '<span class="tagFilterTitle">Etiquetas</span><span class="tagFilterEmpty">Aún no hay etiquetas creadas</span>';
-    box.style.display = 'flex';
-    return;
-  }
-  box.style.display = 'flex';
-  box.innerHTML =
-    '<span class="tagFilterTitle">Etiquetas</span>' +
-    tags.map(function(t){
-      return '<button class="tagFilterChip '+(activeTagFilter===t?'active':'')+'" onclick="setTagFilter(&quot;'+esc(t)+'&quot;)">'+esc(t)+'</button>';
-    }).join('') +
-    (activeTagFilter ? '<button class="tagFilterClear" onclick="clearTagFilter()">Quitar etiqueta</button>' : '');
-}
+function renderTagFilterBar() { var box = document.getElementById('tagFilterBar'); if (box) { box.innerHTML = ''; box.style.display = 'none'; } }
 // ========== FIN ETIQUETAS CLIENTES ==========
 
 
@@ -206,6 +177,7 @@ function dbRowToClient(row) {
     avisoRenovacionContestado: !!row.aviso_renovacion_contestado,
     avisoRenovacionContestadoFecha: row.aviso_renovacion_contestado_fecha || '',
     avisoRenovacionContestadoExpiracion: row.aviso_renovacion_contestado_expiracion || '',
+    avisoRenovacionRespuesta: row.aviso_renovacion_respuesta || '',
     createdAt: row.created_at || new Date().toISOString(),
     updatedAt: row.updated_at || ''
   };
@@ -228,6 +200,7 @@ function clientToDbPayload(c) {
     aviso_renovacion_contestado: !!c.avisoRenovacionContestado,
     aviso_renovacion_contestado_fecha: c.avisoRenovacionContestadoFecha || null,
     aviso_renovacion_contestado_expiracion: c.avisoRenovacionContestadoExpiracion || null,
+    aviso_renovacion_respuesta: c.avisoRenovacionRespuesta || null,
     updated_at: new Date().toISOString()
   };
 }
@@ -645,6 +618,75 @@ function getCustomization() {
   catch(e) { return {}; }
 }
 
+function saveCustomizationLocal(c) {
+  try { localStorage.setItem(CUSTOMIZATION_KEY, JSON.stringify(c || {})); } catch(e) {}
+}
+
+function appSettingsRowToCustomization(row) {
+  if (!row) return {};
+  return {
+    name: row.nombre_visible || '',
+    accent: row.color_principal || '',
+    logoData: row.logo_data || ''
+  };
+}
+
+async function loadCustomizationFromStore(showMsg) {
+  var local = getCustomization();
+  if (!USE_SUPABASE) {
+    applyAppCustomization(local);
+    return local;
+  }
+  try {
+    var db = initSupabase();
+    var result = await db.from(SUPABASE_APP_SETTINGS_TABLE).select('*').maybeSingle();
+    if (result.error) throw result.error;
+    var c = appSettingsRowToCustomization(result.data);
+    if (c && (c.name || c.accent || c.logoData)) {
+      saveCustomizationLocal(c);
+      applyAppCustomization(c);
+      return c;
+    }
+    applyAppCustomization(local);
+    return local;
+  } catch(ex) {
+    console.warn('No se pudo cargar personalización Supabase', ex);
+    applyAppCustomization(local);
+    if (showMsg && typeof showToast === 'function') showToast('Usando personalización local. Revisa SQL app_settings.', 'error');
+    return local;
+  }
+}
+
+async function saveCustomizationToStore(c) {
+  saveCustomizationLocal(c);
+  if (!USE_SUPABASE) return c;
+  var db = initSupabase();
+  var userRes = await db.auth.getUser();
+  var ownerId = userRes && userRes.data && userRes.data.user ? userRes.data.user.id : null;
+  if (!ownerId) throw new Error('No se pudo identificar el usuario.');
+  var payload = {
+    owner_id: ownerId,
+    nombre_visible: c.name || 'M17LIV3 Gestión Clientes',
+    color_principal: c.accent || '#00e5ff',
+    logo_data: c.logoData || '',
+    updated_at: new Date().toISOString()
+  };
+  var result = await db.from(SUPABASE_APP_SETTINGS_TABLE).upsert(payload, { onConflict: 'owner_id' }).select('*').single();
+  if (result.error) throw result.error;
+  var saved = appSettingsRowToCustomization(result.data);
+  saveCustomizationLocal(saved);
+  return saved;
+}
+
+async function deleteCustomizationFromStore() {
+  try { localStorage.removeItem(CUSTOMIZATION_KEY); } catch(e) {}
+  if (!USE_SUPABASE) return true;
+  var db = initSupabase();
+  var result = await db.from(SUPABASE_APP_SETTINGS_TABLE).delete().neq('owner_id', '00000000-0000-0000-0000-000000000000');
+  if (result.error) throw result.error;
+  return true;
+}
+
 function setLogoSrc(src) {
   if (!src) src = 'assets/logo.png';
   ['#loginBox img', '#mfaBox img', '.topbar img', '#loadingLogo', '#customLogoPreview'].forEach(function(sel){
@@ -653,8 +695,8 @@ function setLogoSrc(src) {
   });
 }
 
-function applyAppCustomization() {
-  var c = getCustomization();
+function applyAppCustomization(custom) {
+  var c = custom || getCustomization();
   var name = c.name || 'M17LIV3 Gestión Clientes';
   var accent = c.accent || '#00e5ff';
   var logo = c.logoData || 'assets/logo.png';
@@ -672,15 +714,15 @@ function applyAppCustomization() {
   setLogoSrc(logo);
 }
 
-function openCustomization() {
+async function openCustomization() {
   closeSheet('menuSheet','menuOverlay');
-  var c = getCustomization();
+  var c = await loadCustomizationFromStore(false);
   var nameEl = document.getElementById('customAppName');
   var accentEl = document.getElementById('customAccent');
   var status = document.getElementById('customLogoStatus');
   if (nameEl) nameEl.value = c.name || 'M17LIV3 Gestión Clientes';
   if (accentEl) accentEl.value = c.accent || '#00e5ff';
-  if (status) status.textContent = c.logoData ? 'Logo personalizado cargado' : 'Logo original';
+  if (status) status.textContent = c.logoData ? 'Logo personalizado sincronizado' : 'Logo original';
   setLogoSrc(c.logoData || 'assets/logo.png');
   openSheet('customSheet','customOverlay');
 }
@@ -692,48 +734,67 @@ function handleCustomLogoFile(event) {
     showToast('Elige una imagen válida', 'error');
     return;
   }
+  if (file.size > 350000) {
+    showToast('Logo demasiado grande. Mejor usa una imagen ligera.', 'error');
+    return;
+  }
   var reader = new FileReader();
   reader.onload = function(e){
     var data = e.target.result;
     var c = getCustomization();
     c.logoData = data;
-    localStorage.setItem(CUSTOMIZATION_KEY, JSON.stringify(c));
+    saveCustomizationLocal(c);
     setLogoSrc(data);
     var status = document.getElementById('customLogoStatus');
-    if (status) status.textContent = 'Nuevo logo cargado. Pulsa Guardar.';
+    if (status) status.textContent = 'Nuevo logo preparado. Pulsa Guardar para sincronizar.';
     showToast('Logo preparado');
   };
   reader.readAsDataURL(file);
 }
 
-function saveCustomization() {
+async function saveCustomization() {
   var c = getCustomization();
   var nameEl = document.getElementById('customAppName');
   var accentEl = document.getElementById('customAccent');
   c.name = nameEl && nameEl.value ? nameEl.value.trim() : 'M17LIV3 Gestión Clientes';
   c.accent = accentEl && accentEl.value ? accentEl.value : '#00e5ff';
-  localStorage.setItem(CUSTOMIZATION_KEY, JSON.stringify(c));
-  applyAppCustomization();
-  showToast('Personalización guardada');
-  closeSheet('customSheet','customOverlay');
+  try {
+    showElegantLoading('Guardando personalización...');
+    var saved = await saveCustomizationToStore(c);
+    applyAppCustomization(saved);
+    showToast(USE_SUPABASE ? 'Personalización sincronizada' : 'Personalización guardada');
+    closeSheet('customSheet','customOverlay');
+  } catch(ex) {
+    saveCustomizationLocal(c);
+    applyAppCustomization(c);
+    showToast('Guardado local. Ejecuta el SQL app_settings para sincronizar.', 'error');
+  } finally {
+    hideElegantLoading();
+  }
 }
 
 function resetCustomization() {
   showPrettyConfirm({
     title: 'Restaurar diseño original',
-    message: 'Se quitará el nombre, color y logo personalizados de este dispositivo.',
+    message: 'Se quitará el nombre, color y logo personalizados en tus dispositivos.',
     confirmText: 'Restaurar',
     danger: false,
-    onConfirm: function(){
-      localStorage.removeItem(CUSTOMIZATION_KEY);
-      applyAppCustomization();
-      var input = document.getElementById('customLogoFile');
-      if (input) input.value = '';
-      showToast('Diseño original restaurado');
-      closeSheet('customSheet','customOverlay');
+    onConfirm: async function(){
+      try {
+        showElegantLoading('Restaurando diseño...');
+        await deleteCustomizationFromStore();
+        applyAppCustomization({});
+        var input = document.getElementById('customLogoFile');
+        if (input) input.value = '';
+        showToast('Diseño original restaurado');
+        closeSheet('customSheet','customOverlay');
+      } finally {
+        hideElegantLoading();
+      }
     }
   });
 }
+
 // ========== FIN DISEÑO APP ==========
 
 function showAppAfterLogin() {
@@ -816,8 +877,9 @@ async function completeSupabaseLogin(fromSavedSession) {
     setRememberDevice(rememberDeviceWanted(), userEmail);
   } catch(e) {}
 
-  showElegantLoading('Cargando clientes...');
+  showElegantLoading('Cargando panel...');
   try {
+    await loadCustomizationFromStore(false);
     await loadClientsFromStore();
     await loadRenewals(false);
     try { if (typeof loadFinanceMovements === 'function') await loadFinanceMovements(false); } catch(e) { console.warn('No se pudo cargar finanzas para inicio', e); }
@@ -1139,10 +1201,27 @@ function clientHasUnansweredRenewalNotice(c) {
   return !!(clientHasRenewalNotice(c) && !isRenewalReplyCurrent(c));
 }
 
+
+function renewalResponseValue(c) {
+  return String((c && c.avisoRenovacionRespuesta) || '').toLowerCase();
+}
+function renewalResponseLabel(c) {
+  var r = renewalResponseValue(c);
+  if (r === 'renueva') return 'Va a renovar';
+  if (r === 'no_renueva') return 'No va a renovar';
+  return 'Contestó';
+}
+function renewalResponseBadgeClass(c) {
+  var r = renewalResponseValue(c);
+  if (r === 'renueva') return 'badgeAnswered';
+  if (r === 'no_renueva') return 'badgeNoRenew';
+  return 'badgeAnswered';
+}
+
 function renewalReplyBadgeHtml(c) {
   if (!clientHasRenewalNotice(c)) return '';
   return isRenewalReplyCurrent(c)
-    ? '<span class="badge badgeAnswered">Contesto</span>'
+    ? '<span class="badge '+renewalResponseBadgeClass(c)+'">'+esc(renewalResponseLabel(c))+'</span>'
     : '<span class="badge badgeNoAnswer">Sin contestar</span>';
 }
 
@@ -1152,15 +1231,26 @@ function renewalNoticeHtml(c, mode) {
   var answered = isRenewalReplyCurrent(c);
   var sentDate = c.avisoRenovacionFecha ? formatDate(String(c.avisoRenovacionFecha).split('T')[0]) : '';
   var replyDate = c.avisoRenovacionContestadoFecha ? formatDate(String(c.avisoRenovacionContestadoFecha).split('T')[0]) : '';
-  var baseClass = current ? (answered ? 'renewNotice done answered' : 'renewNotice done noanswer') : 'renewNotice pending';
+  var response = renewalResponseValue(c);
+  var baseClass = current ? (answered ? ('renewNotice done answered ' + (response === 'no_renueva' ? 'noRenew' : 'willRenew')) : 'renewNotice done noanswer') : 'renewNotice pending';
   var label = current ? ('Avisado' + (sentDate ? ' · ' + sentDate : '')) : 'Pendiente de aviso';
-  var replyLabel = current ? (answered ? ('Contesto' + (replyDate ? ' · ' + replyDate : '')) : 'Sin contestar todavía') : 'Aviso de renovación 15 días';
+  var replyLabel = current ? (answered ? (renewalResponseLabel(c) + (replyDate ? ' · ' + replyDate : '')) : 'El cliente aún no ha contestado') : 'Aviso de renovación 15 días';
   var actions = '';
   if (current) {
-    actions = '<div class="noticeActions">' +
-      '<button type="button" data-id="'+esc(c.id)+'" onclick="toggleRenewalReply(this.dataset.id, '+(!answered)+', this)">'+(answered ? 'Marcar sin contestar' : 'Marcar contestado')+'</button>' +
-      '<button type="button" data-id="'+esc(c.id)+'" onclick="toggleRenewalNotice(this.dataset.id, false, this)">Desmarcar aviso</button>' +
-    '</div>';
+    if (answered) {
+      actions = '<div class="noticeActions">' +
+        (response !== 'renueva' ? '<button type="button" data-id="'+esc(c.id)+'" onclick="toggleRenewalReply(this.dataset.id, true, this, &quot;renueva&quot;)">Cambiar a renueva</button>' : '') +
+        (response !== 'no_renueva' ? '<button type="button" data-id="'+esc(c.id)+'" onclick="toggleRenewalReply(this.dataset.id, true, this, &quot;no_renueva&quot;)">Cambiar a no renueva</button>' : '') +
+        '<button type="button" data-id="'+esc(c.id)+'" onclick="toggleRenewalReply(this.dataset.id, false, this)">Marcar sin contestar</button>' +
+        '<button type="button" data-id="'+esc(c.id)+'" onclick="toggleRenewalNotice(this.dataset.id, false, this)">Desmarcar aviso</button>' +
+      '</div>';
+    } else {
+      actions = '<div class="noticeActions renewalResponseActions">' +
+        '<button type="button" class="willRenewBtn" data-id="'+esc(c.id)+'" onclick="toggleRenewalReply(this.dataset.id, true, this, &quot;renueva&quot;)">Va a renovar</button>' +
+        '<button type="button" class="noRenewBtn" data-id="'+esc(c.id)+'" onclick="toggleRenewalReply(this.dataset.id, true, this, &quot;no_renueva&quot;)">No va a renovar</button>' +
+        '<button type="button" data-id="'+esc(c.id)+'" onclick="toggleRenewalNotice(this.dataset.id, false, this)">Desmarcar aviso</button>' +
+      '</div>';
+    }
   } else {
     actions = '<div class="noticeActions"><button type="button" data-id="'+esc(c.id)+'" onclick="toggleRenewalNotice(this.dataset.id, true, this)">Marcar avisado</button></div>';
   }
@@ -1179,6 +1269,7 @@ async function toggleRenewalNotice(id, value, btn) {
     c.avisoRenovacionContestado = false;
     c.avisoRenovacionContestadoFecha = null;
     c.avisoRenovacionContestadoExpiracion = null;
+    c.avisoRenovacionRespuesta = null;
   } else {
     c.avisoRenovacionEnviado = false;
     c.avisoRenovacionFecha = null;
@@ -1186,6 +1277,7 @@ async function toggleRenewalNotice(id, value, btn) {
     c.avisoRenovacionContestado = false;
     c.avisoRenovacionContestadoFecha = null;
     c.avisoRenovacionContestadoExpiracion = null;
+    c.avisoRenovacionRespuesta = null;
   }
   try {
     var saved = await saveClientToStore(c);
@@ -1203,7 +1295,7 @@ async function toggleRenewalNotice(id, value, btn) {
   }
 }
 
-async function toggleRenewalReply(id, value, btn) {
+async function toggleRenewalReply(id, value, btn, response) {
   var c = clients.find(function(x){ return x.id === id; });
   if (!c) return;
   if (!clientHasRenewalNotice(c)) {
@@ -1215,6 +1307,7 @@ async function toggleRenewalReply(id, value, btn) {
   c.avisoRenovacionContestado = !!value;
   c.avisoRenovacionContestadoFecha = value ? new Date().toISOString() : null;
   c.avisoRenovacionContestadoExpiracion = value ? (c.expiry || null) : null;
+  c.avisoRenovacionRespuesta = value ? (response || 'renueva') : null;
   try {
     var saved = await saveClientToStore(c);
     var idx = clients.findIndex(function(x){ return x.id === id; });
@@ -1224,7 +1317,7 @@ async function toggleRenewalReply(id, value, btn) {
     if (document.getElementById('viewSheet') && document.getElementById('viewSheet').classList.contains('open')) {
       viewClient(id);
     }
-    if (typeof showToast === 'function') showToast(value ? 'Cliente marcado como contestado' : 'Cliente marcado como sin contestar');
+    if (typeof showToast === 'function') showToast(value ? ('Respuesta guardada: ' + renewalResponseLabel(saved)) : 'Cliente marcado como sin contestar');
   } catch(ex) {
     if (typeof showToast === 'function') showToast('Error al guardar contestación: ' + ex.message, 'error'); else alert('Error al guardar contestación: ' + ex.message);
     if (btn) { btn.disabled = false; btn.textContent = oldText; }
@@ -3134,7 +3227,6 @@ function viewClient(id) {
   html+=    renewalReplyBadgeHtml(c);
   html+=  '</div>';
   html+=  '<div class="premiumExpiryLine"><span>Expira</span><strong>'+formatDate(c.expiry)+'</strong><small>'+esc(premiumExpiryText(c))+'</small></div>';
-  if (tags.length) html+= '<div class="premiumTagsWrap">'+clientTagsHtml(c)+'</div>';
   html+='</div>';
 
   html+='<div class="premiumActionRow">';
@@ -3731,6 +3823,7 @@ async function doRenew(markAsPending) {
   c.avisoRenovacionContestado = false;
   c.avisoRenovacionContestadoFecha = null;
   c.avisoRenovacionContestadoExpiracion = null;
+  c.avisoRenovacionRespuesta = null;
   try {
     if (btn) { btn.disabled = true; btn.textContent = 'Guardando renovacion...'; }
     if (pendingBtn) { pendingBtn.disabled = true; pendingBtn.textContent = 'Guardando paga mas tarde...'; }

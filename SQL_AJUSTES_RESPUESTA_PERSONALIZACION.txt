@@ -1,0 +1,53 @@
+-- M17LIV3 - Ajustes nuevos
+-- Ejecutar UNA SOLA VEZ en Supabase SQL Editor.
+-- Añade:
+-- 1) respuesta de renovación: renueva / no_renueva
+-- 2) personalización sincronizada entre dispositivos
+
+alter table public.clientes
+add column if not exists aviso_renovacion_respuesta text;
+
+create table if not exists public.app_settings (
+  id uuid primary key default gen_random_uuid(),
+  owner_id uuid default auth.uid(),
+  nombre_visible text default 'M17LIV3 Gestión Clientes',
+  color_principal text default '#00e5ff',
+  logo_data text,
+  updated_at timestamptz default now(),
+  unique(owner_id)
+);
+
+alter table public.app_settings enable row level security;
+
+grant usage on schema public to authenticated;
+grant select, insert, update, delete on public.app_settings to authenticated;
+
+drop policy if exists "app_settings_select_owner" on public.app_settings;
+drop policy if exists "app_settings_insert_owner" on public.app_settings;
+drop policy if exists "app_settings_update_owner" on public.app_settings;
+drop policy if exists "app_settings_delete_owner" on public.app_settings;
+
+create policy "app_settings_select_owner"
+on public.app_settings
+for select
+to authenticated
+using (owner_id = (select auth.uid()));
+
+create policy "app_settings_insert_owner"
+on public.app_settings
+for insert
+to authenticated
+with check (owner_id = (select auth.uid()));
+
+create policy "app_settings_update_owner"
+on public.app_settings
+for update
+to authenticated
+using (owner_id = (select auth.uid()))
+with check (owner_id = (select auth.uid()));
+
+create policy "app_settings_delete_owner"
+on public.app_settings
+for delete
+to authenticated
+using (owner_id = (select auth.uid()));

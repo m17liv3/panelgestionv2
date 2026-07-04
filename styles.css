@@ -1987,3 +1987,70 @@ button:active,
     grid-template-columns: 1fr 1fr 1fr 40px;
   }
 }
+
+
+/* ===== Limpieza etiquetas y respuesta renovación ===== */
+.clientTags,
+.tagFilterBar,
+.clientTagsEditor {
+  display: none !important;
+}
+.badgeNoRenew {
+  background: rgba(255,77,77,.13);
+  color: var(--red);
+  border-color: rgba(255,77,77,.28);
+}
+.renewNotice.noRenew {
+  border-color: rgba(255,77,77,.22);
+  background: rgba(255,77,77,.055);
+}
+.renewNotice.willRenew {
+  border-color: rgba(105,255,71,.22);
+  background: rgba(105,255,71,.055);
+}
+.renewalResponseActions {
+  grid-template-columns: 1fr 1fr;
+}
+.noticeActions .willRenewBtn {
+  border-color: rgba(105,255,71,.25);
+  color: var(--green);
+}
+.noticeActions .noRenewBtn {
+  border-color: rgba(255,77,77,.25);
+  color: var(--red);
+}
+
+/* ===== Carga panel con efecto más visual ===== */
+.loadingCard {
+  position: relative;
+  overflow: hidden;
+}
+.loadingCard::before {
+  content: "";
+  position: absolute;
+  inset: -40%;
+  background: conic-gradient(from 0deg, transparent, rgba(0,229,255,.18), transparent, rgba(105,255,71,.14), transparent);
+  animation: loadingSpin 3s linear infinite;
+  opacity: .85;
+}
+.loadingCard > * {
+  position: relative;
+  z-index: 1;
+}
+@keyframes loadingSpin {
+  to { transform: rotate(360deg); }
+}
+.loadingTitle::after {
+  content: "";
+  display: block;
+  width: 56px;
+  height: 2px;
+  margin: 10px auto 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+  animation: loadingLine 1.25s ease-in-out infinite;
+}
+@keyframes loadingLine {
+  0%,100% { transform: scaleX(.45); opacity: .45; }
+  50% { transform: scaleX(1); opacity: 1; }
+}

@@ -23,7 +23,7 @@
   <div class="loadingCard">
     <img src="assets/logo.png" alt="M17LIV3" id="loadingLogo"/>
     <div class="loadingTitle" id="loadingTitle">M17LIV3</div>
-    <div class="loadingText" id="loadingText">Cargando clientes...</div>
+    <div class="loadingText" id="loadingText">Cargando panel...</div>
     <div class="loadingDots"><span></span><span></span><span></span></div>
   </div>
 </div>
@@ -163,10 +163,7 @@
       <div class="pill" data-svc="TODO" onclick="setPillSvc(this,'TODO')">TODO</div>
       <div class="pill" data-svc="ESPANA" onclick="setPillSvc(this,'ESPANA')">ESPA&Ntilde;A</div>
     </div>
-
-    <div class="tagFilterBar" id="tagFilterBar"></div>
-
-    <div id="cardsContainer"></div>
+<div id="cardsContainer"></div>
     <div class="empty" id="emptyState" style="display:none">
       <div class="ico">&#128250;</div>
       <div>No hay clientes</div>
@@ -221,8 +218,6 @@
   <div class="sheet-body">
     <div class="premiumOptionList">
       <button onclick="clientMoreEdit()"><span>&#9998;</span><strong>Editar cliente</strong><small>Cambiar datos, apps, etiquetas o fecha</small></button>
-      <button onclick="clientMoreCopy('user')"><span>&#128203;</span><strong>Copiar usuario</strong><small>Copiar el usuario al portapapeles</small></button>
-      <button onclick="clientMoreCopy('pass')"><span>&#128273;</span><strong>Copiar contraseña</strong><small>Copiar la contraseña al portapapeles</small></button>
       <button class="danger" onclick="clientMoreDelete()"><span>&#128465;</span><strong>Borrar cliente</strong><small>Eliminar el cliente de la base de datos</small></button>
     </div>
   </div>
@@ -254,7 +249,7 @@
     <button class="sheet-close" onclick="closeSheet('customSheet','customOverlay')">x</button>
   </div>
   <div class="sheet-body">
-    <div class="customIntro">Cambia el nombre visible, color principal y logo en este dispositivo.</div>
+    <div class="customIntro">Cambia el nombre visible, color principal y logo. Se sincroniza en tus dispositivos.</div>
 
     <div class="formGroup">
       <label>Nombre visible</label>
@@ -357,13 +352,7 @@
       </div>
       <div id="otraExtrasBox"></div>
     </div>
-    <div class="formGroup">
-      <label>Etiquetas del cliente</label>
-      <div class="clientTagsEditor" id="clientTagsEditor"></div>
-      <input type="text" id="fCustomTags" placeholder="Etiquetas extra separadas por coma"/>
-    </div>
-
-    <div class="formGroup">
+<div class="formGroup">
       <label>Notas</label>
       <textarea id="fNotes" placeholder="Informacion adicional..."></textarea>
     </div>
