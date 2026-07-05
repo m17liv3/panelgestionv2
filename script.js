@@ -909,6 +909,15 @@ function homeStatusListItemHtml(c, type) {
     actions = '<div class="homeStatusListActions homeStatusListActionsPaidOnly">' +
       '<button class="paidOnlyBtn" data-id="'+esc(c.id)+'" data-renewal-id="'+esc(pendingRenewal ? pendingRenewal.id : '')+'" onclick="homeStatusListMarkPaid(this.dataset.id, this.dataset.renewalId, this)">✓ Pagado</button>' +
     '</div>';
+  } else if (type === 'warn') {
+    actions = '<div class="homeStatusListActions homeStatusListActionsWarnOnly">' +
+      '<button data-id="'+esc(c.id)+'" onclick="homeStatusListRenew(this.dataset.id)">Renovar</button>' +
+      '<button data-id="'+esc(c.id)+'" onclick="homeStatusListMessages(this.dataset.id)">Msg</button>' +
+      '<button data-id="'+esc(c.id)+'" onclick="homeStatusListSetRenewalNotice(this.dataset.id, this)">Marcar avisado</button>' +
+      '<button data-id="'+esc(c.id)+'" onclick="homeStatusListSetRenewalReply(this.dataset.id, &quot;&quot;, this)">Marcar contestado</button>' +
+      '<button class="willRenewBtn" data-id="'+esc(c.id)+'" onclick="homeStatusListSetRenewalReply(this.dataset.id, &quot;renueva&quot;, this)">Va a renovar</button>' +
+      '<button class="noRenewBtn" data-id="'+esc(c.id)+'" onclick="homeStatusListSetRenewalReply(this.dataset.id, &quot;no_renueva&quot;, this)">No va a renovar</button>' +
+    '</div>';
   } else {
     actions = '<div class="homeStatusListActions">' +
       '<button data-id="'+esc(c.id)+'" onclick="homeStatusListOpenFull(this.dataset.id)">Ver</button>' +
@@ -967,6 +976,49 @@ function homeStatusListEdit(id) {
 function homeStatusListMore(id) {
   closeSheet('homeStatusListSheet','homeStatusListOverlay');
   setTimeout(function(){ openClientMoreActions(id); }, 260);
+}
+
+
+async function homeStatusListSetRenewalNotice(id, btn) {
+  await toggleRenewalNotice(id, true, btn);
+  renderHomeStatusList();
+  if (typeof updateStats === 'function') updateStats();
+  if (typeof updateHomeMiniPanel === 'function') updateHomeMiniPanel();
+}
+
+async function homeStatusListSetRenewalReply(id, response, btn) {
+  var c = clients.find(function(x){ return x.id === id; });
+  if (!c) return;
+  var oldText = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = 'Guardando...'; }
+
+  var now = new Date().toISOString();
+  if (!isRenewalNoticeCurrent(c)) {
+    c.avisoRenovacionEnviado = true;
+    c.avisoRenovacionFecha = now;
+    c.avisoRenovacionExpiracion = c.expiry || null;
+  }
+  c.avisoRenovacionContestado = true;
+  c.avisoRenovacionContestadoFecha = now;
+  c.avisoRenovacionContestadoExpiracion = c.expiry || null;
+  c.avisoRenovacionRespuesta = response || null;
+
+  try {
+    var saved = await saveClientToStore(c);
+    var idx = clients.findIndex(function(x){ return x.id === id; });
+    if (idx >= 0) clients[idx] = saved;
+    saveData();
+    renderCards();
+    renderHomeStatusList();
+    if (typeof updateStats === 'function') updateStats();
+    if (typeof updateHomeMiniPanel === 'function') updateHomeMiniPanel();
+    if (typeof showToast === 'function') {
+      showToast(response === 'renueva' ? 'Marcado: va a renovar' : (response === 'no_renueva' ? 'Marcado: no va a renovar' : 'Cliente marcado como contestado'));
+    }
+  } catch(ex) {
+    if (typeof showToast === 'function') showToast('Error al guardar contestación: ' + ex.message, 'error'); else alert('Error al guardar contestación: ' + ex.message);
+    if (btn) { btn.disabled = false; btn.textContent = oldText; }
+  }
 }
 
 async function homeStatusListMarkPaid(clientId, renewalId, btn) {
