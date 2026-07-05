@@ -39,6 +39,8 @@ var SUPABASE_RENEWALS_TABLE = CONFIG.supabaseRenewalsTable || 'renovaciones';
 var SUPABASE_FINANCE_TABLE = CONFIG.supabaseFinanceTable || 'finanzas_movimientos';
 var financeMovements = [];
 var SUPABASE_MESSAGE_TEMPLATES_TABLE = CONFIG.supabaseMessageTemplatesTable || 'message_templates';
+var SUPABASE_PANEL_LINKS_TABLE = CONFIG.supabasePanelLinksTable || 'panel_links';
+var panelLinks = [];
 var renewals = [];
 var BACKUP_LAST_KEY = 'm17_last_backup_at';
 var BACKUP_REMINDER_DAYS = 7;
@@ -1069,6 +1071,8 @@ async function homeStatusListMarkPaid(clientId, renewalId, btn) {
   renderHomeStatusList();
   updateStats();
   updateHomeMiniPanel();
+  renderPanelLinks();
+  loadPanelLinksFromStore(false);
 }
 // ========== FIN LISTAS DESDE PANTALLA PRINCIPAL ==========
 
@@ -3270,11 +3274,160 @@ async function exportFinanceExcel() {
 // ========== FIN BALANCE / FINANZAS ==========
 
 
+
+// ========== PANELES EXTERNOS EDITABLES ==========
+var DEFAULT_PANEL_LINKS = [
+  { key: 'ibo', label: 'Panel IBO', url: 'https://damaplay.top/panelr/m17live/' },
+  { key: 'k13', label: 'Panel K13', url: '' },
+  { key: 'jordan', label: 'Panel Jordan', url: '' }
+];
+
+function normalizePanelUrl(url) {
+  url = String(url || '').trim();
+  if (!url) return '';
+  if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+  return url;
+}
+
+function panelLinkByKey(key) {
+  var found = (panelLinks || []).find(function(p){ return p.key === key; });
+  if (found) return found;
+  return DEFAULT_PANEL_LINKS.find(function(p){ return p.key === key; }) || { key:key, label:key, url:'' };
+}
+
+function panelLinksMerged(rows) {
+  rows = rows || [];
+  return DEFAULT_PANEL_LINKS.map(function(base){
+    var found = rows.find(function(r){ return r.key === base.key; });
+    return {
+      key: base.key,
+      label: base.label,
+      url: found && typeof found.url !== 'undefined' ? (found.url || '') : (base.url || '')
+    };
+  });
+}
+
+function renderPanelLinks() {
+  (panelLinks || DEFAULT_PANEL_LINKS).forEach(function(p){
+    var status = document.getElementById('panelLinkStatus-' + p.key);
+    var card = document.querySelector('[data-panel-key="'+p.key+'"]');
+    var hasUrl = !!normalizePanelUrl(p.url);
+    if (status) status.textContent = hasUrl ? 'Abrir panel' : 'Sin enlace';
+    if (card) card.classList.toggle('disabled', !hasUrl);
+  });
+}
+
+async function loadPanelLinksFromStore(showErrors) {
+  var localKey = 'm17_panel_links_v1';
+  try {
+    if (!USE_SUPABASE) {
+      var localRows = JSON.parse(localStorage.getItem(localKey) || '[]');
+      panelLinks = panelLinksMerged(localRows);
+      renderPanelLinks();
+      return panelLinks;
+    }
+
+    var db = initSupabase();
+    var result = await db.from(SUPABASE_PANEL_LINKS_TABLE).select('*');
+    if (result.error) throw result.error;
+
+    var rows = (result.data || []).map(function(r){
+      return { key: r.panel_key || r.key || '', label: r.label || '', url: r.url || '' };
+    }).filter(function(r){ return r.key; });
+
+    panelLinks = panelLinksMerged(rows);
+    try { localStorage.setItem(localKey, JSON.stringify(panelLinks)); } catch(e) {}
+    renderPanelLinks();
+    return panelLinks;
+  } catch(e) {
+    try {
+      var fallbackRows = JSON.parse(localStorage.getItem(localKey) || '[]');
+      panelLinks = panelLinksMerged(fallbackRows);
+    } catch(ex) {
+      panelLinks = panelLinksMerged([]);
+    }
+    renderPanelLinks();
+    if (showErrors && typeof showToast === 'function') showToast('No se pudieron cargar enlaces de paneles. Revisa el SQL.', 'error');
+    return panelLinks;
+  }
+}
+
+async function savePanelLinksToStore(values) {
+  var localKey = 'm17_panel_links_v1';
+  var rows = panelLinksMerged(values || []);
+  panelLinks = rows;
+  try { localStorage.setItem(localKey, JSON.stringify(rows)); } catch(e) {}
+
+  if (USE_SUPABASE) {
+    var db = initSupabase();
+    for (var i = 0; i < rows.length; i++) {
+      var r = rows[i];
+      var payload = {
+        panel_key: r.key,
+        label: r.label,
+        url: normalizePanelUrl(r.url),
+        updated_at: new Date().toISOString()
+      };
+      var res = await db.from(SUPABASE_PANEL_LINKS_TABLE).upsert(payload, { onConflict: 'owner_id,panel_key' });
+      if (res.error) throw res.error;
+    }
+  }
+
+  renderPanelLinks();
+  return rows;
+}
+
+function openPanelLink(key) {
+  var p = panelLinkByKey(key);
+  var url = normalizePanelUrl(p.url);
+  if (!url) {
+    showToast('Todavía no hay enlace para ' + (p.label || key), 'warning');
+    openPanelLinksEditor();
+    return;
+  }
+  window.open(url, '_blank', 'noopener');
+}
+
+function openPanelLinksEditor() {
+  var set = function(key){
+    var input = document.getElementById('panelLinkInput-' + key);
+    if (input) input.value = panelLinkByKey(key).url || '';
+  };
+  set('ibo'); set('k13'); set('jordan');
+  var st = document.getElementById('panelLinksEditorStatus');
+  if (st) st.textContent = 'Actualiza los enlaces y pulsa Guardar enlaces.';
+  openSheet('panelLinksSheet','panelLinksOverlay');
+}
+
+async function savePanelLinksEditor() {
+  var btn = null;
+  try {
+    var values = DEFAULT_PANEL_LINKS.map(function(base){
+      var input = document.getElementById('panelLinkInput-' + base.key);
+      return { key: base.key, label: base.label, url: normalizePanelUrl(input ? input.value : '') };
+    });
+    var buttons = document.querySelectorAll('#panelLinksSheet .btnFull.primary');
+    btn = buttons && buttons.length ? buttons[0] : null;
+    if (btn) { btn.disabled = true; btn.textContent = 'Guardando...'; }
+    await savePanelLinksToStore(values);
+    var st = document.getElementById('panelLinksEditorStatus');
+    if (st) st.textContent = 'Enlaces guardados correctamente.';
+    showToast('Enlaces de paneles guardados');
+    closeSheet('panelLinksSheet','panelLinksOverlay');
+  } catch(e) {
+    var st2 = document.getElementById('panelLinksEditorStatus');
+    if (st2) st2.textContent = 'Error al guardar: ' + (e && e.message ? e.message : 'desconocido');
+    showToast('Error al guardar enlaces', 'error');
+  }
+  if (btn) { btn.disabled = false; btn.textContent = 'Guardar enlaces'; }
+}
+// ========== FIN PANELES EXTERNOS EDITABLES ==========
+
 // ========== PANEL APP IBO ==========
 var IBO_PANEL_URL = 'https://damaplay.top/panelr/m17live/';
 function openIboPanel() {
   closeSheet('menuSheet','menuOverlay');
-  window.open(IBO_PANEL_URL, '_blank', 'noopener');
+  openPanelLink('ibo');
 }
 function openIboPanelExternal() {
   openIboPanel();

@@ -116,6 +116,33 @@
         <em>Ver clientes</em>
       </button>
     </section>
+
+    <section class="homePanelLinks">
+      <div class="homePanelLinksHead">
+        <div>
+          <span>Accesos rápidos</span>
+          <strong>Paneles externos</strong>
+        </div>
+        <button type="button" onclick="openPanelLinksEditor()">Editar enlaces</button>
+      </div>
+      <div class="homePanelLinksGrid" id="homePanelLinksGrid">
+        <button type="button" class="homePanelLinkCard" data-panel-key="ibo" onclick="openPanelLink('ibo')">
+          <span>&#127760;</span>
+          <strong>Panel IBO</strong>
+          <small id="panelLinkStatus-ibo">Cargando...</small>
+        </button>
+        <button type="button" class="homePanelLinkCard" data-panel-key="k13" onclick="openPanelLink('k13')">
+          <span>&#9889;</span>
+          <strong>Panel K13</strong>
+          <small id="panelLinkStatus-k13">Cargando...</small>
+        </button>
+        <button type="button" class="homePanelLinkCard" data-panel-key="jordan" onclick="openPanelLink('jordan')">
+          <span>&#128081;</span>
+          <strong>Panel Jordan</strong>
+          <small id="panelLinkStatus-jordan">Cargando...</small>
+        </button>
+      </div>
+    </section>
 <div class="homeHiddenCounters" aria-hidden="true">
       <span id="stTotal">0</span>
       <span id="stAdvised">0</span>
@@ -182,7 +209,6 @@
     <div class="menuItem" onclick="openPayments()"><span class="ico2">&#128176;</span> Ingresos / renovaciones</div>
     <div class="menuItem" onclick="openFinanceBalance()"><span class="ico2">&#128202;</span> Balance / finanzas</div>
     <div class="menuItem" onclick="openRaffles()"><span class="ico2">&#127873;</span> Sorteos clientes</div>
-    <div class="menuItem" onclick="openIboPanel()"><span class="ico2">&#127760;</span> Panel APP IBO</div>
     <div class="menuItem" onclick="openFixedAppImage()"><span class="ico2">&#128444;</span> Links fijos APP</div>
     <div class="menuItem" onclick="openCartelera()"><span class="ico2">&#128249;</span> Cartelera del dia</div>
     <div class="menuItem" onclick="openMovieTemplates()"><span class="ico2">&#127916;</span> Plantillas Peliculas</div>
@@ -190,6 +216,38 @@
     <div class="menuItem" id="pwaInstallMenuItem" onclick="installPWA()"><span class="ico2">&#128241;</span> Instalar como app</div>
     <div class="menuItem" onclick="doLogout()"><span class="ico2">&#128682;</span> Cerrar sesion</div>
     <input type="file" id="importInput" accept=".xlsx,.xls" onchange="importExcel(event)"/>
+  </div>
+</div>
+
+
+<!-- PANEL LINKS EDITOR SHEET -->
+<div class="sheet-overlay" id="panelLinksOverlay" onclick="closeSheet('panelLinksSheet','panelLinksOverlay')"></div>
+<div class="sheet compactSheet" id="panelLinksSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <h3>&#127760; Editar paneles</h3>
+    <button class="sheet-close" onclick="closeSheet('panelLinksSheet','panelLinksOverlay')">x</button>
+  </div>
+  <div class="sheet-body">
+    <div class="panelLinksEditorIntro">Actualiza aquí los enlaces cuando cambien. Los botones de Inicio usarán siempre la última URL guardada.</div>
+
+    <div class="formGroup">
+      <label>Panel IBO</label>
+      <input type="url" id="panelLinkInput-ibo" placeholder="https://...">
+    </div>
+    <div class="formGroup">
+      <label>Panel K13</label>
+      <input type="url" id="panelLinkInput-k13" placeholder="https://...">
+    </div>
+    <div class="formGroup">
+      <label>Panel Jordan</label>
+      <input type="url" id="panelLinkInput-jordan" placeholder="https://...">
+    </div>
+
+    <div id="panelLinksEditorStatus" class="panelLinksEditorStatus">Los enlaces se guardan online para tu usuario.</div>
+
+    <button class="btnFull primary" onclick="savePanelLinksEditor()">Guardar enlaces</button>
+    <button class="btnFull gray" onclick="closeSheet('panelLinksSheet','panelLinksOverlay')" style="margin-top:8px">Cerrar</button>
   </div>
 </div>
 
