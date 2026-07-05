@@ -40,7 +40,7 @@ var SUPABASE_FINANCE_TABLE = CONFIG.supabaseFinanceTable || 'finanzas_movimiento
 var financeMovements = [];
 var SUPABASE_MESSAGE_TEMPLATES_TABLE = CONFIG.supabaseMessageTemplatesTable || 'message_templates';
 var SUPABASE_PANEL_LINKS_TABLE = CONFIG.supabasePanelLinksTable || 'panel_links';
-var panelLinks = [];
+var panelLinks = panelLinksMerged ? panelLinksMerged([]) : [];
 var renewals = [];
 var BACKUP_LAST_KEY = 'm17_last_backup_at';
 var BACKUP_REMINDER_DAYS = 7;
@@ -598,6 +598,7 @@ function navHome() {
   var results = document.getElementById('homeResultsBlock');
   if (results) results.style.display = 'none';
   var sc = document.getElementById('mainScroll');
+  refreshPanelLinksSoon();
   if (sc) sc.scrollTo({top: 0, behavior: 'smooth'});
 }
 
@@ -1071,8 +1072,7 @@ async function homeStatusListMarkPaid(clientId, renewalId, btn) {
   renderHomeStatusList();
   updateStats();
   updateHomeMiniPanel();
-  renderPanelLinks();
-  loadPanelLinksFromStore(false);
+  refreshPanelLinksSoon();
 }
 // ========== FIN LISTAS DESDE PANTALLA PRINCIPAL ==========
 
@@ -3308,12 +3308,26 @@ function panelLinksMerged(rows) {
 }
 
 function renderPanelLinks() {
-  (panelLinks || DEFAULT_PANEL_LINKS).forEach(function(p){
+  var list = panelLinksMerged(panelLinks || []);
+  panelLinks = list;
+  list.forEach(function(p){
     var status = document.getElementById('panelLinkStatus-' + p.key);
     var card = document.querySelector('[data-panel-key="'+p.key+'"]');
     var hasUrl = !!normalizePanelUrl(p.url);
     if (status) status.textContent = hasUrl ? 'Abrir panel' : 'Sin enlace';
-    if (card) card.classList.toggle('disabled', !hasUrl);
+    if (card) {
+      card.classList.toggle('disabled', !hasUrl);
+      card.setAttribute('aria-disabled', hasUrl ? 'false' : 'true');
+    }
+  });
+}
+
+function refreshPanelLinksSoon() {
+  renderPanelLinks();
+  loadPanelLinksFromStore(false).then(function(){
+    renderPanelLinks();
+  }).catch(function(){
+    renderPanelLinks();
   });
 }
 
@@ -3408,14 +3422,23 @@ async function savePanelLinksToStore(values) {
   return rows;
 }
 
-function openPanelLink(key) {
+async function openPanelLink(key) {
   var p = panelLinkByKey(key);
   var url = normalizePanelUrl(p.url);
+
+  if (!url) {
+    await loadPanelLinksFromStore(false);
+    p = panelLinkByKey(key);
+    url = normalizePanelUrl(p.url);
+  }
+
   if (!url) {
     showToast('Todavía no hay enlace para ' + (p.label || key), 'warning');
     openPanelLinksEditor();
     return;
   }
+
+  renderPanelLinks();
   window.open(url, '_blank', 'noopener');
 }
 
@@ -7498,4 +7521,5 @@ function finalEnhancementsBoot() {
 }
 document.addEventListener('DOMContentLoaded', function(){
   setTimeout(finalEnhancementsBoot, 800);
+  setTimeout(refreshPanelLinksSoon, 1000);
 });
