@@ -185,7 +185,6 @@
     <div class="menuItem" onclick="openIboPanel()"><span class="ico2">&#127760;</span> Panel APP IBO</div>
     <div class="menuItem" onclick="openFixedAppImage()"><span class="ico2">&#128444;</span> Links fijos APP</div>
     <div class="menuItem" onclick="openCartelera()"><span class="ico2">&#128249;</span> Cartelera del dia</div>
-    <div class="menuItem" onclick="openCustomization()"><span class="ico2">&#9881;</span> Personalizar app</div>
     <div class="menuItem" onclick="openMovieTemplates()"><span class="ico2">&#127916;</span> Plantillas Peliculas</div>
     <div class="menuItem" onclick="openSeriesTemplates()"><span class="ico2">&#127909;</span> Plantillas Series</div>
     <div class="menuItem" id="pwaInstallMenuItem" onclick="installPWA()"><span class="ico2">&#128241;</span> Instalar como app</div>
@@ -227,55 +226,6 @@
     </div>
   </div>
 </div>
-
-<!-- CUSTOMIZATION SHEET -->
-<div class="sheet-overlay" id="customOverlay" onclick="closeSheet('customSheet','customOverlay')"></div>
-<div class="sheet" id="customSheet">
-  <div class="sheet-handle"></div>
-  <div class="sheet-header">
-    <h3>&#9881; Personalizar app</h3>
-    <button class="sheet-close" onclick="closeSheet('customSheet','customOverlay')">x</button>
-  </div>
-  <div class="sheet-body">
-    <div class="customIntro">Cambia el nombre visible, color principal y logo. Se sincroniza en tus dispositivos.</div>
-
-    <div class="formGroup">
-      <label>Nombre visible</label>
-      <input type="text" id="customAppName" placeholder="Ej: M17LIV3 Gestión Clientes"/>
-    </div>
-
-    <div class="formGroup">
-      <label>Color principal</label>
-      <select id="customAccent">
-        <option value="#00e5ff">Azul neón</option>
-        <option value="#69ff47">Verde neón</option>
-        <option value="#a78bfa">Morado premium</option>
-        <option value="#ffb020">Ámbar</option>
-        <option value="#ff4d8d">Rosa neón</option>
-      </select>
-    </div>
-
-    <div class="customLogoBox">
-      <div>
-        <strong>Logo</strong>
-        <span>Sube un PNG/JPG cuadrado si quieres cambiarlo visualmente.</span>
-      </div>
-      <button onclick="document.getElementById('customLogoFile').click()">Elegir logo</button>
-      <input type="file" id="customLogoFile" accept="image/*" style="display:none" onchange="handleCustomLogoFile(event)"/>
-    </div>
-
-    <div class="customLogoPreview">
-      <img src="assets/logo.png" alt="Logo" id="customLogoPreview"/>
-      <span id="customLogoStatus">Logo actual</span>
-    </div>
-
-    <button class="btnFull primary" onclick="saveCustomization()">&#128190; Guardar personalización</button>
-    <button class="btnFull gray" onclick="resetCustomization()" style="margin-top:8px">&#8634; Restaurar diseño original</button>
-    <button class="btnFull gray" onclick="closeSheet('customSheet','customOverlay')" style="margin-top:8px">Cerrar</button>
-  </div>
-</div>
-
-
 
 
 <!-- HOME STATUS LIST SHEET -->
