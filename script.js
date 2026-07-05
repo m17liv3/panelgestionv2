@@ -3328,7 +3328,15 @@ async function loadPanelLinksFromStore(showErrors) {
     }
 
     var db = initSupabase();
-    var result = await db.from(SUPABASE_PANEL_LINKS_TABLE).select('*');
+    var userId = '';
+    if (db.auth && db.auth.getUser) {
+      var userRes = await db.auth.getUser();
+      userId = userRes && userRes.data && userRes.data.user ? userRes.data.user.id : '';
+    }
+
+    var query = db.from(SUPABASE_PANEL_LINKS_TABLE).select('*');
+    if (userId) query = query.eq('owner_id', userId);
+    var result = await query;
     if (result.error) throw result.error;
 
     var rows = (result.data || []).map(function(r){
@@ -3340,6 +3348,7 @@ async function loadPanelLinksFromStore(showErrors) {
     renderPanelLinks();
     return panelLinks;
   } catch(e) {
+    console.warn('No se pudieron cargar enlaces online:', e);
     try {
       var fallbackRows = JSON.parse(localStorage.getItem(localKey) || '[]');
       panelLinks = panelLinksMerged(fallbackRows);
@@ -3347,7 +3356,7 @@ async function loadPanelLinksFromStore(showErrors) {
       panelLinks = panelLinksMerged([]);
     }
     renderPanelLinks();
-    if (showErrors && typeof showToast === 'function') showToast('No se pudieron cargar enlaces de paneles. Revisa el SQL.', 'error');
+    if (showErrors && typeof showToast === 'function') showToast('No se pudieron cargar enlaces online. Revisa Supabase.', 'error');
     return panelLinks;
   }
 }
@@ -3355,24 +3364,46 @@ async function loadPanelLinksFromStore(showErrors) {
 async function savePanelLinksToStore(values) {
   var localKey = 'm17_panel_links_v1';
   var rows = panelLinksMerged(values || []);
-  panelLinks = rows;
-  try { localStorage.setItem(localKey, JSON.stringify(rows)); } catch(e) {}
 
   if (USE_SUPABASE) {
     var db = initSupabase();
+    var userRes = db.auth && db.auth.getUser ? await db.auth.getUser() : null;
+    var user = userRes && userRes.data && userRes.data.user ? userRes.data.user : null;
+    if (!user || !user.id) throw new Error('No hay usuario autenticado para guardar enlaces online.');
+
     for (var i = 0; i < rows.length; i++) {
       var r = rows[i];
       var payload = {
+        owner_id: user.id,
         panel_key: r.key,
         label: r.label,
         url: normalizePanelUrl(r.url),
         updated_at: new Date().toISOString()
       };
-      var res = await db.from(SUPABASE_PANEL_LINKS_TABLE).upsert(payload, { onConflict: 'owner_id,panel_key' });
+
+      var existing = await db.from(SUPABASE_PANEL_LINKS_TABLE)
+        .select('id')
+        .eq('owner_id', user.id)
+        .eq('panel_key', r.key)
+        .maybeSingle();
+
+      if (existing.error) throw existing.error;
+
+      var res;
+      if (existing.data && existing.data.id) {
+        res = await db.from(SUPABASE_PANEL_LINKS_TABLE)
+          .update(payload)
+          .eq('id', existing.data.id);
+      } else {
+        res = await db.from(SUPABASE_PANEL_LINKS_TABLE)
+          .insert(payload);
+      }
       if (res.error) throw res.error;
     }
   }
 
+  panelLinks = rows;
+  try { localStorage.setItem(localKey, JSON.stringify(rows)); } catch(e) {}
   renderPanelLinks();
   return rows;
 }
@@ -3388,14 +3419,15 @@ function openPanelLink(key) {
   window.open(url, '_blank', 'noopener');
 }
 
-function openPanelLinksEditor() {
+async function openPanelLinksEditor() {
+  await loadPanelLinksFromStore(false);
   var set = function(key){
     var input = document.getElementById('panelLinkInput-' + key);
     if (input) input.value = panelLinkByKey(key).url || '';
   };
   set('ibo'); set('k13'); set('jordan');
   var st = document.getElementById('panelLinksEditorStatus');
-  if (st) st.textContent = 'Actualiza los enlaces y pulsa Guardar enlaces.';
+  if (st) st.textContent = 'Actualiza los enlaces y pulsa Guardar enlaces. Se sincronizan entre Windows y móvil.';
   openSheet('panelLinksSheet','panelLinksOverlay');
 }
 
