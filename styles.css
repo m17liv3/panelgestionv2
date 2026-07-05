@@ -3304,3 +3304,32 @@ button:active,
     grid-template-columns: repeat(3, 1fr);
   }
 }
+
+
+/* ===== Acción No contestado en Caducan pronto ===== */
+.homeStatusListActionsWarnOnly .noAnswerBtn {
+  color: var(--orange);
+  border-color: rgba(255,170,0,.32);
+  background: rgba(255,170,0,.08);
+}
+
+
+/* ===== Tags completos de renovación ===== */
+.badgeWillRenew {
+  background: rgba(105,255,71,.14) !important;
+  color: var(--green) !important;
+  border-color: rgba(105,255,71,.34) !important;
+}
+.badgeNoticePending {
+  background: rgba(255,255,255,.075) !important;
+  color: var(--muted) !important;
+  border-color: rgba(255,255,255,.16) !important;
+}
+.homeStatusListBadges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.homeStatusListBadges .badge {
+  margin-right: 0;
+}

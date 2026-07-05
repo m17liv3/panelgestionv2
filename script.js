@@ -915,6 +915,7 @@ function homeStatusListItemHtml(c, type) {
       '<button data-id="'+esc(c.id)+'" onclick="homeStatusListMessages(this.dataset.id)">Msg</button>' +
       '<button data-id="'+esc(c.id)+'" onclick="homeStatusListSetRenewalNotice(this.dataset.id, this)">Marcar avisado</button>' +
       '<button data-id="'+esc(c.id)+'" onclick="homeStatusListSetRenewalReply(this.dataset.id, &quot;&quot;, this)">Marcar contestado</button>' +
+      '<button class="noAnswerBtn" data-id="'+esc(c.id)+'" onclick="homeStatusListSetRenewalNoReply(this.dataset.id, this)">No contestado</button>' +
       '<button class="willRenewBtn" data-id="'+esc(c.id)+'" onclick="homeStatusListSetRenewalReply(this.dataset.id, &quot;renueva&quot;, this)">Va a renovar</button>' +
       '<button class="noRenewBtn" data-id="'+esc(c.id)+'" onclick="homeStatusListSetRenewalReply(this.dataset.id, &quot;no_renueva&quot;, this)">No va a renovar</button>' +
     '</div>';
@@ -932,7 +933,7 @@ function homeStatusListItemHtml(c, type) {
     '<div class="homeStatusListInfo">' +
       '<strong>'+esc(c.name)+'</strong>' +
       '<span>'+esc(getClientMainApp(c) || c.user || '-')+'</span>' +
-      '<div class="homeStatusListBadges"><span class="badge '+(c.service==='TODO'?'badgeTodo':'badgeEs')+'">'+svcLabel+'</span>'+statusBadge(c.expiry)+(clientHasPendingPayment(c)?' <span class="badge badgePayPending">Pago pendiente</span>':'')+renewalReplyBadgeHtml(c)+'</div>' +
+      '<div class="homeStatusListBadges"><span class="badge '+(c.service==='TODO'?'badgeTodo':'badgeEs')+'">'+svcLabel+'</span>'+statusBadge(c.expiry)+(clientHasPendingPayment(c)?' <span class="badge badgePayPending">Pago pendiente</span>':'')+(type === 'warn' ? renewalFullTagsHtml(c) : renewalReplyBadgeHtml(c))+'</div>' +
       '<small>'+esc(homeStatusListSubtitle(c, type))+' · Expira: '+formatDate(c.expiry)+'</small>' +
     '</div>' +
     actions +
@@ -984,6 +985,41 @@ async function homeStatusListSetRenewalNotice(id, btn) {
   renderHomeStatusList();
   if (typeof updateStats === 'function') updateStats();
   if (typeof updateHomeMiniPanel === 'function') updateHomeMiniPanel();
+}
+
+
+async function homeStatusListSetRenewalNoReply(id, btn) {
+  var c = clients.find(function(x){ return x.id === id; });
+  if (!c) return;
+  var oldText = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = 'Guardando...'; }
+
+  var now = new Date().toISOString();
+  if (!isRenewalNoticeCurrent(c)) {
+    c.avisoRenovacionEnviado = true;
+    c.avisoRenovacionFecha = now;
+    c.avisoRenovacionExpiracion = c.expiry || null;
+  }
+
+  c.avisoRenovacionContestado = false;
+  c.avisoRenovacionContestadoFecha = null;
+  c.avisoRenovacionContestadoExpiracion = null;
+  c.avisoRenovacionRespuesta = null;
+
+  try {
+    var saved = await saveClientToStore(c);
+    var idx = clients.findIndex(function(x){ return x.id === id; });
+    if (idx >= 0) clients[idx] = saved;
+    saveData();
+    renderCards();
+    renderHomeStatusList();
+    if (typeof updateStats === 'function') updateStats();
+    if (typeof updateHomeMiniPanel === 'function') updateHomeMiniPanel();
+    if (typeof showToast === 'function') showToast('Marcado como no contestado');
+  } catch(ex) {
+    if (typeof showToast === 'function') showToast('Error al guardar no contestado: ' + ex.message, 'error'); else alert('Error al guardar no contestado: ' + ex.message);
+    if (btn) { btn.disabled = false; btn.textContent = oldText; }
+  }
 }
 
 async function homeStatusListSetRenewalReply(id, response, btn) {
@@ -1757,6 +1793,29 @@ function renewalReplyBadgeHtml(c) {
   return isRenewalReplyCurrent(c)
     ? '<span class="badge '+renewalResponseBadgeClass(c)+'">'+esc(renewalResponseLabel(c))+'</span>'
     : '<span class="badge badgeNoAnswer">Sin contestar</span>';
+}
+
+
+function renewalFullTagsHtml(c) {
+  var tags = [];
+  if (!c) return '';
+  if (isRenewalNoticeCurrent(c)) {
+    tags.push('<span class="badge badgeAdvised">Avisado</span>');
+    if (isRenewalReplyCurrent(c)) {
+      tags.push('<span class="badge badgeAnswered">Contestado</span>');
+      var r = renewalResponseValue(c);
+      if (r === 'renueva') {
+        tags.push('<span class="badge badgeWillRenew">Va a renovar</span>');
+      } else if (r === 'no_renueva') {
+        tags.push('<span class="badge badgeNoRenew">No va a renovar</span>');
+      }
+    } else {
+      tags.push('<span class="badge badgeNoAnswer">No contestado</span>');
+    }
+  } else if (getStatus(c.expiry) === 'warn') {
+    tags.push('<span class="badge badgeNoticePending">Pendiente aviso</span>');
+  }
+  return tags.join('');
 }
 
 function renewalNoticeHtml(c, mode) {
