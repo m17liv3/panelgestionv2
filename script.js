@@ -40,7 +40,7 @@ var SUPABASE_FINANCE_TABLE = CONFIG.supabaseFinanceTable || 'finanzas_movimiento
 var financeMovements = [];
 var SUPABASE_MESSAGE_TEMPLATES_TABLE = CONFIG.supabaseMessageTemplatesTable || 'message_templates';
 var SUPABASE_PANEL_LINKS_TABLE = CONFIG.supabasePanelLinksTable || 'panel_links';
-var panelLinks = panelLinksMerged ? panelLinksMerged([]) : [];
+var panelLinks = [];
 var renewals = [];
 var BACKUP_LAST_KEY = 'm17_last_backup_at';
 var BACKUP_REMINDER_DAYS = 7;
@@ -3308,7 +3308,7 @@ function panelLinksMerged(rows) {
 }
 
 function renderPanelLinks() {
-  var list = panelLinksMerged(panelLinks || []);
+  var list = panelLinksMerged(panelLinks && panelLinks.length ? panelLinks : []);
   panelLinks = list;
   list.forEach(function(p){
     var status = document.getElementById('panelLinkStatus-' + p.key);
@@ -3324,11 +3324,19 @@ function renderPanelLinks() {
 
 function refreshPanelLinksSoon() {
   renderPanelLinks();
-  loadPanelLinksFromStore(false).then(function(){
-    renderPanelLinks();
-  }).catch(function(){
-    renderPanelLinks();
-  });
+
+  var run = function(){
+    loadPanelLinksFromStore(false).then(function(){
+      renderPanelLinks();
+    }).catch(function(e){
+      console.warn('No se pudieron refrescar paneles:', e);
+      renderPanelLinks();
+    });
+  };
+
+  run();
+  setTimeout(run, 1200);
+  setTimeout(run, 3000);
 }
 
 async function loadPanelLinksFromStore(showErrors) {
@@ -3342,15 +3350,7 @@ async function loadPanelLinksFromStore(showErrors) {
     }
 
     var db = initSupabase();
-    var userId = '';
-    if (db.auth && db.auth.getUser) {
-      var userRes = await db.auth.getUser();
-      userId = userRes && userRes.data && userRes.data.user ? userRes.data.user.id : '';
-    }
-
-    var query = db.from(SUPABASE_PANEL_LINKS_TABLE).select('*');
-    if (userId) query = query.eq('owner_id', userId);
-    var result = await query;
+    var result = await db.from(SUPABASE_PANEL_LINKS_TABLE).select('*');
     if (result.error) throw result.error;
 
     var rows = (result.data || []).map(function(r){
@@ -3427,10 +3427,21 @@ async function openPanelLink(key) {
   var url = normalizePanelUrl(p.url);
 
   if (!url) {
+    var status = document.getElementById('panelLinkStatus-' + key);
+    if (status) status.textContent = 'Buscando...';
     await loadPanelLinksFromStore(false);
     p = panelLinkByKey(key);
     url = normalizePanelUrl(p.url);
   }
+
+  if (!url) {
+    await new Promise(function(resolve){ setTimeout(resolve, 700); });
+    await loadPanelLinksFromStore(false);
+    p = panelLinkByKey(key);
+    url = normalizePanelUrl(p.url);
+  }
+
+  renderPanelLinks();
 
   if (!url) {
     showToast('Todavía no hay enlace para ' + (p.label || key), 'warning');
@@ -3438,7 +3449,6 @@ async function openPanelLink(key) {
     return;
   }
 
-  renderPanelLinks();
   window.open(url, '_blank', 'noopener');
 }
 
@@ -7522,4 +7532,10 @@ function finalEnhancementsBoot() {
 document.addEventListener('DOMContentLoaded', function(){
   setTimeout(finalEnhancementsBoot, 800);
   setTimeout(refreshPanelLinksSoon, 1000);
+});
+
+
+document.addEventListener('DOMContentLoaded', function(){
+  setTimeout(refreshPanelLinksSoon, 250);
+  setTimeout(refreshPanelLinksSoon, 1800);
 });
