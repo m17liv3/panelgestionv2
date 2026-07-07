@@ -211,6 +211,7 @@
     <div class="menuItem" onclick="openRaffles()"><span class="ico2">&#127873;</span> Sorteos clientes</div>
     <div class="menuItem" onclick="openFixedAppImage()"><span class="ico2">&#128444;</span> Links fijos APP</div>
     <div class="menuItem" onclick="openCartelera()"><span class="ico2">&#128249;</span> Cartelera del dia</div>
+    <div class="menuItem" onclick="openPromps()"><span class="ico2">&#9997;</span> Promps</div>
     <div class="menuItem" onclick="openMovieTemplates()"><span class="ico2">&#127916;</span> Plantillas Peliculas</div>
     <div class="menuItem" onclick="openSeriesTemplates()"><span class="ico2">&#127909;</span> Plantillas Series</div>
     <div class="menuItem" id="pwaInstallMenuItem" onclick="installPWA()"><span class="ico2">&#128241;</span> Instalar como app</div>
@@ -248,6 +249,113 @@
 
     <button class="btnFull primary" onclick="savePanelLinksEditor()">Guardar enlaces</button>
     <button class="btnFull gray" onclick="closeSheet('panelLinksSheet','panelLinksOverlay')" style="margin-top:8px">Cerrar</button>
+  </div>
+</div>
+
+
+
+<!-- PROMPS SHEET -->
+<div class="sheet-overlay" id="prompsOverlay" onclick="closeSheet('prompsSheet','prompsOverlay')"></div>
+<div class="sheet" id="prompsSheet" style="max-height:92vh;overflow-y:auto;">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <h3>&#9997; Promps</h3>
+    <button class="sheet-close" onclick="closeSheet('prompsSheet','prompsOverlay')">x</button>
+  </div>
+  <div class="sheet-body" style="padding-bottom:30px;">
+    <div class="dailyPromptBox">
+      <div class="dailyPromptTop">
+        <div>
+          <div class="dailyPromptKicker">&#9889; Prompt para ChatGPT</div>
+          <strong>Crear cartelera diaria premium</strong>
+          <span>Pega solo los eventos. La fecha del día se añade automáticamente al prompt.</span>
+        </div>
+      </div>
+
+      <div class="dailyPromptDateBox">
+        <span>Fecha automática</span>
+        <strong id="dailyPromptDatePreview">Cargando fecha...</strong>
+      </div>
+
+      <label class="dailyPromptLabel">Eventos del día, sin fecha</label>
+      <textarea id="dailyPromptEvents" class="dailyPromptTextarea" placeholder="Pega aquí solo los eventos del día. Ejemplo:
+
+⚽ FÚTBOL INTERNACIONAL
+⏰ 13:35 – Superliga china: Beijing Guoan 🆚 Shandong Taishan
+📺 GOL
+🗂 DEPORTES ESPAÑA
+
+⏰ 19:00 – Mundial 2026: Canadá 🆚 Marruecos
+📺 DAZN Mundial
+🗂 MUNDIAL 2026 / UEFA TV"></textarea>
+
+      <div class="dailyPromptActions">
+        <button type="button" onclick="dailyPromptUseCartText()">Usar texto de cartelera</button>
+        <button type="button" class="primary" onclick="dailyPromptBuild()">Generar prompt</button>
+        <button type="button" class="success" onclick="dailyPromptCopy()">Copiar prompt</button>
+        <button type="button" class="danger" onclick="dailyPromptClear()">Borrar prompt</button>
+      </div>
+
+      <label class="dailyPromptLabel">Prompt generado</label>
+      <textarea id="dailyGeneratedPrompt" class="dailyGeneratedPrompt" readonly placeholder="Aquí aparecerá el prompt listo para pegar en ChatGPT."></textarea>
+
+      <div class="dailyPromptFinalUpload">
+        <div>
+          <strong>Subir imagen final de ChatGPT</strong>
+          <span>Cuando descargues la imagen de ChatGPT, súbela aquí para sustituir HORARIOS MUNDIAL.</span>
+        </div>
+        <input type="file" id="dailyFinalImageFile" accept="image/*" onchange="dailyPromptPreviewFinalImage(event)">
+        <button type="button" class="success" onclick="dailyPromptUploadFinalImage()">Subir imagen final a HORARIOS MUNDIAL</button>
+      </div>
+
+      <div id="dailyPromptFinalPreview" class="dailyPromptFinalPreview" style="display:none">
+        <img id="dailyPromptFinalPreviewImg" alt="Vista previa imagen final">
+      </div>
+
+      <div id="dailyPromptStatus" class="dailyPromptStatus">Pega los eventos y pulsa “Generar prompt”.</div>
+    </div>
+
+
+
+    <div class="eventPromptBox">
+      <div class="dailyPromptTop">
+        <div>
+          <div class="dailyPromptKicker">&#9917; Prompt partido individual</div>
+          <strong>Crear cartela de un partido del Mundial</strong>
+          <span>Introduce el partido, hora, canal y carpeta. Te genera un prompt listo para ChatGPT.</span>
+        </div>
+      </div>
+
+      <div class="eventPromptGrid">
+        <div class="formGroup">
+          <label>Partido o evento</label>
+          <input type="text" id="eventPromptMatch" placeholder="Ej: España vs Portugal">
+        </div>
+        <div class="formGroup">
+          <label>Hora</label>
+          <input type="text" id="eventPromptTime" placeholder="Ej: 21:00">
+        </div>
+        <div class="formGroup">
+          <label>Canal</label>
+          <input type="text" id="eventPromptChannel" placeholder="Ej: DAZN Mundial / LA 1">
+        </div>
+        <div class="formGroup">
+          <label>Carpeta / categoría</label>
+          <input type="text" id="eventPromptFolder" placeholder="Ej: MUNDIAL 2026 / UEFA TV">
+        </div>
+      </div>
+
+      <div class="dailyPromptActions">
+        <button type="button" class="primary" onclick="eventPromptBuild()">Generar prompt</button>
+        <button type="button" class="success" onclick="eventPromptCopy()">Copiar prompt</button>
+        <button type="button" class="danger" onclick="eventPromptClear()">Borrar prompt</button>
+      </div>
+
+      <label class="dailyPromptLabel">Prompt generado</label>
+      <textarea id="eventPromptGenerated" class="dailyGeneratedPrompt" readonly placeholder="Aquí aparecerá el prompt del partido individual."></textarea>
+
+      <div id="eventPromptStatus" class="dailyPromptStatus">Rellena los datos del partido y pulsa “Generar prompt”.</div>
+    </div>
   </div>
 </div>
 
@@ -950,58 +1058,6 @@
       <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#7AA3C8;margin-bottom:8px;">&#128279; Enlace para tus clientes</div>
       <div id="clienteLinkBox" style="font-size:13px;color:#00D4FF;word-break:break-all;padding:8px 12px;background:rgba(0,0,0,0.3);border-radius:8px;cursor:pointer;border:1px solid rgba(0,212,255,0.2);">Cargando...</div>
       <button onclick="copyClienteLink()" style="margin-top:10px;width:100%;padding:10px;background:linear-gradient(135deg,#0099CC,#00D4FF);color:#001822;border:none;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;">&#128203; Copiar enlace de clientes</button>
-    </div>
-
-    <div class="dailyPromptBox">
-      <div class="dailyPromptTop">
-        <div>
-          <div class="dailyPromptKicker">&#9889; Prompt para ChatGPT</div>
-          <strong>Crear cartelera diaria premium</strong>
-          <span>Pega solo los eventos. La fecha del día se añade automáticamente al prompt.</span>
-        </div>
-      </div>
-
-      <div class="dailyPromptDateBox">
-        <span>Fecha automática</span>
-        <strong id="dailyPromptDatePreview">Cargando fecha...</strong>
-      </div>
-
-      <label class="dailyPromptLabel">Eventos del día, sin fecha</label>
-      <textarea id="dailyPromptEvents" class="dailyPromptTextarea" placeholder="Pega aquí solo los eventos del día. Ejemplo:
-
-⚽ FÚTBOL INTERNACIONAL
-⏰ 13:35 – Superliga china: Beijing Guoan 🆚 Shandong Taishan
-📺 GOL
-🗂 DEPORTES ESPAÑA
-
-⏰ 19:00 – Mundial 2026: Canadá 🆚 Marruecos
-📺 DAZN Mundial
-🗂 MUNDIAL 2026 / UEFA TV"></textarea>
-
-      <div class="dailyPromptActions">
-        <button type="button" onclick="dailyPromptUseCartText()">Usar texto de cartelera</button>
-        <button type="button" class="primary" onclick="dailyPromptBuild()">Generar prompt</button>
-        <button type="button" class="success" onclick="dailyPromptCopy()">Copiar prompt</button>
-        <button type="button" class="danger" onclick="dailyPromptClear()">Borrar prompt</button>
-      </div>
-
-      <label class="dailyPromptLabel">Prompt generado</label>
-      <textarea id="dailyGeneratedPrompt" class="dailyGeneratedPrompt" readonly placeholder="Aquí aparecerá el prompt listo para pegar en ChatGPT."></textarea>
-
-      <div class="dailyPromptFinalUpload">
-        <div>
-          <strong>Subir imagen final de ChatGPT</strong>
-          <span>Cuando descargues la imagen de ChatGPT, súbela aquí para sustituir HORARIOS MUNDIAL.</span>
-        </div>
-        <input type="file" id="dailyFinalImageFile" accept="image/*" onchange="dailyPromptPreviewFinalImage(event)">
-        <button type="button" class="success" onclick="dailyPromptUploadFinalImage()">Subir imagen final a HORARIOS MUNDIAL</button>
-      </div>
-
-      <div id="dailyPromptFinalPreview" class="dailyPromptFinalPreview" style="display:none">
-        <img id="dailyPromptFinalPreviewImg" alt="Vista previa imagen final">
-      </div>
-
-      <div id="dailyPromptStatus" class="dailyPromptStatus">Pega los eventos y pulsa “Generar prompt”.</div>
     </div>
 
     <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#7AA3C8;margin-bottom:10px;">&#127937; Evento del dia</div>

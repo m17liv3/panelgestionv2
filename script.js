@@ -623,6 +623,13 @@ function navMenu() {
 }
 
 
+function openPromps() {
+  closeSheet('menuSheet','menuOverlay');
+  try { dailyPromptRefreshDate(); } catch(e) {}
+  openSheet('prompsSheet','prompsOverlay');
+}
+
+
 var clientBrowserAllList = [];
 var clientBrowserList = [];
 var clientBrowserIndex = 0;
@@ -5089,7 +5096,6 @@ function openCartelera() {
   if (!base.endsWith('/')) base += '/';
   document.getElementById('clienteLinkBox').textContent = base + 'cartelera.html';
   cartLoadExisting();
-  try { dailyPromptRefreshDate(); } catch(e) {}
   openSheet('carteleraSheet','carteleraOverlay');
 }
 
@@ -5800,6 +5806,124 @@ function dailyPromptClear() {
 
   dailyPromptRefreshDate();
   dailyPromptStatus('Prompt borrado. Mañana solo pega los nuevos eventos y genera otro.', 'ok');
+  showToast('Prompt borrado');
+}
+
+
+function eventPromptStatus(msg, type) {
+  var el = document.getElementById('eventPromptStatus');
+  if (!el) return;
+  el.textContent = msg || '';
+  el.className = 'dailyPromptStatus ' + (type || '');
+}
+
+function eventPromptBuildText(matchText, timeText, channelText, folderText) {
+  matchText = String(matchText || '').trim();
+  timeText = String(timeText || '').trim();
+  channelText = String(channelText || '').trim();
+  folderText = String(folderText || '').trim();
+
+  return [
+    'Hazme una cartela profesional en horizontal y en 4K para mi servicio de streaming M17LIV3.',
+    '',
+    'TIPO DE CARTELA:',
+    '- Cartela individual para un partido/evento del Mundial 2026.',
+    '- Debe estar centrada únicamente en este evento, sin añadir otros partidos.',
+    '',
+    'EVENTO:',
+    matchText,
+    '',
+    'HORA:',
+    timeText,
+    '',
+    'CANAL:',
+    channelText,
+    '',
+    'CARPETA / CATEGORÍA:',
+    folderText,
+    '',
+    'ESTILO VISUAL:',
+    '- Diseño premium muy neon, moderno, cinematográfico y deportivo.',
+    '- Formato horizontal 16:9, resolución 4K.',
+    '- Fondo oscuro elegante con luces neon cyan, azul eléctrico, verde lima y brillos deportivos.',
+    '- Composición potente, clara y legible en móvil y TV.',
+    '- Usa energía visual de gran partido: estadio, focos, partículas, ambiente mundialista y tensión deportiva.',
+    '- Puedes inspirarte en colores de las selecciones/equipos, sin usar logos oficiales si no están adjuntos.',
+    '- Texto limpio, grande y sin errores.',
+    '- No poner marcas de agua.',
+    '',
+    'REQUISITOS DE COMPOSICIÓN:',
+    '- Destaca los dos equipos o nombres principales con mucha presencia visual.',
+    '- La hora debe verse claramente.',
+    '- El canal debe aparecer de forma limpia debajo o en una tarjeta secundaria.',
+    '- La carpeta/categoría debe aparecer como etiqueta inferior o bloque pequeño.',
+    '- Incluye el título general “M17LIV3” de forma elegante.',
+    '- No añadas eventos que no estén escritos.',
+    '- No cambies el nombre de los equipos, la hora, el canal ni la carpeta.',
+    '- Que parezca una cartela final lista para publicar en una app de streaming.'
+  ].join('\n');
+}
+
+function eventPromptBuild() {
+  var matchEl = document.getElementById('eventPromptMatch');
+  var timeEl = document.getElementById('eventPromptTime');
+  var channelEl = document.getElementById('eventPromptChannel');
+  var folderEl = document.getElementById('eventPromptFolder');
+  var out = document.getElementById('eventPromptGenerated');
+
+  var matchText = matchEl ? matchEl.value.trim() : '';
+  var timeText = timeEl ? timeEl.value.trim() : '';
+  var channelText = channelEl ? channelEl.value.trim() : '';
+  var folderText = folderEl ? folderEl.value.trim() : '';
+
+  if (!matchText || !timeText || !folderText) {
+    showToast('Rellena al menos partido, hora y carpeta', 'error');
+    eventPromptStatus('Faltan datos. Rellena partido, hora y carpeta/categoría.', 'error');
+    return;
+  }
+
+  var prompt = eventPromptBuildText(matchText, timeText, channelText, folderText);
+  if (out) out.value = prompt;
+  eventPromptStatus('Prompt de partido generado. Cópialo y pégalo en ChatGPT.', 'ok');
+  showToast('Prompt generado');
+}
+
+function eventPromptCopy() {
+  var out = document.getElementById('eventPromptGenerated');
+  if (!out || !out.value.trim()) {
+    eventPromptBuild();
+  }
+  out = document.getElementById('eventPromptGenerated');
+  if (!out || !out.value.trim()) return;
+
+  var text = out.value;
+  var done = function(){
+    eventPromptStatus('Prompt copiado. Pégalo en ChatGPT para crear la cartela del partido.', 'ok');
+    showToast('Prompt copiado');
+  };
+
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(done).catch(function(){
+      out.focus();
+      out.select();
+      document.execCommand('copy');
+      done();
+    });
+  } else {
+    out.focus();
+    out.select();
+    document.execCommand('copy');
+    done();
+  }
+}
+
+function eventPromptClear() {
+  if (!confirm('¿Borrar los datos y el prompt del partido?')) return;
+  ['eventPromptMatch','eventPromptTime','eventPromptChannel','eventPromptFolder','eventPromptGenerated'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  eventPromptStatus('Datos borrados. Rellena un nuevo partido cuando quieras.', 'ok');
   showToast('Prompt borrado');
 }
 

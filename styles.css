@@ -3442,3 +3442,39 @@ button:active,
     align-items: flex-start;
   }
 }
+
+
+/* ===== Apartado Promps ===== */
+.eventPromptBox {
+  border: 1px solid rgba(0,229,255,.18);
+  background:
+    radial-gradient(circle at top left, rgba(0,229,255,.10), transparent 45%),
+    radial-gradient(circle at bottom right, rgba(105,255,71,.07), transparent 48%),
+    rgba(255,255,255,.035);
+  border-radius: 18px;
+  padding: 14px;
+  margin-top: 18px;
+}
+.eventPromptGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin: 12px 0 12px;
+}
+.eventPromptGrid .formGroup {
+  margin-bottom: 0;
+}
+.eventPromptGrid input {
+  width: 100%;
+  background: rgba(255,255,255,.045);
+  border: 1px solid rgba(0,229,255,.16);
+  border-radius: 12px;
+  color: var(--text);
+  padding: 11px 12px;
+  outline: none;
+}
+@media (min-width: 680px) {
+  .eventPromptGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
