@@ -320,30 +320,22 @@
     <div class="eventPromptBox">
       <div class="dailyPromptTop">
         <div>
-          <div class="dailyPromptKicker">&#9917; Prompt partido individual</div>
-          <strong>Crear cartela de un partido del Mundial</strong>
-          <span>Introduce el partido, hora, canal y carpeta. Te genera un prompt listo para ChatGPT.</span>
+          <div class="dailyPromptKicker">&#9917; Prompt evento individual</div>
+          <strong>Crear cartela premium de un evento</strong>
+          <span>Pega el texto completo del partido o evento con hora, canal y carpeta. La fecha se añade automáticamente.</span>
         </div>
       </div>
 
-      <div class="eventPromptGrid">
-        <div class="formGroup">
-          <label>Partido o evento</label>
-          <input type="text" id="eventPromptMatch" placeholder="Ej: España vs Portugal">
-        </div>
-        <div class="formGroup">
-          <label>Hora</label>
-          <input type="text" id="eventPromptTime" placeholder="Ej: 21:00">
-        </div>
-        <div class="formGroup">
-          <label>Canal</label>
-          <input type="text" id="eventPromptChannel" placeholder="Ej: DAZN Mundial / LA 1">
-        </div>
-        <div class="formGroup">
-          <label>Carpeta / categoría</label>
-          <input type="text" id="eventPromptFolder" placeholder="Ej: MUNDIAL 2026 / UEFA TV">
-        </div>
+      <div class="dailyPromptDateBox">
+        <span>Fecha automática</span>
+        <strong id="eventPromptDatePreview">Cargando fecha...</strong>
       </div>
+
+      <label class="dailyPromptLabel">Evento o partido, sin fecha</label>
+      <textarea id="eventPromptEvents" class="dailyPromptEvents" placeholder="Ej:
+⏰ 21:00 – Mundial 2026: España 🆚 Portugal
+📺 LA 1 / DAZN Mundial
+🗂 TDT / DEPORTES ESPAÑA / MUNDIAL 2026 / UEFA TV"></textarea>
 
       <div class="dailyPromptActions">
         <button type="button" class="primary" onclick="eventPromptBuild()">Generar prompt</button>
@@ -352,12 +344,13 @@
       </div>
 
       <label class="dailyPromptLabel">Prompt generado</label>
-      <textarea id="eventPromptGenerated" class="dailyGeneratedPrompt" readonly placeholder="Aquí aparecerá el prompt del partido individual."></textarea>
+      <textarea id="eventPromptGenerated" class="dailyGeneratedPrompt" readonly placeholder="Aquí aparecerá el prompt del evento individual."></textarea>
 
-      <div id="eventPromptStatus" class="dailyPromptStatus">Rellena los datos del partido y pulsa “Generar prompt”.</div>
+      <div id="eventPromptStatus" class="dailyPromptStatus">Pega el evento y pulsa “Generar prompt”.</div>
     </div>
   </div>
 </div>
+
 
 
 <!-- CLIENT MORE ACTIONS SHEET -->

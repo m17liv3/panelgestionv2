@@ -3478,3 +3478,12 @@ button:active,
     grid-template-columns: 1fr 1fr;
   }
 }
+
+
+/* ===== Promps: evento individual con texto pegado ===== */
+.eventPromptBox .dailyPromptDateBox {
+  margin-bottom: 12px;
+}
+#eventPromptEvents {
+  min-height: 150px;
+}

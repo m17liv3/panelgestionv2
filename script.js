@@ -626,6 +626,7 @@ function navMenu() {
 function openPromps() {
   closeSheet('menuSheet','menuOverlay');
   try { dailyPromptRefreshDate(); } catch(e) {}
+  try { eventPromptRefreshDate(); } catch(e) {}
   openSheet('prompsSheet','prompsOverlay');
 }
 
@@ -5810,6 +5811,11 @@ function dailyPromptClear() {
 }
 
 
+function eventPromptRefreshDate() {
+  var el = document.getElementById('eventPromptDatePreview');
+  if (el) el.textContent = dailyPromptDateText();
+}
+
 function eventPromptStatus(msg, type) {
   var el = document.getElementById('eventPromptStatus');
   if (!el) return;
@@ -5817,30 +5823,17 @@ function eventPromptStatus(msg, type) {
   el.className = 'dailyPromptStatus ' + (type || '');
 }
 
-function eventPromptBuildText(matchText, timeText, channelText, folderText) {
-  matchText = String(matchText || '').trim();
-  timeText = String(timeText || '').trim();
-  channelText = String(channelText || '').trim();
-  folderText = String(folderText || '').trim();
+function eventPromptBuildText(eventsText) {
+  eventsText = String(eventsText || '').trim();
+  var dateText = dailyPromptDateText();
 
   return [
     'Hazme una cartela profesional en horizontal y en 4K para mi servicio de streaming M17LIV3.',
     '',
     'TIPO DE CARTELA:',
-    '- Cartela individual para un partido/evento del Mundial 2026.',
-    '- Debe estar centrada únicamente en este evento, sin añadir otros partidos.',
-    '',
-    'EVENTO:',
-    matchText,
-    '',
-    'HORA:',
-    timeText,
-    '',
-    'CANAL:',
-    channelText,
-    '',
-    'CARPETA / CATEGORÍA:',
-    folderText,
+    '- Cartela individual premium para un partido o evento del Mundial 2026.',
+    '- Debe estar centrada únicamente en el evento o eventos que aparecen abajo.',
+    '- No añadas otros partidos ni información que no esté escrita.',
     '',
     'ESTILO VISUAL:',
     '- Diseño premium muy neon, moderno, cinematográfico y deportivo.',
@@ -5849,42 +5842,45 @@ function eventPromptBuildText(matchText, timeText, channelText, folderText) {
     '- Composición potente, clara y legible en móvil y TV.',
     '- Usa energía visual de gran partido: estadio, focos, partículas, ambiente mundialista y tensión deportiva.',
     '- Puedes inspirarte en colores de las selecciones/equipos, sin usar logos oficiales si no están adjuntos.',
-    '- Texto limpio, grande y sin errores.',
+    '- Texto limpio, grande, ordenado y sin errores.',
     '- No poner marcas de agua.',
     '',
+    'FECHA QUE DEBE APARECER EN LA CARTELA:',
+    dateText,
+    '',
+    'CONTENIDO DEL EVENTO:',
+    eventsText,
+    '',
     'REQUISITOS DE COMPOSICIÓN:',
-    '- Destaca los dos equipos o nombres principales con mucha presencia visual.',
+    '- Mantén exactamente los horarios, equipos, canales y carpetas/categorías que aparecen en el contenido.',
+    '- Respeta emojis como ⚽, ⏰, 📺 y 🗂 si ayudan a la legibilidad.',
+    '- Destaca el partido o evento principal con mucha presencia visual.',
     '- La hora debe verse claramente.',
     '- El canal debe aparecer de forma limpia debajo o en una tarjeta secundaria.',
     '- La carpeta/categoría debe aparecer como etiqueta inferior o bloque pequeño.',
     '- Incluye el título general “M17LIV3” de forma elegante.',
+    '- Que parezca una cartela final lista para publicar en una app de streaming.',
     '- No añadas eventos que no estén escritos.',
-    '- No cambies el nombre de los equipos, la hora, el canal ni la carpeta.',
-    '- Que parezca una cartela final lista para publicar en una app de streaming.'
+    '- No cambies nombres de equipos, horarios, canales ni carpetas.'
   ].join('\n');
 }
 
 function eventPromptBuild() {
-  var matchEl = document.getElementById('eventPromptMatch');
-  var timeEl = document.getElementById('eventPromptTime');
-  var channelEl = document.getElementById('eventPromptChannel');
-  var folderEl = document.getElementById('eventPromptFolder');
+  var eventsEl = document.getElementById('eventPromptEvents');
   var out = document.getElementById('eventPromptGenerated');
+  var eventsText = eventsEl ? eventsEl.value.trim() : '';
 
-  var matchText = matchEl ? matchEl.value.trim() : '';
-  var timeText = timeEl ? timeEl.value.trim() : '';
-  var channelText = channelEl ? channelEl.value.trim() : '';
-  var folderText = folderEl ? folderEl.value.trim() : '';
+  eventPromptRefreshDate();
 
-  if (!matchText || !timeText || !folderText) {
-    showToast('Rellena al menos partido, hora y carpeta', 'error');
-    eventPromptStatus('Faltan datos. Rellena partido, hora y carpeta/categoría.', 'error');
+  if (!eventsText) {
+    showToast('Pega el texto del evento primero', 'error');
+    eventPromptStatus('Falta el texto del evento. Pega hora, partido, canal y carpeta.', 'error');
     return;
   }
 
-  var prompt = eventPromptBuildText(matchText, timeText, channelText, folderText);
+  var prompt = eventPromptBuildText(eventsText);
   if (out) out.value = prompt;
-  eventPromptStatus('Prompt de partido generado. Cópialo y pégalo en ChatGPT.', 'ok');
+  eventPromptStatus('Prompt de evento generado. Cópialo y pégalo en ChatGPT.', 'ok');
   showToast('Prompt generado');
 }
 
@@ -5898,7 +5894,7 @@ function eventPromptCopy() {
 
   var text = out.value;
   var done = function(){
-    eventPromptStatus('Prompt copiado. Pégalo en ChatGPT para crear la cartela del partido.', 'ok');
+    eventPromptStatus('Prompt copiado. Pégalo en ChatGPT para crear la cartela del evento.', 'ok');
     showToast('Prompt copiado');
   };
 
@@ -5918,14 +5914,16 @@ function eventPromptCopy() {
 }
 
 function eventPromptClear() {
-  if (!confirm('¿Borrar los datos y el prompt del partido?')) return;
-  ['eventPromptMatch','eventPromptTime','eventPromptChannel','eventPromptFolder','eventPromptGenerated'].forEach(function(id){
+  if (!confirm('¿Borrar el texto del evento y el prompt generado?')) return;
+  ['eventPromptEvents','eventPromptGenerated'].forEach(function(id){
     var el = document.getElementById(id);
     if (el) el.value = '';
   });
-  eventPromptStatus('Datos borrados. Rellena un nuevo partido cuando quieras.', 'ok');
+  eventPromptRefreshDate();
+  eventPromptStatus('Texto borrado. Pega un nuevo evento cuando quieras.', 'ok');
   showToast('Prompt borrado');
 }
+
 
 // ========== FIN PROMPT CHATGPT CARTELERA DIARIA ==========
 
