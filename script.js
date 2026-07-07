@@ -5913,12 +5913,78 @@ function eventPromptCopy() {
   }
 }
 
+
+function eventPromptPreviewFinalImage(event) {
+  var input = event && event.target ? event.target : document.getElementById('eventFinalImageFile');
+  var file = input && input.files ? input.files[0] : null;
+  var box = document.getElementById('eventPromptFinalPreview');
+  var img = document.getElementById('eventPromptFinalPreviewImg');
+  if (!file) {
+    if (box) box.style.display = 'none';
+    if (img) img.removeAttribute('src');
+    return;
+  }
+  if (!file.type || file.type.indexOf('image/') !== 0) {
+    showToast('Selecciona una imagen válida', 'error');
+    if (box) box.style.display = 'none';
+    eventPromptStatus('El archivo seleccionado no parece una imagen.', 'error');
+    return;
+  }
+  var url = URL.createObjectURL(file);
+  if (img) img.src = url;
+  if (box) box.style.display = 'block';
+  eventPromptStatus('Imagen final seleccionada. Pulsa “Subir imagen final a HORARIOS MUNDIAL”.', 'ok');
+}
+
+async function eventPromptUploadFinalImage() {
+  var input = document.getElementById('eventFinalImageFile');
+  var file = input && input.files ? input.files[0] : null;
+  if (!file) {
+    showToast('Selecciona la imagen descargada de ChatGPT', 'error');
+    eventPromptStatus('Primero selecciona la imagen final descargada de ChatGPT.', 'error');
+    return;
+  }
+  if (!file.type || file.type.indexOf('image/') !== 0) {
+    showToast('El archivo debe ser una imagen', 'error');
+    eventPromptStatus('El archivo seleccionado no parece una imagen.', 'error');
+    return;
+  }
+
+  var btn = null;
+  try {
+    var buttons = document.querySelectorAll('.eventPromptBox .dailyPromptFinalUpload button.success');
+    btn = buttons && buttons.length ? buttons[0] : null;
+    if (btn) { btn.disabled = true; btn.textContent = 'Subiendo...'; }
+
+    var slot = fixedSlotByKey('horarios_mundial');
+    var sb = initSupabase();
+    var res = await sb.storage.from(FIXED_IMAGE_BUCKET).upload(slot.path, file, {
+      cacheControl: '60',
+      upsert: true,
+      contentType: file.type || 'image/jpeg'
+    });
+    if (res.error) throw res.error;
+
+    eventPromptStatus('Imagen final subida correctamente a HORARIOS MUNDIAL.', 'ok');
+    showToast('HORARIOS MUNDIAL actualizado');
+    try { loadFixedSlotImage('horarios_mundial'); } catch(e) {}
+  } catch (e) {
+    showToast('Error al subir imagen final', 'error');
+    eventPromptStatus('No se pudo subir la imagen final: ' + (e && e.message ? e.message : 'error'), 'error');
+  }
+  if (btn) { btn.disabled = false; btn.textContent = 'Subir imagen final a HORARIOS MUNDIAL'; }
+}
+
 function eventPromptClear() {
-  if (!confirm('¿Borrar el texto del evento y el prompt generado?')) return;
-  ['eventPromptEvents','eventPromptGenerated'].forEach(function(id){
+  if (!confirm('¿Borrar el texto del evento, el prompt generado y la imagen final seleccionada?')) return;
+  ['eventPromptEvents','eventPromptGenerated','eventFinalImageFile'].forEach(function(id){
     var el = document.getElementById(id);
     if (el) el.value = '';
   });
+  var box = document.getElementById('eventPromptFinalPreview');
+  var img = document.getElementById('eventPromptFinalPreviewImg');
+  if (box) box.style.display = 'none';
+  if (img) img.removeAttribute('src');
   eventPromptRefreshDate();
   eventPromptStatus('Texto borrado. Pega un nuevo evento cuando quieras.', 'ok');
   showToast('Prompt borrado');

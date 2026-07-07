@@ -346,6 +346,19 @@
       <label class="dailyPromptLabel">Prompt generado</label>
       <textarea id="eventPromptGenerated" class="dailyGeneratedPrompt" readonly placeholder="Aquí aparecerá el prompt del evento individual."></textarea>
 
+      <div class="dailyPromptFinalUpload">
+        <div>
+          <strong>Adjuntar imagen final del evento</strong>
+          <span>Cuando descargues la imagen de ChatGPT, súbela aquí para sustituir HORARIOS MUNDIAL.</span>
+        </div>
+        <input type="file" id="eventFinalImageFile" accept="image/*" onchange="eventPromptPreviewFinalImage(event)">
+        <button type="button" class="success" onclick="eventPromptUploadFinalImage()">Subir imagen final a HORARIOS MUNDIAL</button>
+      </div>
+
+      <div id="eventPromptFinalPreview" class="dailyPromptFinalPreview" style="display:none">
+        <img id="eventPromptFinalPreviewImg" alt="Vista previa imagen final del evento">
+      </div>
+
       <div id="eventPromptStatus" class="dailyPromptStatus">Pega el evento y pulsa “Generar prompt”.</div>
     </div>
   </div>

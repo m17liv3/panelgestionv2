@@ -3518,3 +3518,9 @@ button:active,
 .eventPromptBox textarea.dailyPromptEvents::placeholder {
   color: rgba(200,230,245,.48);
 }
+
+
+/* ===== Promps: subida de imagen final en evento individual ===== */
+.eventPromptBox .dailyPromptFinalUpload {
+  margin-top: 14px;
+}
