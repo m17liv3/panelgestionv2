@@ -5933,7 +5933,7 @@ function eventPromptPreviewFinalImage(event) {
   var url = URL.createObjectURL(file);
   if (img) img.src = url;
   if (box) box.style.display = 'block';
-  eventPromptStatus('Imagen final seleccionada. Pulsa “Subir imagen final a HORARIOS MUNDIAL”.', 'ok');
+  eventPromptStatus('Imagen final seleccionada. Pulsa “Subir imagen final a EVENTO DEL DÍA”.', 'ok');
 }
 
 async function eventPromptUploadFinalImage() {
@@ -5956,23 +5956,53 @@ async function eventPromptUploadFinalImage() {
     btn = buttons && buttons.length ? buttons[0] : null;
     if (btn) { btn.disabled = true; btn.textContent = 'Subiendo...'; }
 
-    var slot = fixedSlotByKey('horarios_mundial');
-    var sb = initSupabase();
-    var res = await sb.storage.from(FIXED_IMAGE_BUCKET).upload(slot.path, file, {
-      cacheControl: '60',
-      upsert: true,
-      contentType: file.type || 'image/jpeg'
-    });
-    if (res.error) throw res.error;
+    if (!CART_IMGBB_KEY || !CART_BIN_ID || !CART_KEY) {
+      throw new Error('Falta configuración de Cartelera del día');
+    }
 
-    eventPromptStatus('Imagen final subida correctamente a HORARIOS MUNDIAL.', 'ok');
-    showToast('HORARIOS MUNDIAL actualizado');
-    try { loadFixedSlotImage('horarios_mundial'); } catch(e) {}
+    var formData = new FormData();
+    formData.append('image', file);
+    var res = await fetch('https://api.imgbb.com/1/upload?key=' + CART_IMGBB_KEY, {
+      method: 'POST',
+      body: formData
+    });
+    var data = await res.json();
+    if (!data || !data.success || !data.data || !data.data.url) {
+      throw new Error('ImgBB no devolvió enlace de imagen');
+    }
+
+    var url = data.data.url;
+
+    var r2 = await fetch('https://api.jsonbin.io/v3/b/' + CART_BIN_ID + '/latest', {
+      headers: { 'X-Master-Key': CART_KEY, 'X-Access-Key': CART_KEY }
+    });
+    var d2 = await r2.json();
+    var rec2 = d2.record || {};
+    rec2.imagen_dia = url;
+
+    var putRes = await fetch('https://api.jsonbin.io/v3/b/' + CART_BIN_ID, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-Master-Key': CART_KEY, 'X-Access-Key': CART_KEY },
+      body: JSON.stringify(rec2)
+    });
+    if (!putRes.ok) throw new Error('Imagen subida, pero no se pudo publicar en Evento del día');
+
+    var linkEl = document.getElementById('cart-img-link');
+    var resultEl = document.getElementById('cart-imgbb-result');
+    var previewEl = document.getElementById('cart-preview-img');
+    if (linkEl) linkEl.textContent = url;
+    if (resultEl) resultEl.style.display = 'block';
+    if (previewEl) previewEl.src = url;
+
+    try { cartUpdatePreview(rec2); } catch(e) {}
+
+    eventPromptStatus('Imagen final publicada correctamente como EVENTO DEL DÍA.', 'ok');
+    showToast('EVENTO DEL DÍA actualizado');
   } catch (e) {
     showToast('Error al subir imagen final', 'error');
-    eventPromptStatus('No se pudo subir la imagen final: ' + (e && e.message ? e.message : 'error'), 'error');
+    eventPromptStatus('No se pudo publicar en Evento del día: ' + (e && e.message ? e.message : 'error'), 'error');
   }
-  if (btn) { btn.disabled = false; btn.textContent = 'Subir imagen final a HORARIOS MUNDIAL'; }
+  if (btn) { btn.disabled = false; btn.textContent = 'Subir imagen final a EVENTO DEL DÍA'; }
 }
 
 function eventPromptClear() {
