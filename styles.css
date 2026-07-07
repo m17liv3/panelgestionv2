@@ -3487,3 +3487,34 @@ button:active,
 #eventPromptEvents {
   min-height: 150px;
 }
+
+
+/* ===== Promps: campo de texto oscuro para evento individual ===== */
+#eventPromptEvents,
+.eventPromptBox textarea.dailyPromptEvents {
+  width: 100%;
+  min-height: 150px;
+  resize: vertical;
+  box-sizing: border-box;
+  border: 1px solid rgba(0,212,255,.32);
+  border-radius: 14px;
+  background:
+    linear-gradient(135deg, rgba(0,212,255,.07), rgba(105,255,71,.025)),
+    rgba(8,18,28,.92);
+  color: var(--text);
+  padding: 12px 13px;
+  outline: none;
+  font-size: .86rem;
+  line-height: 1.55;
+  font-family: inherit;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.025);
+}
+#eventPromptEvents:focus,
+.eventPromptBox textarea.dailyPromptEvents:focus {
+  border-color: rgba(0,229,255,.62);
+  box-shadow: 0 0 0 3px rgba(0,229,255,.08), inset 0 0 0 1px rgba(255,255,255,.03);
+}
+#eventPromptEvents::placeholder,
+.eventPromptBox textarea.dailyPromptEvents::placeholder {
+  color: rgba(200,230,245,.48);
+}
