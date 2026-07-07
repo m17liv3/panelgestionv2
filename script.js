@@ -5171,10 +5171,56 @@ async function cartSave() {
 }
 
 async function cartClear() {
-  if (!confirm('Borrar toda la cartelera?')) return;
-  document.getElementById('cart-texto').value = '';
-  document.getElementById('cart-char-count').textContent = '0 caracteres';
-  await cartSave();
+  if (!confirm('¿Borrar toda la cartelera y también la imagen de EVENTO DEL DÍA?')) return;
+
+  var txt = document.getElementById('cart-texto');
+  var count = document.getElementById('cart-char-count');
+  var imgBox = document.getElementById('cart-imgbb-result');
+  var imgFile = document.getElementById('cart-img-file');
+  var imgLink = document.getElementById('cart-img-link');
+  var previewImg = document.getElementById('cart-preview-img');
+  var prevEvento = document.getElementById('cart-prev-evento');
+  var prevImg = document.getElementById('cart-prev-img');
+  var prevTexto = document.getElementById('cart-prev-texto');
+  var btn = document.getElementById('cart-save-btn');
+
+  if (txt) txt.value = '';
+  if (count) count.textContent = '0 caracteres';
+  if (btn) { btn.disabled = true; btn.textContent = 'Borrando...'; }
+
+  try {
+    var res = await fetch('https://api.jsonbin.io/v3/b/' + CART_BIN_ID + '/latest', {
+      headers: { 'X-Master-Key': CART_KEY, 'X-Access-Key': CART_KEY }
+    });
+    var data = await res.json();
+    var record = data.record || {};
+
+    record.texto = '';
+    delete record.imagen_dia;
+
+    var saveRes = await fetch('https://api.jsonbin.io/v3/b/' + CART_BIN_ID, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-Master-Key': CART_KEY, 'X-Access-Key': CART_KEY },
+      body: JSON.stringify(record)
+    });
+
+    if (!saveRes.ok) throw new Error('No se pudo guardar el borrado');
+
+    if (imgBox) imgBox.style.display = 'none';
+    if (imgFile) imgFile.value = '';
+    if (imgLink) imgLink.textContent = '';
+    if (previewImg) previewImg.removeAttribute('src');
+    if (prevEvento) prevEvento.style.display = 'none';
+    if (prevImg) prevImg.removeAttribute('src');
+    if (prevTexto) prevTexto.textContent = 'Sin publicar todavia';
+
+    cartUpdatePreview(record);
+    showToast('Cartelera e imagen del evento borradas');
+  } catch(e) {
+    showToast('Error al borrar cartelera', 'error');
+  }
+
+  if (btn) { btn.disabled = false; btn.textContent = 'Guardar y publicar'; }
 }
 
 async function cartUploadImage() {
