@@ -754,6 +754,36 @@ function clientBrowserEdit(id) {
   setTimeout(function(){ editClient(id); }, 260);
 }
 
+function clientBrowserDelete(id) {
+  var c = clients.find(function(x){ return x.id === id; });
+  if (!c) {
+    showToast('No se ha encontrado el cliente', 'error');
+    return;
+  }
+  closeSheet('clientBrowserSheet','clientBrowserOverlay');
+  setTimeout(function(){
+    showPrettyConfirm({
+      title: 'Eliminar cliente',
+      message: 'Vas a borrar a "' + c.name + '". Esta acción no se puede deshacer.',
+      confirmText: 'Eliminar',
+      danger: true,
+      onConfirm: async function(){
+        await deleteClientFromStore(id);
+        clients = clients.filter(function(x){ return x.id !== id; });
+        clientBrowserAllList = clientBrowserAllList.filter(function(x){ return x.id !== id; });
+        clientBrowserList = clientBrowserList.filter(function(x){ return x.id !== id; });
+        if (clientBrowserIndex >= clientBrowserList.length) clientBrowserIndex = Math.max(0, clientBrowserList.length - 1);
+        saveData();
+        renderCards();
+        updateStats();
+        if (typeof updateHomeMiniPanel === 'function') updateHomeMiniPanel();
+        if (typeof renderTagFilterBar === 'function') renderTagFilterBar();
+        showToast('Cliente eliminado');
+      }
+    });
+  }, 260);
+}
+
 function clientBrowserRenew(id) {
   closeSheet('clientBrowserSheet','clientBrowserOverlay');
   setTimeout(function(){ openRenew(id); }, 260);
@@ -813,6 +843,7 @@ function clientBrowserCardHtml(c, direction) {
   html +=   '<button data-id="'+esc(c.id)+'" onclick="clientBrowserOpenFull(this.dataset.id)">&#128065; Ver ficha</button>';
   html +=   '<button data-id="'+esc(c.id)+'" onclick="clientBrowserMessages(this.dataset.id)">&#128203; Msg</button>';
   html +=   '<button data-id="'+esc(c.id)+'" onclick="clientBrowserEdit(this.dataset.id)">&#9998; Editar</button>';
+  html +=   '<button class="danger" data-id="'+esc(c.id)+'" onclick="clientBrowserDelete(this.dataset.id)">&#128465; Borrar</button>';
   html += '</div>';
   html += '<div class="clientBrowserHint">Desliza para cambiar de cliente</div>';
   html += '</div>';

@@ -3524,3 +3524,14 @@ button:active,
 .eventPromptBox .dailyPromptFinalUpload {
   margin-top: 14px;
 }
+
+
+/* ===== Botón borrar en ficha Clientes ===== */
+.clientBrowserActions button.danger {
+  background: rgba(255,77,77,.10);
+  color: var(--red);
+  border-color: rgba(255,77,77,.34);
+}
+.clientBrowserActions button.danger:hover {
+  background: rgba(255,77,77,.16);
+}
