@@ -4041,6 +4041,14 @@ function openNewClient() {
   openSheet('clientSheet','clientOverlay');
 }
 
+
+function editClientFromView(id) {
+  closeSheet('viewSheet','viewOverlay');
+  setTimeout(function(){
+    editClient(id);
+  }, 260);
+}
+
 function editClient(id) {
   var c = clients.find(function(x){ return x.id===id; });
   if (!c) return;
@@ -4254,7 +4262,7 @@ function viewClient(id) {
 
   html+='<div class="premiumActionRow">';
   html+=  '<button class="primary" data-id="'+esc(c.id)+'" onclick="openRenew(this.dataset.id)">&#8635; Renovar</button>';
-  html+=  '<button data-id="'+esc(c.id)+'" onclick="editClient(this.dataset.id)">&#9998; Editar</button>';
+  html+=  '<button data-id="'+esc(c.id)+'" onclick="editClientFromView(this.dataset.id)">&#9998; Editar</button>';
   html+=  '<button data-id="'+esc(c.id)+'" onclick="openClientMessages(this.dataset.id)">&#128203; Msg</button>';
   html+='</div>';
 
