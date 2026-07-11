@@ -627,6 +627,7 @@ function openPromps() {
   closeSheet('menuSheet','menuOverlay');
   try { dailyPromptRefreshDate(); } catch(e) {}
   try { eventPromptRefreshDate(); } catch(e) {}
+  try { extraPromptRefreshDate(); extraPromptTypeChanged(); } catch(e) {}
   openSheet('prompsSheet','prompsOverlay');
 }
 
@@ -6097,6 +6098,251 @@ function eventPromptClear() {
   showToast('Prompt borrado');
 }
 
+
+
+
+function extraPromptDateText() { return dailyPromptDateText(); }
+
+function extraPromptRefreshDate() {
+  var el = document.getElementById('extraPromptDatePreview');
+  if (el) el.textContent = extraPromptDateText();
+}
+
+function extraPromptStatus(msg, type) {
+  var el = document.getElementById('extraPromptStatus');
+  if (!el) return;
+  el.textContent = msg || '';
+  el.className = 'dailyPromptStatus ' + (type || '');
+}
+
+function extraPromptTypeLabel(type) {
+  var labels = {
+    final: 'Final / semifinal premium',
+    multi: 'Cartelera de varios partidos',
+    destacado: 'Evento destacado del día',
+    pelicula: 'Película recomendada',
+    serie: 'Serie recomendada',
+    whatsapp: 'Texto corto WhatsApp / Telegram'
+  };
+  return labels[type] || labels.final;
+}
+
+function extraPromptPlaceholder(type) {
+  if (type === 'final') return 'Ej:\n⏰ 21:00 – Mundial 2026: España 🆚 Portugal\n📺 LA 1 / DAZN Mundial\n🗂 TDT / MUNDIAL 2026 / UEFA TV\n\nPuedes añadir si es FINAL o SEMIFINAL.';
+  if (type === 'multi') return 'Ej:\n⚽ FÚTBOL INTERNACIONAL\n⏰ 18:00 – Mundial 2026: Francia 🆚 Marruecos\n📺 DAZN Mundial\n🗂 MUNDIAL 2026 / UEFA TV\n\n⏰ 21:00 – Mundial 2026: España 🆚 Portugal\n📺 LA 1 / DAZN Mundial\n🗂 MUNDIAL 2026 / UEFA TV';
+  if (type === 'destacado') return 'Ej:\nEvento destacado: España vs Portugal\nHora: 21:00\nCanal: LA 1 / DAZN Mundial\nCarpeta: TDT / MUNDIAL 2026 / UEFA TV';
+  if (type === 'pelicula') return 'Ej:\nTítulo: Interestellar\nGénero: Ciencia ficción\nMensaje: película recomendada de la noche\nPlataforma/carpeta: Cine / Recomendadas';
+  if (type === 'serie') return 'Ej:\nTítulo: The Last of Us\nTemporada: 1\nGénero: Drama / aventura\nMensaje: serie recomendada para hoy\nPlataforma/carpeta: Series / Recomendadas';
+  if (type === 'whatsapp') return 'Ej:\nEspaña vs Portugal, 21:00, LA 1 / DAZN Mundial. Quiero avisar a mis clientes de forma breve y premium.';
+  return 'Pega aquí la información base.';
+}
+
+function extraPromptTypeChanged() {
+  var typeEl = document.getElementById('extraPromptType');
+  var input = document.getElementById('extraPromptInput');
+  var type = typeEl ? typeEl.value : 'final';
+  if (input && !input.value.trim()) input.placeholder = extraPromptPlaceholder(type);
+  extraPromptRefreshDate();
+  extraPromptStatus('Tipo seleccionado: ' + extraPromptTypeLabel(type) + '.', 'ok');
+}
+
+function extraPromptBuildText(type, info) {
+  info = String(info || '').trim();
+  var fecha = extraPromptDateText();
+  var commonHeader = 'Hazme una cartela profesional en horizontal y en 4K para mi servicio de streaming M17LIV3.';
+
+  if (type === 'final') {
+    return [
+      commonHeader, '',
+      'TIPO DE CARTELA:',
+      '- Cartela individual premium para una semifinal o final del Mundial 2026.',
+      '- Debe transmitir partido histórico, tensión, emoción y gran evento.',
+      '- No añadas otros partidos ni información que no esté escrita.', '',
+      'ESTILO VISUAL:',
+      '- Diseño premium muy neon, cinematográfico, deportivo y épico.',
+      '- Formato horizontal 16:9, resolución 4K.',
+      '- Fondo oscuro elegante con estadio, focos, partículas, humo sutil y luces neon cyan, azul eléctrico, dorado y verde lima.',
+      '- Composición potente, clara y legible en móvil y TV.',
+      '- Usa energía visual de final: máxima tensión, ambiente mundialista y sensación de evento único.',
+      '- Puedes inspirarte en colores de las selecciones/equipos, sin usar logos oficiales si no están adjuntos.',
+      '- Texto limpio, grande, ordenado y sin errores.',
+      '- No poner marcas de agua.', '',
+      'FECHA QUE DEBE APARECER EN LA CARTELA:', fecha, '',
+      'CONTENIDO DEL EVENTO:', info, '',
+      'REQUISITOS DE COMPOSICIÓN:',
+      '- Destaca los equipos o protagonistas con mucha presencia visual.',
+      '- La hora debe verse claramente.',
+      '- El canal y la carpeta/categoría deben aparecer limpios en bloques secundarios.',
+      '- Incluye el título general “M17LIV3” de forma elegante.',
+      '- Que parezca una cartela final lista para publicar en una app de streaming.',
+      '- No cambies nombres, horarios, canales ni carpetas.'
+    ].join('\n');
+  }
+
+  if (type === 'multi') {
+    return [
+      commonHeader, '',
+      'TIPO DE CARTELA:',
+      '- Cartelera premium de varios partidos o eventos deportivos.',
+      '- Debe incluir únicamente los eventos escritos abajo.',
+      '- No añadas otros partidos ni información inventada.', '',
+      'ESTILO VISUAL:',
+      '- Diseño premium neon, moderno, cinematográfico y profesional.',
+      '- Formato horizontal 16:9, resolución 4K.',
+      '- Fondo oscuro elegante con luces neon cyan, azul eléctrico, verde lima y pequeños brillos deportivos.',
+      '- Estética de plataforma streaming / cartel deportivo profesional.',
+      '- Buena jerarquía visual, legible en móvil y TV.',
+      '- Usa separadores finos, tarjetas o bloques para cada evento.',
+      '- No sobrecargar la composición.',
+      '- No poner marcas de agua.', '',
+      'FECHA QUE DEBE APARECER EN LA CARTELA:', fecha, '',
+      'CONTENIDO DE LA CARTELA:', info, '',
+      'REQUISITOS DE COMPOSICIÓN:',
+      '- Mantén exactamente horarios, equipos, canales y carpetas/categorías.',
+      '- Respeta emojis como ⚽, ⏰, 📺 y 🗂 si ayudan a la legibilidad.',
+      '- Destaca los partidos principales con más presencia visual.',
+      '- Incluye el título general “M17LIV3” de forma elegante.',
+      '- Que parezca una cartela final lista para publicar en una app de streaming.'
+    ].join('\n');
+  }
+
+  if (type === 'destacado') {
+    return [
+      commonHeader, '',
+      'TIPO DE CARTELA:',
+      '- Cartela de EVENTO DESTACADO DEL DÍA.',
+      '- Debe centrarse únicamente en el evento escrito abajo.',
+      '- No añadas otros eventos ni información que no esté escrita.', '',
+      'ESTILO VISUAL:',
+      '- Diseño premium muy neon, moderno, cinematográfico y deportivo.',
+      '- Formato horizontal 16:9, resolución 4K.',
+      '- Fondo oscuro elegante con luces neon cyan, azul eléctrico, verde lima y brillos deportivos.',
+      '- Composición de evento principal: grande, clara, potente y muy legible en móvil y TV.',
+      '- Sensación de directo, estreno o gran cita del día.',
+      '- Texto limpio, grande, ordenado y sin errores.',
+      '- No poner marcas de agua.', '',
+      'FECHA QUE DEBE APARECER EN LA CARTELA:', fecha, '',
+      'CONTENIDO DEL EVENTO DESTACADO:', info, '',
+      'REQUISITOS DE COMPOSICIÓN:',
+      '- El evento debe ser el centro absoluto de la imagen.',
+      '- La hora debe verse claramente.',
+      '- Canal y carpeta/categoría deben aparecer como información secundaria.',
+      '- Incluye “EVENTO DEL DÍA” y el título general “M17LIV3” de forma elegante.',
+      '- No cambies nombres, horarios, canales ni carpetas.'
+    ].join('\n');
+  }
+
+  if (type === 'pelicula') {
+    return [
+      commonHeader, '',
+      'TIPO DE CARTELA:',
+      '- Cartela premium de película recomendada.',
+      '- Debe parecer una recomendación de streaming elegante, moderna y lista para publicar.',
+      '- No inventes datos que no aparezcan abajo.', '',
+      'ESTILO VISUAL:',
+      '- Diseño cinematográfico premium, oscuro, moderno y neon.',
+      '- Formato horizontal 16:9, resolución 4K.',
+      '- Fondo elegante con luces cyan, azul eléctrico, verde lima y atmósfera de cine.',
+      '- Composición limpia, con título grande y detalles ordenados.',
+      '- Puede tener estética de póster de película, sin usar logos oficiales si no están adjuntos.',
+      '- Texto limpio, legible en móvil y TV, sin errores.',
+      '- No poner marcas de agua.', '',
+      'FECHA / CONTEXTO:', fecha, '',
+      'INFORMACIÓN DE LA PELÍCULA:', info, '',
+      'REQUISITOS DE COMPOSICIÓN:',
+      '- Incluye “PELÍCULA RECOMENDADA” de forma elegante.',
+      '- Incluye el título general “M17LIV3”.',
+      '- Destaca el título de la película.',
+      '- Si hay género, plataforma, carpeta o mensaje, ordénalos en bloques secundarios.',
+      '- No inventes sinopsis larga si no está escrita.'
+    ].join('\n');
+  }
+
+  if (type === 'serie') {
+    return [
+      commonHeader, '',
+      'TIPO DE CARTELA:',
+      '- Cartela premium de serie recomendada.',
+      '- Debe parecer una recomendación de streaming elegante, moderna y lista para publicar.',
+      '- No inventes datos que no aparezcan abajo.', '',
+      'ESTILO VISUAL:',
+      '- Diseño premium cinematográfico, oscuro, moderno y neon.',
+      '- Formato horizontal 16:9, resolución 4K.',
+      '- Fondo elegante con luces cyan, azul eléctrico, verde lima y ambiente de serie exclusiva.',
+      '- Composición limpia, con título grande y detalles ordenados.',
+      '- Texto limpio, legible en móvil y TV, sin errores.',
+      '- No poner marcas de agua.', '',
+      'FECHA / CONTEXTO:', fecha, '',
+      'INFORMACIÓN DE LA SERIE:', info, '',
+      'REQUISITOS DE COMPOSICIÓN:',
+      '- Incluye “SERIE RECOMENDADA” de forma elegante.',
+      '- Incluye el título general “M17LIV3”.',
+      '- Destaca el título de la serie.',
+      '- Si hay temporada, género, plataforma, carpeta o mensaje, ordénalos en bloques secundarios.',
+      '- No inventes sinopsis larga si no está escrita.'
+    ].join('\n');
+  }
+
+  if (type === 'whatsapp') {
+    return [
+      'Redacta un texto corto para WhatsApp o Telegram para mis clientes de M17LIV3.', '',
+      'OBJETIVO:',
+      '- Avisar de forma breve, clara y atractiva.',
+      '- Tono profesional, cercano y premium.',
+      '- No hacerlo demasiado largo.',
+      '- No inventar datos que no estén escritos.',
+      '- Puede usar emojis con moderación.', '',
+      'FECHA DE REFERENCIA:', fecha, '',
+      'INFORMACIÓN BASE:', info, '',
+      'FORMATO DE SALIDA:',
+      '- Dame 3 versiones diferentes.',
+      '- Una versión elegante.',
+      '- Una versión más comercial.',
+      '- Una versión muy corta tipo aviso rápido.'
+    ].join('\n');
+  }
+  return info;
+}
+
+function extraPromptBuild() {
+  var typeEl = document.getElementById('extraPromptType');
+  var input = document.getElementById('extraPromptInput');
+  var out = document.getElementById('extraPromptGenerated');
+  var type = typeEl ? typeEl.value : 'final';
+  var info = input ? input.value.trim() : '';
+  extraPromptRefreshDate();
+  if (!info) {
+    showToast('Pega la información base primero', 'error');
+    extraPromptStatus('Falta la información base. Pega los datos y vuelve a generar.', 'error');
+    return;
+  }
+  var prompt = extraPromptBuildText(type, info);
+  if (out) out.value = prompt;
+  extraPromptStatus('Prompt extra generado: ' + extraPromptTypeLabel(type) + '.', 'ok');
+  showToast('Prompt generado');
+}
+
+function extraPromptCopy() {
+  var out = document.getElementById('extraPromptGenerated');
+  if (!out || !out.value.trim()) extraPromptBuild();
+  out = document.getElementById('extraPromptGenerated');
+  if (!out || !out.value.trim()) return;
+  var text = out.value;
+  var done = function(){ extraPromptStatus('Prompt copiado. Pégalo en ChatGPT.', 'ok'); showToast('Prompt copiado'); };
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(done).catch(function(){ out.focus(); out.select(); document.execCommand('copy'); done(); });
+  } else {
+    out.focus(); out.select(); document.execCommand('copy'); done();
+  }
+}
+
+function extraPromptClear() {
+  if (!confirm('¿Borrar la información base y el prompt extra generado?')) return;
+  ['extraPromptInput','extraPromptGenerated'].forEach(function(id){ var el = document.getElementById(id); if (el) el.value = ''; });
+  extraPromptTypeChanged();
+  extraPromptStatus('Prompt extra borrado. Elige tipo y pega nueva información cuando quieras.', 'ok');
+  showToast('Prompt borrado');
+}
 
 // ========== FIN PROMPT CHATGPT CARTELERA DIARIA ==========
 

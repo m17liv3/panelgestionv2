@@ -364,6 +364,47 @@
   </div>
 </div>
 
+    <div class="extraPromptBox">
+      <div class="dailyPromptTop">
+        <div>
+          <div class="dailyPromptKicker">&#10024; Promps extra</div>
+          <strong>Generador rápido de prompts</strong>
+          <span>Elige el tipo de prompt, pega la información base y la app lo convierte en un prompt listo para ChatGPT.</span>
+        </div>
+      </div>
+
+      <div class="extraPromptSelectorWrap">
+        <label class="dailyPromptLabel" for="extraPromptType">Tipo de prompt</label>
+        <select id="extraPromptType" class="extraPromptSelect" onchange="extraPromptTypeChanged()">
+          <option value="final">Final / semifinal premium</option>
+          <option value="multi">Cartelera de varios partidos</option>
+          <option value="destacado">Evento destacado del día</option>
+          <option value="pelicula">Película recomendada</option>
+          <option value="serie">Serie recomendada</option>
+          <option value="whatsapp">Texto corto WhatsApp / Telegram</option>
+        </select>
+      </div>
+
+      <div class="dailyPromptDateBox" id="extraPromptDateBox">
+        <span>Fecha automática</span>
+        <strong id="extraPromptDatePreview">Cargando fecha...</strong>
+      </div>
+
+      <label class="dailyPromptLabel">Información base</label>
+      <textarea id="extraPromptInput" class="dailyPromptTextarea extraPromptInput" placeholder="Pega aquí los datos base. Ejemplo: partido, hora, canal, carpeta, película, serie o texto que quieras convertir en prompt."></textarea>
+
+      <div class="dailyPromptActions extraPromptActions">
+        <button type="button" class="primary" onclick="extraPromptBuild()">Generar prompt</button>
+        <button type="button" class="success" onclick="extraPromptCopy()">Copiar prompt</button>
+        <button type="button" class="danger" onclick="extraPromptClear()">Borrar prompt</button>
+      </div>
+
+      <label class="dailyPromptLabel">Prompt generado</label>
+      <textarea id="extraPromptGenerated" class="dailyGeneratedPrompt" readonly placeholder="Aquí aparecerá el prompt extra listo para copiar."></textarea>
+
+      <div id="extraPromptStatus" class="dailyPromptStatus">Elige un tipo, pega la información base y pulsa “Generar prompt”.</div>
+    </div>
+
 
 
 <!-- CLIENT MORE ACTIONS SHEET -->

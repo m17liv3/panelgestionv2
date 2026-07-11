@@ -3535,3 +3535,38 @@ button:active,
 .clientBrowserActions button.danger:hover {
   background: rgba(255,77,77,.16);
 }
+
+
+/* ===== Promps extra ===== */
+.extraPromptBox {
+  border: 1px solid rgba(178,105,255,.20);
+  background:
+    radial-gradient(circle at top left, rgba(178,105,255,.12), transparent 42%),
+    radial-gradient(circle at bottom right, rgba(0,212,255,.08), transparent 46%),
+    rgba(255,255,255,.035);
+  border-radius: 18px;
+  padding: 14px;
+  margin-top: 18px;
+}
+.extraPromptSelectorWrap { margin-bottom: 12px; }
+.extraPromptSelect {
+  width: 100%;
+  background: rgba(8,18,28,.92);
+  border: 1px solid rgba(0,212,255,.26);
+  border-radius: 14px;
+  color: var(--text);
+  padding: 12px 13px;
+  outline: none;
+  font-family: inherit;
+  font-weight: 800;
+}
+.extraPromptSelect:focus {
+  border-color: rgba(0,229,255,.62);
+  box-shadow: 0 0 0 3px rgba(0,229,255,.08);
+}
+.extraPromptInput { min-height: 150px; }
+.extraPromptActions button.danger {
+  border-color: rgba(255,77,77,.32);
+  background: rgba(255,77,77,.10);
+  color: var(--red);
+}
