@@ -4213,106 +4213,6 @@ function premiumExpiryText(c) {
 }
 
 
-function getClientRenewalHistory(clientId) {
-  clientId = String(clientId || '');
-  return (renewals || []).filter(function(r){
-    return String(r.clientId || '') === clientId;
-  }).sort(function(a, b){
-    var da = new Date(a.createdAt || a.newExpiry || a.previousExpiry || 0).getTime();
-    var db = new Date(b.createdAt || b.newExpiry || b.previousExpiry || 0).getTime();
-    return db - da;
-  });
-}
-
-function getLastRenewalForClient(clientId) {
-  var list = getClientRenewalHistory(clientId);
-  return list.length ? list[0] : null;
-}
-
-function premiumDaysValue(c) {
-  var d = getDaysLeft(c && c.expiry);
-  if (isNaN(d)) return '-';
-  if (d < 0) return '-' + Math.abs(d);
-  return String(d);
-}
-
-function premiumDaysLabel(c) {
-  var d = getDaysLeft(c && c.expiry);
-  if (isNaN(d)) return 'Sin fecha';
-  if (d < 0) return 'Días vencido';
-  if (d === 0) return 'Caduca hoy';
-  return 'Días restantes';
-}
-
-function premiumRenewalNoticeText(c) {
-  if (!c || getStatus(c.expiry) !== 'warn') return 'No toca aviso';
-  if (!clientHasRenewalNotice(c)) return 'Pendiente aviso';
-  if (!isRenewalReplyCurrent(c)) return 'Avisado · sin respuesta';
-  return renewalResponseLabel(c);
-}
-
-function premiumSummaryCard(label, value, detail, cls) {
-  return '<div class="premiumSummaryCard '+esc(cls || '')+'">' +
-    '<span>'+esc(label)+'</span>' +
-    '<strong>'+esc(value || '-')+'</strong>' +
-    '<small>'+esc(detail || '')+'</small>' +
-  '</div>';
-}
-
-function premiumClientSummaryHtml(c) {
-  var days = getDaysLeft(c && c.expiry);
-  var status = getStatus(c && c.expiry);
-  var last = getLastRenewalForClient(c && c.id);
-  var pending = getPendingPaymentRenewalForClient(c && c.id);
-  var lastValue = last ? formatDate(last.createdAt ? String(last.createdAt).split('T')[0] : (last.newExpiry || '')) : 'Sin registro';
-  var lastDetail = last ? ((last.months || 0) + ' mes(es)' + (Number(last.amount || 0) ? ' · ' + euro(last.amount) : '') + (isPaymentPending(last) ? ' · pendiente' : '')) : 'Todavía no hay renovación guardada';
-  var payValue = pending ? 'Pendiente' : 'Correcto';
-  var payDetail = pending ? ((Number(pending.amount || 0) ? euro(pending.amount) + ' · ' : '') + formatDate(pending.previousExpiry) + ' → ' + formatDate(pending.newExpiry)) : 'Sin pagos pendientes';
-  return '<div class="premiumSummaryGrid">' +
-    premiumSummaryCard(premiumDaysLabel(c), premiumDaysValue(c), formatDate(c && c.expiry), status === 'exp' ? 'expired' : (status === 'warn' ? 'warning' : 'active')) +
-    premiumSummaryCard('Última renovación', lastValue, lastDetail, 'renewal') +
-    premiumSummaryCard('Pago', payValue, payDetail, pending ? 'payPending' : 'paid') +
-    premiumSummaryCard('Aviso renovación', premiumRenewalNoticeText(c), status === 'warn' ? 'Zona de seguimiento' : 'Fuera de ventana de aviso', clientHasUnansweredRenewalNotice(c) ? 'noAnswer' : '') +
-  '</div>';
-}
-
-function premiumRenewalActionsHtml(c) {
-  if (!c || getStatus(c.expiry) !== 'warn') return '';
-  return '<div class="premiumSectionTitle">Seguimiento renovación</div>' +
-    '<div class="premiumRenewalActions">' +
-      '<button data-id="'+esc(c.id)+'" onclick="homeStatusListSetRenewalNotice(this.dataset.id, this)">Marcar avisado</button>' +
-      '<button class="noAnswerBtn" data-id="'+esc(c.id)+'" onclick="homeStatusListSetRenewalNoReply(this.dataset.id, this)">No contestado</button>' +
-      '<button class="willRenewBtn" data-id="'+esc(c.id)+'" onclick="homeStatusListSetRenewalReply(this.dataset.id, &quot;renueva&quot;, this)">Va a renovar</button>' +
-      '<button class="noRenewBtn" data-id="'+esc(c.id)+'" onclick="homeStatusListSetRenewalReply(this.dataset.id, &quot;no_renueva&quot;, this)">No va a renovar</button>' +
-    '</div>';
-}
-
-function deleteClientFromView(id) {
-  var c = clients.find(function(x){ return x.id === id; });
-  if (!c) return;
-  closeSheet('viewSheet','viewOverlay');
-  setTimeout(function(){
-    showPrettyConfirm({
-      title: 'Eliminar cliente',
-      message: 'Vas a borrar a "' + c.name + '". Esta acción no se puede deshacer.',
-      confirmText: 'Eliminar',
-      danger: true,
-      onConfirm: async function(){
-        await deleteClientFromStore(id);
-        clients = clients.filter(function(x){ return x.id !== id; });
-        saveData();
-        renderCards();
-        updateStats();
-        if (typeof updateHomeMiniPanel === 'function') updateHomeMiniPanel();
-        if (typeof renderTagFilterBar === 'function') renderTagFilterBar();
-        if (typeof renderRenewalCalendar === 'function' && document.getElementById('renewalCalendarSheet') && document.getElementById('renewalCalendarSheet').classList.contains('open')) renderRenewalCalendar();
-        showToast('Cliente eliminado');
-      }
-    });
-  }, 260);
-}
-
-
 function premiumDataCard(label, value, copyValue, accent) {
   value = value || '-';
   return '<div class="premiumDataCard '+(accent || '')+'">' +
@@ -4352,16 +4252,11 @@ function viewClient(id) {
   html+=  '<div class="premiumExpiryLine"><span>Expira</span><strong>'+formatDate(c.expiry)+'</strong><small>'+esc(premiumExpiryText(c))+'</small></div>';
   html+='</div>';
 
-  html+=premiumClientSummaryHtml(c);
-
-  html+='<div class="premiumActionRow premiumActionRow4">';
+  html+='<div class="premiumActionRow">';
   html+=  '<button class="primary" data-id="'+esc(c.id)+'" onclick="openRenew(this.dataset.id)">&#8635; Renovar</button>';
-  html+=  '<button data-id="'+esc(c.id)+'" onclick="openClientMessages(this.dataset.id)">&#128203; Msg</button>';
   html+=  '<button data-id="'+esc(c.id)+'" onclick="editClient(this.dataset.id)">&#9998; Editar</button>';
-  html+=  '<button class="danger" data-id="'+esc(c.id)+'" onclick="deleteClientFromView(this.dataset.id)">&#128465; Borrar</button>';
+  html+=  '<button data-id="'+esc(c.id)+'" onclick="openClientMessages(this.dataset.id)">&#128203; Msg</button>';
   html+='</div>';
-
-  html+=premiumRenewalActionsHtml(c);
 
   html+=renewalNoticeHtml(c, 'view');
   html+=pendingPaymentNoticeHtml(c, 'view');
