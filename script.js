@@ -2117,6 +2117,173 @@ async function exportFullBackup() {
 }
 // ========== FIN BACKUP INTELIGENTE ==========
 
+
+// ========== CALENDARIO DE RENOVACIONES ==========
+var renewalCalendarMode = 'week';
+
+function renewalCalendarToday() {
+  var d = new Date();
+  d.setHours(0,0,0,0);
+  return d;
+}
+
+function renewalCalendarDaysLeft(c) {
+  return getDaysLeft(c && c.expiry);
+}
+
+function renewalCalendarModeLabel(mode) {
+  var labels = {
+    today: 'Hoy',
+    tomorrow: 'Mañana',
+    week: 'Esta semana',
+    next: 'Próxima semana',
+    month: 'Este mes',
+    expired: 'Expirados',
+    all: 'Todo'
+  };
+  return labels[mode] || labels.week;
+}
+
+function renewalCalendarClientMatches(c, mode) {
+  var d = renewalCalendarDaysLeft(c);
+  if (isNaN(d)) return false;
+  if (mode === 'today') return d === 0;
+  if (mode === 'tomorrow') return d === 1;
+  if (mode === 'week') return d >= 0 && d <= 7;
+  if (mode === 'next') return d >= 8 && d <= 14;
+  if (mode === 'month') return d >= 0 && d <= 30;
+  if (mode === 'expired') return d < 0;
+  return d <= 60;
+}
+
+function renewalCalendarStats() {
+  var list = clients || [];
+  return {
+    today: list.filter(function(c){ return renewalCalendarClientMatches(c, 'today'); }).length,
+    tomorrow: list.filter(function(c){ return renewalCalendarClientMatches(c, 'tomorrow'); }).length,
+    week: list.filter(function(c){ return renewalCalendarClientMatches(c, 'week'); }).length,
+    month: list.filter(function(c){ return renewalCalendarClientMatches(c, 'month'); }).length
+  };
+}
+
+function renewalCalendarTitleForClient(c) {
+  var d = renewalCalendarDaysLeft(c);
+  if (d < 0) return 'Expirado hace ' + Math.abs(d) + ' día(s)';
+  if (d === 0) return 'Caduca hoy';
+  if (d === 1) return 'Caduca mañana';
+  return 'Caduca en ' + d + ' día(s)';
+}
+
+function renewalCalendarDateGroup(c) {
+  var d = renewalCalendarDaysLeft(c);
+  if (d < 0) return 'Expirados';
+  if (d === 0) return 'Hoy';
+  if (d === 1) return 'Mañana';
+  if (d <= 7) return 'Esta semana';
+  if (d <= 14) return 'Próxima semana';
+  if (d <= 30) return 'Este mes';
+  return 'Más adelante';
+}
+
+function renewalCalendarItemHtml(c) {
+  var svcLabel = c.service === 'ESPANA' ? 'ESPAÑA' : (c.service || '-');
+  var pending = getPendingPaymentRenewalForClient(c.id);
+  var mainApp = getClientMainApp(c) || c.user || '-';
+  return '<div class="renewalCalendarItem '+esc(getStatus(c.expiry))+'">' +
+    '<div class="renewalCalendarDate">' +
+      '<strong>'+esc(String(formatDate(c.expiry)).slice(0,5))+'</strong>' +
+      '<span>'+esc(renewalCalendarTitleForClient(c))+'</span>' +
+    '</div>' +
+    '<div class="renewalCalendarInfo">' +
+      '<strong>'+esc(c.name || 'Cliente')+'</strong>' +
+      '<span>'+esc(mainApp)+'</span>' +
+      '<div class="renewalCalendarBadges">' +
+        '<span class="badge '+(c.service==='TODO'?'badgeTodo':'badgeEs')+'">'+esc(svcLabel)+'</span>' +
+        statusBadge(c.expiry) +
+        (clientHasRenewalNotice(c) ? '<span class="badge badgeAdvised">Avisado</span>' : '') +
+        renewalReplyBadgeHtml(c) +
+        (pending ? '<span class="badge badgePayPending">Pago pendiente</span>' : '') +
+      '</div>' +
+    '</div>' +
+    '<div class="renewalCalendarActions">' +
+      '<button data-id="'+esc(c.id)+'" onclick="renewalCalendarOpenClient(this.dataset.id)">Ver</button>' +
+      '<button class="primary" data-id="'+esc(c.id)+'" onclick="renewalCalendarRenew(this.dataset.id)">Renovar</button>' +
+      '<button data-id="'+esc(c.id)+'" onclick="renewalCalendarMessages(this.dataset.id)">Msg</button>' +
+    '</div>' +
+  '</div>';
+}
+
+function renderRenewalCalendar() {
+  var box = document.getElementById('renewalCalendarContent');
+  if (!box) return;
+  var stats = renewalCalendarStats();
+  var t = document.getElementById('renewCalToday');
+  var tm = document.getElementById('renewCalTomorrow');
+  var w = document.getElementById('renewCalWeek');
+  var m = document.getElementById('renewCalMonth');
+  if (t) t.textContent = stats.today;
+  if (tm) tm.textContent = stats.tomorrow;
+  if (w) w.textContent = stats.week;
+  if (m) m.textContent = stats.month;
+
+  document.querySelectorAll('[data-renewal-cal-mode]').forEach(function(btn){
+    btn.classList.toggle('active', btn.getAttribute('data-renewal-cal-mode') === renewalCalendarMode);
+  });
+
+  var list = sortClientsByExpiryAsc((clients || []).filter(function(c){
+    return renewalCalendarClientMatches(c, renewalCalendarMode);
+  }));
+
+  if (!list.length) {
+    box.innerHTML = '<div class="renewalCalendarEmpty"><div class="ico">&#128197;</div><strong>No hay renovaciones en "'+esc(renewalCalendarModeLabel(renewalCalendarMode))+'"</strong><span>Prueba con otro rango del calendario.</span></div>';
+    return;
+  }
+
+  var groups = {};
+  list.forEach(function(c){
+    var g = renewalCalendarDateGroup(c);
+    if (!groups[g]) groups[g] = [];
+    groups[g].push(c);
+  });
+  var order = ['Expirados','Hoy','Mañana','Esta semana','Próxima semana','Este mes','Más adelante'];
+  box.innerHTML = order.filter(function(g){ return groups[g] && groups[g].length; }).map(function(g){
+    return '<div class="renewalCalendarGroup">' +
+      '<div class="renewalCalendarGroupTitle"><span>'+esc(g)+'</span><strong>'+groups[g].length+'</strong></div>' +
+      groups[g].map(renewalCalendarItemHtml).join('') +
+    '</div>';
+  }).join('');
+}
+
+function setRenewalCalendarMode(mode) {
+  renewalCalendarMode = mode || 'week';
+  renderRenewalCalendar();
+}
+
+async function openRenewalCalendar() {
+  closeSheet('menuSheet','menuOverlay');
+  openSheet('renewalCalendarSheet','renewalCalendarOverlay');
+  if (!renewals || !renewals.length) {
+    try { await loadRenewals(false); } catch(e) {}
+  }
+  renderRenewalCalendar();
+}
+
+function renewalCalendarOpenClient(id) {
+  closeSheet('renewalCalendarSheet','renewalCalendarOverlay');
+  setTimeout(function(){ viewClient(id); }, 260);
+}
+
+function renewalCalendarRenew(id) {
+  closeSheet('renewalCalendarSheet','renewalCalendarOverlay');
+  setTimeout(function(){ openRenew(id); }, 260);
+}
+
+function renewalCalendarMessages(id) {
+  closeSheet('renewalCalendarSheet','renewalCalendarOverlay');
+  setTimeout(function(){ openClientMessages(id); }, 260);
+}
+// ========== FIN CALENDARIO DE RENOVACIONES ==========
+
 // ========== RENOVACIONES E INGRESOS ==========
 function parseEuroAmount(value) {
   if (value === null || value === undefined) return 0;
@@ -4045,6 +4212,107 @@ function premiumExpiryText(c) {
   return 'Activo · quedan ' + d + ' día(s)';
 }
 
+
+function getClientRenewalHistory(clientId) {
+  clientId = String(clientId || '');
+  return (renewals || []).filter(function(r){
+    return String(r.clientId || '') === clientId;
+  }).sort(function(a, b){
+    var da = new Date(a.createdAt || a.newExpiry || a.previousExpiry || 0).getTime();
+    var db = new Date(b.createdAt || b.newExpiry || b.previousExpiry || 0).getTime();
+    return db - da;
+  });
+}
+
+function getLastRenewalForClient(clientId) {
+  var list = getClientRenewalHistory(clientId);
+  return list.length ? list[0] : null;
+}
+
+function premiumDaysValue(c) {
+  var d = getDaysLeft(c && c.expiry);
+  if (isNaN(d)) return '-';
+  if (d < 0) return '-' + Math.abs(d);
+  return String(d);
+}
+
+function premiumDaysLabel(c) {
+  var d = getDaysLeft(c && c.expiry);
+  if (isNaN(d)) return 'Sin fecha';
+  if (d < 0) return 'Días vencido';
+  if (d === 0) return 'Caduca hoy';
+  return 'Días restantes';
+}
+
+function premiumRenewalNoticeText(c) {
+  if (!c || getStatus(c.expiry) !== 'warn') return 'No toca aviso';
+  if (!clientHasRenewalNotice(c)) return 'Pendiente aviso';
+  if (!isRenewalReplyCurrent(c)) return 'Avisado · sin respuesta';
+  return renewalResponseLabel(c);
+}
+
+function premiumSummaryCard(label, value, detail, cls) {
+  return '<div class="premiumSummaryCard '+esc(cls || '')+'">' +
+    '<span>'+esc(label)+'</span>' +
+    '<strong>'+esc(value || '-')+'</strong>' +
+    '<small>'+esc(detail || '')+'</small>' +
+  '</div>';
+}
+
+function premiumClientSummaryHtml(c) {
+  var days = getDaysLeft(c && c.expiry);
+  var status = getStatus(c && c.expiry);
+  var last = getLastRenewalForClient(c && c.id);
+  var pending = getPendingPaymentRenewalForClient(c && c.id);
+  var lastValue = last ? formatDate(last.createdAt ? String(last.createdAt).split('T')[0] : (last.newExpiry || '')) : 'Sin registro';
+  var lastDetail = last ? ((last.months || 0) + ' mes(es)' + (Number(last.amount || 0) ? ' · ' + euro(last.amount) : '') + (isPaymentPending(last) ? ' · pendiente' : '')) : 'Todavía no hay renovación guardada';
+  var payValue = pending ? 'Pendiente' : 'Correcto';
+  var payDetail = pending ? ((Number(pending.amount || 0) ? euro(pending.amount) + ' · ' : '') + formatDate(pending.previousExpiry) + ' → ' + formatDate(pending.newExpiry)) : 'Sin pagos pendientes';
+  return '<div class="premiumSummaryGrid">' +
+    premiumSummaryCard(premiumDaysLabel(c), premiumDaysValue(c), formatDate(c && c.expiry), status === 'exp' ? 'expired' : (status === 'warn' ? 'warning' : 'active')) +
+    premiumSummaryCard('Última renovación', lastValue, lastDetail, 'renewal') +
+    premiumSummaryCard('Pago', payValue, payDetail, pending ? 'payPending' : 'paid') +
+    premiumSummaryCard('Aviso renovación', premiumRenewalNoticeText(c), status === 'warn' ? 'Zona de seguimiento' : 'Fuera de ventana de aviso', clientHasUnansweredRenewalNotice(c) ? 'noAnswer' : '') +
+  '</div>';
+}
+
+function premiumRenewalActionsHtml(c) {
+  if (!c || getStatus(c.expiry) !== 'warn') return '';
+  return '<div class="premiumSectionTitle">Seguimiento renovación</div>' +
+    '<div class="premiumRenewalActions">' +
+      '<button data-id="'+esc(c.id)+'" onclick="homeStatusListSetRenewalNotice(this.dataset.id, this)">Marcar avisado</button>' +
+      '<button class="noAnswerBtn" data-id="'+esc(c.id)+'" onclick="homeStatusListSetRenewalNoReply(this.dataset.id, this)">No contestado</button>' +
+      '<button class="willRenewBtn" data-id="'+esc(c.id)+'" onclick="homeStatusListSetRenewalReply(this.dataset.id, &quot;renueva&quot;, this)">Va a renovar</button>' +
+      '<button class="noRenewBtn" data-id="'+esc(c.id)+'" onclick="homeStatusListSetRenewalReply(this.dataset.id, &quot;no_renueva&quot;, this)">No va a renovar</button>' +
+    '</div>';
+}
+
+function deleteClientFromView(id) {
+  var c = clients.find(function(x){ return x.id === id; });
+  if (!c) return;
+  closeSheet('viewSheet','viewOverlay');
+  setTimeout(function(){
+    showPrettyConfirm({
+      title: 'Eliminar cliente',
+      message: 'Vas a borrar a "' + c.name + '". Esta acción no se puede deshacer.',
+      confirmText: 'Eliminar',
+      danger: true,
+      onConfirm: async function(){
+        await deleteClientFromStore(id);
+        clients = clients.filter(function(x){ return x.id !== id; });
+        saveData();
+        renderCards();
+        updateStats();
+        if (typeof updateHomeMiniPanel === 'function') updateHomeMiniPanel();
+        if (typeof renderTagFilterBar === 'function') renderTagFilterBar();
+        if (typeof renderRenewalCalendar === 'function' && document.getElementById('renewalCalendarSheet') && document.getElementById('renewalCalendarSheet').classList.contains('open')) renderRenewalCalendar();
+        showToast('Cliente eliminado');
+      }
+    });
+  }, 260);
+}
+
+
 function premiumDataCard(label, value, copyValue, accent) {
   value = value || '-';
   return '<div class="premiumDataCard '+(accent || '')+'">' +
@@ -4084,11 +4352,16 @@ function viewClient(id) {
   html+=  '<div class="premiumExpiryLine"><span>Expira</span><strong>'+formatDate(c.expiry)+'</strong><small>'+esc(premiumExpiryText(c))+'</small></div>';
   html+='</div>';
 
-  html+='<div class="premiumActionRow">';
+  html+=premiumClientSummaryHtml(c);
+
+  html+='<div class="premiumActionRow premiumActionRow4">';
   html+=  '<button class="primary" data-id="'+esc(c.id)+'" onclick="openRenew(this.dataset.id)">&#8635; Renovar</button>';
-  html+=  '<button data-id="'+esc(c.id)+'" onclick="editClient(this.dataset.id)">&#9998; Editar</button>';
   html+=  '<button data-id="'+esc(c.id)+'" onclick="openClientMessages(this.dataset.id)">&#128203; Msg</button>';
+  html+=  '<button data-id="'+esc(c.id)+'" onclick="editClient(this.dataset.id)">&#9998; Editar</button>';
+  html+=  '<button class="danger" data-id="'+esc(c.id)+'" onclick="deleteClientFromView(this.dataset.id)">&#128465; Borrar</button>';
   html+='</div>';
+
+  html+=premiumRenewalActionsHtml(c);
 
   html+=renewalNoticeHtml(c, 'view');
   html+=pendingPaymentNoticeHtml(c, 'view');

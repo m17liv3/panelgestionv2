@@ -207,6 +207,7 @@
     <div class="menuItem" onclick="document.getElementById('importInput').click()"><span class="ico2">&#11014;</span> Importar desde Excel</div>
     <div class="menuItem" onclick="openDeleteAllClients()" style="color:var(--red)"><span class="ico2">&#128465;</span> Borrar todos los clientes</div>
     <div class="menuItem" onclick="openPayments()"><span class="ico2">&#128176;</span> Ingresos / renovaciones</div>
+    <div class="menuItem" onclick="openRenewalCalendar()"><span class="ico2">&#128197;</span> Calendario renovaciones</div>
     <div class="menuItem" onclick="openFinanceBalance()"><span class="ico2">&#128202;</span> Balance / finanzas</div>
     <div class="menuItem" onclick="openRaffles()"><span class="ico2">&#127873;</span> Sorteos clientes</div>
     <div class="menuItem" onclick="openFixedAppImage()"><span class="ico2">&#128444;</span> Links fijos APP</div>
@@ -732,6 +733,47 @@
     <button class="btnFull gray" onclick="exportExcel()">&#11015; Exportar solo clientes</button>
     <p class="miniHelp">El backup completo incluye clientes y renovaciones/pagos. La fecha del ultimo backup se guarda en este dispositivo para avisarte si pasan varios dias sin copia.</p>
     <button class="btnFull gray" onclick="closeSheet('backupSheet','backupOverlay')" style="margin-top:8px">Cerrar</button>
+  </div>
+</div>
+
+
+<!-- RENEWAL CALENDAR SHEET -->
+<div class="sheet-overlay" id="renewalCalendarOverlay" onclick="closeSheet('renewalCalendarSheet','renewalCalendarOverlay')"></div>
+<div class="sheet renewalCalendarSheet" id="renewalCalendarSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <h3>&#128197; Calendario renovaciones</h3>
+    <button class="sheet-close" onclick="closeSheet('renewalCalendarSheet','renewalCalendarOverlay')">x</button>
+  </div>
+  <div class="sheet-body renewalCalendarBody">
+    <div class="renewalCalendarIntro">
+      <div>
+        <strong>Agenda de caducidades</strong>
+        <span>Visualiza los clientes por fecha de renovación y actúa rápido.</span>
+      </div>
+      <button type="button" onclick="renderRenewalCalendar()">&#8634; Actualizar</button>
+    </div>
+
+    <div class="renewalCalendarStats">
+      <button type="button" onclick="setRenewalCalendarMode('today')"><span>Hoy</span><strong id="renewCalToday">0</strong></button>
+      <button type="button" onclick="setRenewalCalendarMode('tomorrow')"><span>Mañana</span><strong id="renewCalTomorrow">0</strong></button>
+      <button type="button" onclick="setRenewalCalendarMode('week')"><span>7 días</span><strong id="renewCalWeek">0</strong></button>
+      <button type="button" onclick="setRenewalCalendarMode('month')"><span>30 días</span><strong id="renewCalMonth">0</strong></button>
+    </div>
+
+    <div class="renewalCalendarFilters">
+      <button type="button" data-renewal-cal-mode="today" onclick="setRenewalCalendarMode('today')">Hoy</button>
+      <button type="button" data-renewal-cal-mode="tomorrow" onclick="setRenewalCalendarMode('tomorrow')">Mañana</button>
+      <button type="button" data-renewal-cal-mode="week" onclick="setRenewalCalendarMode('week')">Esta semana</button>
+      <button type="button" data-renewal-cal-mode="next" onclick="setRenewalCalendarMode('next')">Próxima semana</button>
+      <button type="button" data-renewal-cal-mode="month" onclick="setRenewalCalendarMode('month')">Este mes</button>
+      <button type="button" data-renewal-cal-mode="expired" onclick="setRenewalCalendarMode('expired')">Expirados</button>
+      <button type="button" data-renewal-cal-mode="all" onclick="setRenewalCalendarMode('all')">Todo</button>
+    </div>
+
+    <div id="renewalCalendarContent" class="renewalCalendarContent">
+      <div class="emptyMini">Cargando calendario...</div>
+    </div>
   </div>
 </div>
 
