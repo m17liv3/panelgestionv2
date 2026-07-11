@@ -3570,3 +3570,37 @@ button:active,
   background: rgba(255,77,77,.10);
   color: var(--red);
 }
+
+
+/* ===== Promps extra visible ===== */
+.extraPromptBox {
+  margin-top: 18px;
+  padding: 16px;
+  border: 1px solid rgba(0,229,255,.16);
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at top left, rgba(0,229,255,.10), transparent 36%),
+    linear-gradient(135deg, rgba(10,24,38,.96), rgba(5,12,22,.96));
+  box-shadow: 0 14px 36px rgba(0,0,0,.22);
+}
+.extraPromptSelectGroup select {
+  width: 100%;
+  background: rgba(8,18,28,.92);
+  border: 1px solid rgba(0,212,255,.32);
+  border-radius: 14px;
+  color: var(--text);
+  padding: 12px 13px;
+  outline: none;
+  font-size: .92rem;
+  font-family: inherit;
+}
+.extraPromptSelectGroup select:focus {
+  border-color: rgba(0,229,255,.62);
+  box-shadow: 0 0 0 3px rgba(0,229,255,.08);
+}
+#extraPromptInput {
+  min-height: 145px;
+}
+#extraPromptGenerated {
+  min-height: 190px;
+}
