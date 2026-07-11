@@ -6131,8 +6131,8 @@ function extraPromptPlaceholder(type) {
   if (type === 'final') return 'Ej:\n⏰ 21:00 – Mundial 2026: España 🆚 Portugal\n📺 LA 1 / DAZN Mundial\n🗂 TDT / MUNDIAL 2026 / UEFA TV\n\nPuedes añadir si es FINAL o SEMIFINAL.';
   if (type === 'multi') return 'Ej:\n⚽ FÚTBOL INTERNACIONAL\n⏰ 18:00 – Mundial 2026: Francia 🆚 Marruecos\n📺 DAZN Mundial\n🗂 MUNDIAL 2026 / UEFA TV\n\n⏰ 21:00 – Mundial 2026: España 🆚 Portugal\n📺 LA 1 / DAZN Mundial\n🗂 MUNDIAL 2026 / UEFA TV';
   if (type === 'destacado') return 'Ej:\nEvento destacado: España vs Portugal\nHora: 21:00\nCanal: LA 1 / DAZN Mundial\nCarpeta: TDT / MUNDIAL 2026 / UEFA TV';
-  if (type === 'pelicula') return 'Ej:\nTítulo: Interestellar\nGénero: Ciencia ficción\nMensaje: película recomendada de la noche\nPlataforma/carpeta: Cine / Recomendadas';
-  if (type === 'serie') return 'Ej:\nTítulo: The Last of Us\nTemporada: 1\nGénero: Drama / aventura\nMensaje: serie recomendada para hoy\nPlataforma/carpeta: Series / Recomendadas';
+  if (type === 'pelicula') return 'Ej:\nTítulo: Interestellar\nGénero: Ciencia ficción\nPoster/imagen: adjuntaré imagen o usa visual cinematográfico\nMensaje: película recomendada de la noche\nPlataforma/carpeta: Cine / Recomendadas';
+  if (type === 'serie') return 'Ej:\nTítulo: The Last of Us\nTemporada: 1\nGénero: Drama / aventura\nPoster/imagen: adjuntaré imagen o usa visual cinematográfico\nMensaje: serie recomendada para hoy\nPlataforma/carpeta: Series / Recomendadas';
   if (type === 'whatsapp') return 'Ej:\nEspaña vs Portugal, 21:00, LA 1 / DAZN Mundial. Quiero avisar a mis clientes de forma breve y premium.';
   return 'Pega aquí la información base.';
 }
@@ -6156,25 +6156,29 @@ function extraPromptBuildText(type, info) {
       commonHeader, '',
       'TIPO DE CARTELA:',
       '- Cartela individual premium para una semifinal o final del Mundial 2026.',
-      '- Debe transmitir partido histórico, tensión, emoción y gran evento.',
+      '- Debe transmitir partido histórico, emoción, tensión y sensación de gran evento.',
       '- No añadas otros partidos ni información que no esté escrita.', '',
+      'IMAGEN / VISUAL PRINCIPAL:',
+      '- La cartela debe incluir una imagen principal potente y protagonista.',
+      '- Si adjunto una imagen, poster o referencia visual, úsala como base principal y respeta su identidad visual.',
+      '- Si no adjunto imagen, crea un visual cinematográfico y deportivo original, con ambiente de gran partido.',
+      '- La imagen debe tener mucho peso visual, no ser solo un fondo decorativo.', '',
       'ESTILO VISUAL:',
       '- Diseño premium muy neon, cinematográfico, deportivo y épico.',
       '- Formato horizontal 16:9, resolución 4K.',
-      '- Fondo oscuro elegante con estadio, focos, partículas, humo sutil y luces neon cyan, azul eléctrico, dorado y verde lima.',
+      '- Fondo oscuro elegante con luces neon cyan, azul eléctrico y verde lima.',
+      '- Puede incluir estadio, focos, partículas, humo y atmósfera de gran final.',
       '- Composición potente, clara y legible en móvil y TV.',
-      '- Usa energía visual de final: máxima tensión, ambiente mundialista y sensación de evento único.',
-      '- Puedes inspirarte en colores de las selecciones/equipos, sin usar logos oficiales si no están adjuntos.',
       '- Texto limpio, grande, ordenado y sin errores.',
       '- No poner marcas de agua.', '',
-      'FECHA QUE DEBE APARECER EN LA CARTELA:', fecha, '',
+      'FECHA / CONTEXTO:', fecha, '',
       'CONTENIDO DEL EVENTO:', info, '',
       'REQUISITOS DE COMPOSICIÓN:',
-      '- Destaca los equipos o protagonistas con mucha presencia visual.',
+      '- Destaca muchísimo los equipos o protagonistas del partido.',
       '- La hora debe verse claramente.',
-      '- El canal y la carpeta/categoría deben aparecer limpios en bloques secundarios.',
-      '- Incluye el título general “M17LIV3” de forma elegante.',
-      '- Que parezca una cartela final lista para publicar en una app de streaming.',
+      '- El canal y la carpeta deben aparecer como bloques secundarios limpios.',
+      '- Integra la imagen principal con el resto del diseño usando degradados y sombras.',
+      '- Incluye “M17LIV3” de forma elegante.',
       '- No cambies nombres, horarios, canales ni carpetas.'
     ].join('\n');
   }
@@ -6183,26 +6187,30 @@ function extraPromptBuildText(type, info) {
     return [
       commonHeader, '',
       'TIPO DE CARTELA:',
-      '- Cartelera premium de varios partidos o eventos deportivos.',
-      '- Debe incluir únicamente los eventos escritos abajo.',
-      '- No añadas otros partidos ni información inventada.', '',
+      '- Cartela premium de varios partidos o eventos.',
+      '- Debe recoger exactamente los eventos escritos abajo.',
+      '- No añadas partidos ni información que no esté escrita.', '',
+      'IMAGEN / VISUAL PRINCIPAL:',
+      '- La cartela debe incluir un visual principal potente relacionado con fútbol internacional o con los eventos del día.',
+      '- Si adjunto una imagen o referencia visual, úsala como base principal del diseño.',
+      '- Si no adjunto imagen, crea un visual deportivo premium original con ambiente de competición internacional.',
+      '- La imagen debe integrarse con el listado de eventos y no quedar como un simple fondo vacío.', '',
       'ESTILO VISUAL:',
-      '- Diseño premium neon, moderno, cinematográfico y profesional.',
+      '- Diseño premium de plataforma streaming, moderno y muy visual.',
       '- Formato horizontal 16:9, resolución 4K.',
-      '- Fondo oscuro elegante con luces neon cyan, azul eléctrico, verde lima y pequeños brillos deportivos.',
-      '- Estética de plataforma streaming / cartel deportivo profesional.',
-      '- Buena jerarquía visual, legible en móvil y TV.',
-      '- Usa separadores finos, tarjetas o bloques para cada evento.',
-      '- No sobrecargar la composición.',
+      '- Fondo oscuro elegante con luces cyan, azul eléctrico y verde lima.',
+      '- Jerarquía visual clara con tarjetas o bloques por evento.',
+      '- Legible en móvil y TV.',
+      '- Texto limpio, ordenado y sin errores.',
       '- No poner marcas de agua.', '',
-      'FECHA QUE DEBE APARECER EN LA CARTELA:', fecha, '',
+      'FECHA / CONTEXTO:', fecha, '',
       'CONTENIDO DE LA CARTELA:', info, '',
       'REQUISITOS DE COMPOSICIÓN:',
-      '- Mantén exactamente horarios, equipos, canales y carpetas/categorías.',
-      '- Respeta emojis como ⚽, ⏰, 📺 y 🗂 si ayudan a la legibilidad.',
-      '- Destaca los partidos principales con más presencia visual.',
-      '- Incluye el título general “M17LIV3” de forma elegante.',
-      '- Que parezca una cartela final lista para publicar en una app de streaming.'
+      '- Mantén exactamente los horarios, partidos, canales y carpetas escritos.',
+      '- No añadas eventos nuevos.',
+      '- Incluye “M17LIV3” como título elegante.',
+      '- Integra la imagen/visual principal con el resto de bloques usando degradados y sombras.',
+      '- Que la composición parezca una cartelera final profesional lista para publicar.'
     ].join('\n');
   }
 
@@ -6210,25 +6218,30 @@ function extraPromptBuildText(type, info) {
     return [
       commonHeader, '',
       'TIPO DE CARTELA:',
-      '- Cartela de EVENTO DESTACADO DEL DÍA.',
-      '- Debe centrarse únicamente en el evento escrito abajo.',
-      '- No añadas otros eventos ni información que no esté escrita.', '',
+      '- Cartela premium de evento destacado del día.',
+      '- Debe centrarse únicamente en el evento o partido escrito abajo.',
+      '- No añadas otra información que no esté indicada.', '',
+      'IMAGEN / VISUAL PRINCIPAL:',
+      '- La cartela debe incluir una imagen principal protagonista.',
+      '- Si adjunto una imagen, poster o referencia visual, úsala como base principal del diseño.',
+      '- Si no adjunto imagen, crea un visual premium original inspirado en el evento destacado.',
+      '- La imagen debe tener mucha presencia y reforzar el carácter especial del evento.', '',
       'ESTILO VISUAL:',
-      '- Diseño premium muy neon, moderno, cinematográfico y deportivo.',
+      '- Diseño premium, potente, limpio y muy visual.',
       '- Formato horizontal 16:9, resolución 4K.',
-      '- Fondo oscuro elegante con luces neon cyan, azul eléctrico, verde lima y brillos deportivos.',
-      '- Composición de evento principal: grande, clara, potente y muy legible en móvil y TV.',
-      '- Sensación de directo, estreno o gran cita del día.',
-      '- Texto limpio, grande, ordenado y sin errores.',
+      '- Fondo oscuro con neón deportivo, focos, partículas y atmósfera elegante.',
+      '- La hora debe verse muy clara.',
+      '- El canal y la carpeta deben mostrarse como bloques secundarios limpios.',
+      '- Texto grande, claro y sin errores.',
       '- No poner marcas de agua.', '',
-      'FECHA QUE DEBE APARECER EN LA CARTELA:', fecha, '',
+      'FECHA / CONTEXTO:', fecha, '',
       'CONTENIDO DEL EVENTO DESTACADO:', info, '',
       'REQUISITOS DE COMPOSICIÓN:',
-      '- El evento debe ser el centro absoluto de la imagen.',
-      '- La hora debe verse claramente.',
-      '- Canal y carpeta/categoría deben aparecer como información secundaria.',
-      '- Incluye “EVENTO DEL DÍA” y el título general “M17LIV3” de forma elegante.',
-      '- No cambies nombres, horarios, canales ni carpetas.'
+      '- El evento debe ser el centro absoluto de la composición.',
+      '- Integra la imagen principal con degradados, sombras y bloques premium.',
+      '- Incluye “M17LIV3” de forma elegante.',
+      '- No cambies nombres, hora, canal ni carpeta.',
+      '- Que parezca una cartela final lista para publicar en la app.'
     ].join('\n');
   }
 
@@ -6239,11 +6252,16 @@ function extraPromptBuildText(type, info) {
       '- Cartela premium de película recomendada.',
       '- Debe parecer una recomendación de streaming elegante, moderna y lista para publicar.',
       '- No inventes datos que no aparezcan abajo.', '',
+      'IMAGEN / POSTER:',
+      '- La cartela debe incluir una imagen principal o póster como protagonista visual.',
+      '- Si adjunto una imagen, póster o portada, úsala como referencia principal y respeta su identidad visual.',
+      '- Si no adjunto imagen, crea un visual cinematográfico original inspirado en el género y en la información de la película.',
+      '- La imagen debe ocupar una parte importante de la composición, no ser solo un fondo decorativo.', '',
       'ESTILO VISUAL:',
       '- Diseño cinematográfico premium, oscuro, moderno y neon.',
       '- Formato horizontal 16:9, resolución 4K.',
       '- Fondo elegante con luces cyan, azul eléctrico, verde lima y atmósfera de cine.',
-      '- Composición limpia, con título grande y detalles ordenados.',
+      '- Composición limpia, con título grande, detalles ordenados e imagen bien integrada.',
       '- Puede tener estética de póster de película, sin usar logos oficiales si no están adjuntos.',
       '- Texto limpio, legible en móvil y TV, sin errores.',
       '- No poner marcas de agua.', '',
@@ -6254,7 +6272,9 @@ function extraPromptBuildText(type, info) {
       '- Incluye el título general “M17LIV3”.',
       '- Destaca el título de la película.',
       '- Si hay género, plataforma, carpeta o mensaje, ordénalos en bloques secundarios.',
-      '- No inventes sinopsis larga si no está escrita.'
+      '- Integra la imagen/poster con degradados, sombras y tarjetas limpias.',
+      '- No inventes sinopsis larga si no está escrita.',
+      '- Que parezca una recomendación final lista para publicar en una app de streaming.'
     ].join('\n');
   }
 
@@ -6265,11 +6285,16 @@ function extraPromptBuildText(type, info) {
       '- Cartela premium de serie recomendada.',
       '- Debe parecer una recomendación de streaming elegante, moderna y lista para publicar.',
       '- No inventes datos que no aparezcan abajo.', '',
+      'IMAGEN / POSTER:',
+      '- La cartela debe incluir una imagen principal o póster como protagonista visual.',
+      '- Si adjunto una imagen, póster o portada, úsala como referencia principal y respeta su identidad visual.',
+      '- Si no adjunto imagen, crea un visual cinematográfico original inspirado en el género y en la información de la serie.',
+      '- La imagen debe verse protagonista e integrada con el diseño de plataforma streaming.', '',
       'ESTILO VISUAL:',
       '- Diseño premium cinematográfico, oscuro, moderno y neon.',
       '- Formato horizontal 16:9, resolución 4K.',
       '- Fondo elegante con luces cyan, azul eléctrico, verde lima y ambiente de serie exclusiva.',
-      '- Composición limpia, con título grande y detalles ordenados.',
+      '- Composición limpia, con título grande, detalles ordenados e imagen bien integrada.',
       '- Texto limpio, legible en móvil y TV, sin errores.',
       '- No poner marcas de agua.', '',
       'FECHA / CONTEXTO:', fecha, '',
@@ -6279,7 +6304,9 @@ function extraPromptBuildText(type, info) {
       '- Incluye el título general “M17LIV3”.',
       '- Destaca el título de la serie.',
       '- Si hay temporada, género, plataforma, carpeta o mensaje, ordénalos en bloques secundarios.',
-      '- No inventes sinopsis larga si no está escrita.'
+      '- Integra la imagen/poster con degradados, sombras y tarjetas limpias.',
+      '- No inventes sinopsis larga si no está escrita.',
+      '- Que parezca una recomendación final lista para publicar en una app de streaming.'
     ].join('\n');
   }
 

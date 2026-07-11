@@ -3604,3 +3604,15 @@ button:active,
 #extraPromptGenerated {
   min-height: 190px;
 }
+
+
+.extraPromptImageHint {
+  margin: 7px 0 10px;
+  font-size: .78rem;
+  line-height: 1.45;
+  color: rgba(200,230,245,.66);
+  background: rgba(0,229,255,.055);
+  border: 1px solid rgba(0,229,255,.12);
+  border-radius: 10px;
+  padding: 8px 10px;
+}
