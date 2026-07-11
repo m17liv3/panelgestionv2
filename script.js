@@ -627,7 +627,6 @@ function openPromps() {
   closeSheet('menuSheet','menuOverlay');
   try { dailyPromptRefreshDate(); } catch(e) {}
   try { eventPromptRefreshDate(); } catch(e) {}
-  try { extraPromptRefreshDate(); extraPromptTypeChanged(); } catch(e) {}
   openSheet('prompsSheet','prompsOverlay');
 }
 
