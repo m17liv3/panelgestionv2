@@ -1,4 +1,4 @@
-const CACHE_NAME = 'm17liv3-fix-pelicula3-directo-1784385480';
+const CACHE_NAME = 'm17liv3-cache-imagenes-fijas-1784386027';
 const APP_SHELL = [
   './',
   './index.html',

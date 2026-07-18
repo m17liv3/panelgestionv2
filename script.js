@@ -5267,7 +5267,7 @@ async function uploadFixedSlotImage(slotKey) {
   try {
     var sb = initSupabase();
     var res = await sb.storage.from(FIXED_IMAGE_BUCKET).upload(slot.path, file, {
-      cacheControl: '60',
+      cacheControl: '1',
       upsert: true,
       contentType: file.type || 'image/jpeg'
     });
@@ -5837,7 +5837,7 @@ async function uploadBlobToFixedSlot(slotKey, blob, filename) {
   var sb = initSupabase();
   var file = new File([blob], filename || slot.path || 'imagen_actual.jpg', { type: 'image/jpeg' });
   var res = await sb.storage.from(FIXED_IMAGE_BUCKET).upload(slot.path, file, {
-    cacheControl: '60',
+    cacheControl: '1',
     upsert: true,
     contentType: 'image/jpeg'
   });
@@ -6040,7 +6040,7 @@ async function dailyPromptUploadFinalImage() {
     var slot = fixedSlotByKey('horarios_mundial');
     var sb = initSupabase();
     var res = await sb.storage.from(FIXED_IMAGE_BUCKET).upload(slot.path, file, {
-      cacheControl: '60',
+      cacheControl: '1',
       upsert: true,
       contentType: file.type || 'image/jpeg'
     });
@@ -7225,7 +7225,7 @@ async function uploadBlobToFixedSlot(slotKey, blob, contentType){
   var sb = initSupabase();
   if (!sb || !sb.storage) throw new Error('Supabase no esta disponible');
   var res = await sb.storage.from(FIXED_IMAGE_BUCKET).upload(slot.path, blob, {
-    cacheControl: '60',
+    cacheControl: '1',
     upsert: true,
     contentType: contentType || 'image/jpeg'
   });
@@ -7240,7 +7240,7 @@ async function uploadBlobToExactFixedPath(path, blob, contentType) {
   if (!sb || !sb.storage) throw new Error('Supabase Storage no disponible');
   var file = new File([blob], path, { type: contentType || 'image/jpeg' });
   var res = await sb.storage.from(FIXED_IMAGE_BUCKET).upload(path, file, {
-    cacheControl: '60',
+    cacheControl: '1',
     upsert: true,
     contentType: contentType || 'image/jpeg'
   });
@@ -7266,8 +7266,9 @@ async function movieTplUploadPelicula3Direct(btnEl) {
   if (btnEl) { btnEl.disabled = true; btnEl.textContent = 'Subiendo a PELÍCULA 3...'; }
 
   try {
-    await uploadBlobToExactFixedPath(exactPath, blob, 'image/jpeg');
-    movieTplSetStatus('Subida correctamente a PELÍCULA RECOMENDADA 3: ' + exactPath, 'ok');
+    var publicUrl = await uploadBlobToExactFixedPath(exactPath, blob, 'image/jpeg');
+    var verifyUrl = publicUrl ? (publicUrl + (publicUrl.indexOf('?') === -1 ? '?' : '&') + 'v=' + Date.now()) : '';
+    movieTplSetStatus('Subida correctamente a PELÍCULA RECOMENDADA 3. Si el enlace fijo tarda, comprueba con versión sin caché: ' + verifyUrl, 'ok');
 
     try { movieTplRefreshFixedPreview('pelicula_3', 'tplFixedPreview3'); } catch(e) {}
     try { loadFixedSlotImage('pelicula_3'); } catch(e) {}

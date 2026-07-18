@@ -3842,3 +3842,8 @@ button:active,
   border-radius: 10px;
   padding: 8px 10px;
 }
+
+
+.movieTplStatus {
+  overflow-wrap: anywhere;
+}
