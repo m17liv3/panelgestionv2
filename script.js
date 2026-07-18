@@ -6643,7 +6643,7 @@ function movieTplInit() {
   if (downloadBtn) downloadBtn.onclick = movieTplDownloadJpeg;
   if (uploadBtn1) uploadBtn1.onclick = function(){ movieTplUploadToFixed('pelicula_1', this); };
   if (uploadBtn2) uploadBtn2.onclick = function(){ movieTplUploadToFixed('pelicula_2', this); };
-  if (uploadBtn3) uploadBtn3.onclick = function(){ movieTplUploadToFixed('pelicula_3', this); };
+  if (uploadBtn3) uploadBtn3.onclick = function(){ movieTplUploadPelicula3Direct(this); };
 
   movieTplFillInputsFromState();
   movieTplRestoreLogo();
@@ -7232,6 +7232,57 @@ async function uploadBlobToFixedSlot(slotKey, blob, contentType){
   if (res.error) throw res.error;
   return fixedAppImageBaseUrl(slotKey);
 }
+
+
+async function uploadBlobToExactFixedPath(path, blob, contentType) {
+  if (!path) throw new Error('Ruta fija vacía');
+  var sb = initSupabase();
+  if (!sb || !sb.storage) throw new Error('Supabase Storage no disponible');
+  var file = new File([blob], path, { type: contentType || 'image/jpeg' });
+  var res = await sb.storage.from(FIXED_IMAGE_BUCKET).upload(path, file, {
+    cacheControl: '60',
+    upsert: true,
+    contentType: contentType || 'image/jpeg'
+  });
+  if (res.error) throw res.error;
+  var result = sb.storage.from(FIXED_IMAGE_BUCKET).getPublicUrl(path);
+  return result && result.data && result.data.publicUrl ? result.data.publicUrl : '';
+}
+
+async function movieTplUploadPelicula3Direct(btnEl) {
+  var exactPath = 'pelicula_recomendada_3.jpg';
+  movieTplSetStatus('Generando imagen para PELÍCULA RECOMENDADA 3...', '');
+  movieTplDraw();
+
+  var blob;
+  try {
+    blob = await movieTplCanvasToJpegBlob();
+  } catch(err) {
+    movieTplSetStatus('Error al generar la imagen. Puede ser CORS del poster.', 'err');
+    return;
+  }
+
+  var oldText = btnEl ? btnEl.textContent : '';
+  if (btnEl) { btnEl.disabled = true; btnEl.textContent = 'Subiendo a PELÍCULA 3...'; }
+
+  try {
+    await uploadBlobToExactFixedPath(exactPath, blob, 'image/jpeg');
+    movieTplSetStatus('Subida correctamente a PELÍCULA RECOMENDADA 3: ' + exactPath, 'ok');
+
+    try { movieTplRefreshFixedPreview('pelicula_3', 'tplFixedPreview3'); } catch(e) {}
+    try { loadFixedSlotImage('pelicula_3'); } catch(e) {}
+    try { renderFixedImageSlots(); } catch(e) {}
+
+    showToast('PELÍCULA 3 actualizada correctamente');
+  } catch(err) {
+    console.error(err);
+    movieTplSetStatus('Error al subir a PELÍCULA 3: ' + (err && err.message ? err.message : 'error desconocido'), 'err');
+    showToast('Error al subir a PELÍCULA 3', 'error');
+  }
+
+  if (btnEl) { btnEl.disabled = false; btnEl.textContent = oldText || 'Subir a PELÍCULA 3'; }
+}
+
 
 async function movieTplUploadToFixed(slotKey, btnEl){
   var slot = fixedSlotByKey(slotKey);

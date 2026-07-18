@@ -3830,3 +3830,15 @@ button:active,
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+
+.movieTplDirectNote {
+  margin: 8px 0 4px;
+  color: rgba(200,230,245,.72);
+  font-size: .76rem;
+  line-height: 1.35;
+  background: rgba(0,229,255,.055);
+  border: 1px solid rgba(0,229,255,.12);
+  border-radius: 10px;
+  padding: 8px 10px;
+}
