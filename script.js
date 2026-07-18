@@ -2087,7 +2087,7 @@ function buildRenewalExportRows() {
     return {
       'ID': r.id || '',
       'ClienteID': r.clientId || '',
-      'Cliente': r.clientName || '',
+      'Cliente': renewalDisplayClientName(r),
       'Fecha anterior': r.previousExpiry || '',
       'Fecha nueva': r.newExpiry || '',
       'Meses': r.months || 0,
@@ -2313,6 +2313,59 @@ function renewalRowToItem(row) {
   };
 }
 
+function currentClientById(clientId) {
+  clientId = String(clientId || '');
+  if (!clientId) return null;
+  return (clients || []).find(function(c){ return String(c.id || '') === clientId; }) || null;
+}
+
+function renewalDisplayClientName(r) {
+  var c = currentClientById(r && r.clientId);
+  return (c && c.name) ? c.name : ((r && r.clientName) || 'Cliente');
+}
+
+function renewalDisplayConcept(r) {
+  return 'Renovación · ' + renewalDisplayClientName(r);
+}
+
+function syncRenewalClientNameLocal(clientId, newName) {
+  clientId = String(clientId || '');
+  newName = String(newName || '').trim();
+  if (!clientId || !newName) return 0;
+  var count = 0;
+  (renewals || []).forEach(function(r){
+    if (String(r.clientId || '') === clientId && r.clientName !== newName) {
+      r.clientName = newName;
+      count++;
+    }
+  });
+  if (count && !USE_SUPABASE) {
+    try { localStorage.setItem('m17_renewals', JSON.stringify(renewals)); } catch(e) {}
+  }
+  return count;
+}
+
+async function syncRenewalClientNameForClient(clientId, newName) {
+  clientId = String(clientId || '');
+  newName = String(newName || '').trim();
+  if (!clientId || !newName) return 0;
+
+  syncRenewalClientNameLocal(clientId, newName);
+
+  if (USE_SUPABASE) {
+    var db = initSupabase();
+    var result = await db.from(SUPABASE_RENEWALS_TABLE)
+      .update({ cliente_nombre: newName })
+      .eq('cliente_id', clientId);
+    if (result.error) throw result.error;
+  }
+
+  try { renderPaymentsDashboard(); } catch(e) {}
+  try { if (typeof renderFinanceBalance === 'function') renderFinanceBalance(); } catch(e) {}
+  try { if (typeof updateHomeMiniPanel === 'function') updateHomeMiniPanel(); } catch(e) {}
+  return true;
+}
+
 async function loadRenewals(showMsg) {
   try {
     if (!USE_SUPABASE) {
@@ -2480,7 +2533,7 @@ async function deleteRenewalFromStore(renewalId, btn) {
   var r = (renewals || []).find(function(x){ return String(x.id) === String(renewalId); });
   if (!r) { alert('No se ha encontrado este registro. Pulsa Recargar y vuelve a intentarlo.'); return; }
 
-  var details = (r.clientName || 'Cliente') + ' · ' + euro(r.amount) + ' · ' + (r.createdAt ? formatDateTimeEs(r.createdAt) : 'sin fecha');
+  var details = renewalDisplayClientName(r) + ' · ' + euro(r.amount) + ' · ' + (r.createdAt ? formatDateTimeEs(r.createdAt) : 'sin fecha');
   var ok = confirm('¿Borrar este ingreso / renovación del historial?\n\n' + details + '\n\nEsto quitará este importe de los totales y de los pendientes de pago.');
   if (!ok) return;
 
@@ -2548,7 +2601,7 @@ function openEditRenewal(renewalId) {
   }
 
   idEl.value = r.id || '';
-  if (cEl) cEl.textContent = 'Cliente: ' + (r.clientName || 'Cliente') + ' · Registrado: ' + (r.createdAt ? formatDateTimeEs(r.createdAt) : '-');
+  if (cEl) cEl.textContent = 'Cliente: ' + renewalDisplayClientName(r) + ' · Registrado: ' + (r.createdAt ? formatDateTimeEs(r.createdAt) : '-');
   if (prevEl) prevEl.value = r.previousExpiry || '';
   if (newEl) newEl.value = r.newExpiry || '';
   if (monthsEl) monthsEl.value = r.months || 0;
@@ -2705,7 +2758,7 @@ function renderPaymentsDashboard() {
     var amountClass = pending ? 'paymentAmount pending' : 'paymentAmount';
     return '<div class="paymentItem '+(pending?'paymentItemPending':'')+'">' +
       '<div class="paymentItemTop">' +
-        '<div class="paymentName">' + esc(r.clientName || 'Cliente') + '</div>' +
+        '<div class="paymentName">' + esc(renewalDisplayClientName(r)) + '</div>' +
         '<div class="'+amountClass+'">' + euro(r.amount) + '</div>' +
       '</div>' +
       '<div class="paymentMeta">' + status + ' · ' + esc(d) + ' · ' + esc(r.months || 0) + ' mes(es)' + (r.paymentMethod ? ' · ' + esc(r.paymentMethod) : '') + '</div>' +
@@ -3309,7 +3362,7 @@ function renderFinanceDashboard() {
         source: 'renewal',
         id: r.id || '',
         type: 'ingreso',
-        concept: 'Renovación · ' + (r.clientName || 'Cliente'),
+        concept: renewalDisplayConcept(r),
         category: 'Renovaciones clientes',
         amount: Number(r.amount || 0),
         date: financeRenewalDate(r) ? String(financeRenewalDate(r)).split('T')[0] : '',
@@ -3421,7 +3474,7 @@ function buildFinanceExportRows() {
     if (!isPaymentPaid(r)) return;
     rows.push({
       'Tipo': 'Ingreso cliente',
-      'Concepto': 'Renovación ' + (r.clientName || ''),
+      'Concepto': 'Renovación ' + renewalDisplayClientName(r),
       'Categoría': 'Renovaciones',
       'Importe': Number(r.amount || 0),
       'Fecha': financeRenewalDate(r) ? String(financeRenewalDate(r)).split('T')[0] : '',
@@ -4162,7 +4215,8 @@ async function saveClient(markInitialPending) {
       avisoRenovacionExpiracion: existingClient ? existingClient.avisoRenovacionExpiracion : null,
       avisoRenovacionContestado: existingClient ? !!existingClient.avisoRenovacionContestado : false,
       avisoRenovacionContestadoFecha: existingClient ? existingClient.avisoRenovacionContestadoFecha : null,
-      avisoRenovacionContestadoExpiracion: existingClient ? existingClient.avisoRenovacionContestadoExpiracion : null
+      avisoRenovacionContestadoExpiracion: existingClient ? existingClient.avisoRenovacionContestadoExpiracion : null,
+      avisoRenovacionRespuesta: existingClient ? existingClient.avisoRenovacionRespuesta : null
     };
     if (existingClient && existingClient.expiry !== expiry) {
       clientObj.avisoRenovacionEnviado = false;
@@ -4181,6 +4235,15 @@ async function saveClient(markInitialPending) {
     }
 
     var paymentMessage = '';
+    if (id && existingClient && String(existingClient.name || '').trim() !== String(saved.name || '').trim()) {
+      try {
+        await syncRenewalClientNameForClient(saved.id, saved.name);
+      } catch(syncErr) {
+        console.warn('No se pudo sincronizar el nombre en renovaciones:', syncErr);
+        paymentMessage += ' Nombre cambiado, pero algunas renovaciones antiguas podrían tardar en sincronizar.';
+      }
+    }
+
     if (creatingNew && (markInitialPending || Number(initialAmount || 0) > 0)) {
       try {
         var initialItem = await saveRenewalToStore({

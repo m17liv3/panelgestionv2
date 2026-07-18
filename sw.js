@@ -1,4 +1,4 @@
-const CACHE_NAME = 'm17liv3-cache-imagenes-fijas-1784386027';
+const CACHE_NAME = 'm17liv3-nombres-renovaciones-1784386875';
 const APP_SHELL = [
   './',
   './index.html',
