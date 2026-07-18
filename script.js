@@ -5081,8 +5081,24 @@ var FIXED_IMAGE_SLOTS = [
   { key: 'serie_3', label: 'SERIE RECOMENDADA 3', path: 'serie_recomendada_3.jpg', icon: '&#127909;' }
 ];
 
+var FIXED_IMAGE_SLOT_PATHS = {
+  horarios_mundial: 'imagen_actual.jpg',
+  pelicula_1: 'pelicula_recomendada_1.jpg',
+  pelicula_2: 'pelicula_recomendada_2.jpg',
+  pelicula_3: 'pelicula_recomendada_3.jpg',
+  serie_1: 'serie_recomendada_1.jpg',
+  serie_2: 'serie_recomendada_2.jpg',
+  serie_3: 'serie_recomendada_3.jpg'
+};
+
 function fixedSlotByKey(key) {
-  return FIXED_IMAGE_SLOTS.find(function(slot){ return slot.key === key; }) || FIXED_IMAGE_SLOTS[0];
+  var slot = FIXED_IMAGE_SLOTS.find(function(s){ return s.key === key; }) || FIXED_IMAGE_SLOTS[0];
+  if (slot && FIXED_IMAGE_SLOT_PATHS[slot.key]) {
+    var safeSlot = Object.assign({}, slot);
+    safeSlot.path = FIXED_IMAGE_SLOT_PATHS[slot.key];
+    return safeSlot;
+  }
+  return slot;
 }
 
 function fixedAppImageBaseUrl(slotKey) {
@@ -5815,6 +5831,9 @@ function dailyPosterCanvasToBlob() {
 
 async function uploadBlobToFixedSlot(slotKey, blob, filename) {
   var slot = fixedSlotByKey(slotKey || 'horarios_mundial');
+  if (slotKey && FIXED_IMAGE_SLOT_PATHS[slotKey]) {
+    slot = Object.assign({}, slot, { path: FIXED_IMAGE_SLOT_PATHS[slotKey] });
+  }
   var sb = initSupabase();
   var file = new File([blob], filename || slot.path || 'imagen_actual.jpg', { type: 'image/jpeg' });
   var res = await sb.storage.from(FIXED_IMAGE_BUCKET).upload(slot.path, file, {
@@ -6621,10 +6640,10 @@ function movieTplInit() {
   var uploadBtn1 = document.getElementById('tplUploadFixed1Btn');
   var uploadBtn2 = document.getElementById('tplUploadFixed2Btn');
   var uploadBtn3 = document.getElementById('tplUploadFixed3Btn');
-  if (downloadBtn) downloadBtn.addEventListener('click', movieTplDownloadJpeg);
-  if (uploadBtn1) uploadBtn1.addEventListener('click', function(){ movieTplUploadToFixed('pelicula_1', this); });
-  if (uploadBtn2) uploadBtn2.addEventListener('click', function(){ movieTplUploadToFixed('pelicula_2', this); });
-  if (uploadBtn3) uploadBtn3.addEventListener('click', function(){ movieTplUploadToFixed('pelicula_3', this); });
+  if (downloadBtn) downloadBtn.onclick = movieTplDownloadJpeg;
+  if (uploadBtn1) uploadBtn1.onclick = function(){ movieTplUploadToFixed('pelicula_1', this); };
+  if (uploadBtn2) uploadBtn2.onclick = function(){ movieTplUploadToFixed('pelicula_2', this); };
+  if (uploadBtn3) uploadBtn3.onclick = function(){ movieTplUploadToFixed('pelicula_3', this); };
 
   movieTplFillInputsFromState();
   movieTplRestoreLogo();
@@ -7314,10 +7333,10 @@ function seriesTplInit() {
   var uploadBtn1 = document.getElementById('seriesTplUploadFixed1Btn');
   var uploadBtn2 = document.getElementById('seriesTplUploadFixed2Btn');
   var uploadBtn3 = document.getElementById('seriesTplUploadFixed3Btn');
-  if (downloadBtn) downloadBtn.addEventListener('click', seriesTplDownloadJpeg);
-  if (uploadBtn1) uploadBtn1.addEventListener('click', function(){ seriesTplUploadToFixed('serie_1', this); });
-  if (uploadBtn2) uploadBtn2.addEventListener('click', function(){ seriesTplUploadToFixed('serie_2', this); });
-  if (uploadBtn3) uploadBtn3.addEventListener('click', function(){ seriesTplUploadToFixed('serie_3', this); });
+  if (downloadBtn) downloadBtn.onclick = seriesTplDownloadJpeg;
+  if (uploadBtn1) uploadBtn1.onclick = function(){ seriesTplUploadToFixed('serie_1', this); };
+  if (uploadBtn2) uploadBtn2.onclick = function(){ seriesTplUploadToFixed('serie_2', this); };
+  if (uploadBtn3) uploadBtn3.onclick = function(){ seriesTplUploadToFixed('serie_3', this); };
 
   seriesTplFillInputsFromState();
   seriesTplRestoreLogo();
