@@ -14,7 +14,7 @@
 <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png"/>
 <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<link rel="stylesheet" href="styles.clientes-minimal-neon-c-20260726.css"/>
+<link rel="stylesheet" href="styles.clientes-compactos-expandibles-20260726.css"/>
 
 </head>
 <body>
@@ -167,12 +167,27 @@
     </div>
 
     <div class="homeResultsBlock" id="homeResultsBlock" style="display:none">
+      <div class="clientsSectionHero" id="clientsSectionHero">
+        <div>
+          <span class="clientsSectionEyebrow">Gestión de clientes</span>
+          <h2>Clientes</h2>
+          <p><strong id="clientsListCount">0</strong> clientes encontrados · abre una ficha para consultar sus datos y acciones.</p>
+        </div>
+        <button type="button" class="clientsNewButton" onclick="openNewClient()"><span>+</span> Nuevo cliente</button>
+      </div>
+      <div class="clientsQuickFilters" id="clientsQuickFilters" aria-label="Filtros rápidos de clientes">
+        <button type="button" class="active" data-client-filter="" onclick="setClientQuickFilter('')">Todos</button>
+        <button type="button" data-client-filter="active_only" onclick="setClientQuickFilter('active_only')">Activos</button>
+        <button type="button" data-client-filter="warn" onclick="setClientQuickFilter('warn')">Caducan pronto</button>
+        <button type="button" data-client-filter="exp" onclick="setClientQuickFilter('exp')">Expirados</button>
+        <button type="button" data-client-filter="paypend" onclick="setClientQuickFilter('paypend')">Pendientes</button>
+      </div>
       <div id="activeFilterBar" class="activeFilterBar">
         <span id="activeFilterLabel"></span>
         <button onclick="quickFilter('')">&#10005; Quitar filtro</button>
       </div>
       <div class="searchBar">
-        <input type="search" id="searchBox" placeholder="Buscar cliente..." oninput="renderCards()"/>
+        <input type="search" id="searchBox" placeholder="Buscar por nombre, usuario, teléfono o etiqueta..." oninput="renderCards()"/>
         <button class="filterBtn" id="filterToggleBtn" onclick="toggleFilters()">&#9881;</button>
       </div>
       <div class="filterPills" id="filterPills" style="display:none">
@@ -1414,6 +1429,6 @@
 <div id="toastMsg" style="position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(100px);background:#1e1e2a;border:1px solid rgba(0,229,255,0.3);color:#eeeef5;padding:12px 24px;border-radius:12px;font-size:14px;font-weight:600;z-index:9999;transition:transform 0.3s ease;pointer-events:none;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,0.5);">Mensaje</div>
   <script src="config.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script src="script.clientes-minimal-neon-c-20260726.js" defer></script>
+  <script src="script.clientes-compactos-expandibles-20260726.js" defer></script>
 </body>
 </html>
