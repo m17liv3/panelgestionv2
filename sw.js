@@ -1,7 +1,8 @@
-const CACHE_NAME = 'm17liv3-clientes-compactos-expandibles-navfix-20260726-v2';
+const CACHE_NAME = 'm17liv3-clientes-compactos-expandibles-navfix-cartelera-20260726-v3';
 const APP_SHELL = [
   './',
   './index.html',
+  './cartelera.html',
   './styles.clientes-compactos-expandibles-navfix-20260726.css',
   './script.clientes-compactos-expandibles-navfix-20260726.js',
   './config.js',
@@ -39,16 +40,16 @@ self.addEventListener('fetch', event => {
   // No interceptar APIs externas: TMDB, imgBB, JSONBin, CDN, etc.
   if (url.origin !== self.location.origin) return;
 
-  // Navegación: intenta online, si no hay conexión carga la app guardada.
+  // Navegación: guarda cada página en su propia ruta y usa la app como respaldo.
   if (req.mode === 'navigate') {
     event.respondWith(
       fetch(req)
         .then(res => {
           const copy = res.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put('./index.html', copy));
+          caches.open(CACHE_NAME).then(cache => cache.put(req, copy));
           return res;
         })
-        .catch(() => caches.match('./index.html'))
+        .catch(async () => (await caches.match(req)) || caches.match('./index.html'))
     );
     return;
   }
