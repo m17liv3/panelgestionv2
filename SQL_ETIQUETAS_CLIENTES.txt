@@ -1,7 +1,0 @@
--- M17LIV3 - Etiquetas de clientes
-alter table public.clientes
-add column if not exists etiquetas text[] default '{}';
-
-update public.clientes
-set etiquetas = '{}'
-where etiquetas is null;
