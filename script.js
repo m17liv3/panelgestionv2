@@ -3941,51 +3941,42 @@ function renderCards() {
   }
   filtered.forEach(function(c) {
     var mainApp = c.apps && c.apps.length ? c.apps[0].name : '-';
-    var svcLabel = c.service === 'ESPANA' ? 'ESPAÑA' : esc(c.service);
-    var st = getStatus(c.expiry);
-    var toneClass = st === 'exp' ? 'status-exp' : (st === 'warn' ? 'status-warn' : 'status-ok');
-    if (clientHasPendingPayment(c)) toneClass += ' status-pay';
+    var svcLabel = c.service === 'ESPANA' ? 'ESPA\u00D1A' : esc(c.service);
     var div = document.createElement('div');
-    div.className = 'clientCard clientCard-neon ' + toneClass;
+    div.className = 'clientCard clientCard-neon';
     div.innerHTML =
-      '<div class="clientCard-accent"></div>' +
       '<div class="clientCard-header">' +
         '<div class="clientCard-avatar">' + esc(avatarLetter(c.name)) + '</div>' +
-        '<div class="clientCard-headMain">' +
-          '<div class="clientCard-nameRow">' +
-            '<div class="clientCard-info">' +
-              '<div class="clientCard-name">' + esc(c.name) + '</div>' +
-              '<div class="clientCard-app">' + esc(mainApp) + '</div>' +
-            '</div>' +
-            '<div class="clientCard-miniStatus">' + esc(premiumExpiryText(c)) + '</div>' +
-          '</div>' +
-          '<div class="clientCard-badges">' +
-            '<span class="badge ' + (c.service==='TODO'?'badgeTodo':'badgeEs') + '">' + svcLabel + '</span>' +
-            statusBadge(c.expiry) +
-            (clientHasPendingPayment(c) ? '<span class="badge badgePayPending">Pago pendiente</span>' : '') +
-            (clientHasRenewalNotice(c) ? '<span class="badge badgeAdvised">Avisado</span>' : '') +
-            renewalReplyBadgeHtml(c) +
-          '</div>' +
+        '<div class="clientCard-info">' +
+          '<div class="clientCard-name">' + esc(c.name) + '</div>' +
+          '<div class="clientCard-app">' + esc(mainApp) + '</div>' +
+        '</div>' +
+        '<div class="clientCard-badges">' +
+          '<span class="badge ' + (c.service==='TODO'?'badgeTodo':'badgeEs') + '">' + svcLabel + '</span>' +
+          statusBadge(c.expiry) +
+          (clientHasPendingPayment(c) ? '<span class="badge badgePayPending">Pago pendiente</span>' : '') +
+          (clientHasRenewalNotice(c) ? '<span class="badge badgeAdvised">Avisado</span>' : '') +
+          renewalReplyBadgeHtml(c) +
         '</div>' +
       '</div>' +
       '<div class="clientCard-body">' +
-        '<div class="copyField clientInfoField" style="flex-direction:column;align-items:flex-start">' +
+        '<div class="copyField" style="flex-direction:column;align-items:flex-start">' +
           '<div class="copyField-label">Usuario</div>' +
-          '<div class="clientFieldLine">' +
+          '<div style="display:flex;align-items:center;gap:6px;width:100%">' +
             '<span class="copyField-val">' + esc(c.user||'-') + '</span>' +
             (c.user ? '<button class="btnCopy" data-copy="'+esc(c.user)+'" onclick="copyText(this.dataset.copy,this)">Copiar</button>' : '') +
           '</div>' +
         '</div>' +
-        '<div class="copyField clientInfoField" style="flex-direction:column;align-items:flex-start">' +
+        '<div class="copyField" style="flex-direction:column;align-items:flex-start">' +
           '<div class="copyField-label">Contrasena</div>' +
-          '<div class="clientFieldLine">' +
+          '<div style="display:flex;align-items:center;gap:6px;width:100%">' +
             '<span class="copyField-val pass">' + esc(c.pass||'-') + '</span>' +
             (c.pass ? '<button class="btnCopy" data-copy="'+esc(c.pass)+'" onclick="copyText(this.dataset.copy,this)">Copiar</button>' : '') +
           '</div>' +
         '</div>' +
-        (c.phone ? '<div class="copyField clientInfoField phoneField" style="flex-direction:column;align-items:flex-start"><div class="copyField-label">Teléfono</div><div class="clientFieldLine"><span class="copyField-val">'+esc(c.phone)+'</span><button class="btnCopy" data-copy="'+esc(c.phone)+'" onclick="copyText(this.dataset.copy,this)">Copiar</button></div></div>' : '') +
+        (c.phone ? '<div class="copyField phoneField" style="flex-direction:column;align-items:flex-start"><div class="copyField-label">Teléfono</div><div style="display:flex;align-items:center;gap:6px;width:100%"><span class="copyField-val">'+esc(c.phone)+'</span><button class="btnCopy" data-copy="'+esc(c.phone)+'" onclick="copyText(this.dataset.copy,this)">Copiar</button></div></div>' : '') +
       '</div>' +
-      '<div class="clientCard-expiry"><span class="clientCard-expiry-label">Expira</span><strong>' + formatDate(c.expiry) + '</strong><small>' + esc(premiumExpiryText(c)) + '</small></div>' +
+      '<div class="clientCard-expiry">Expira: <span>' + formatDate(c.expiry) + '</span></div>' +
       clientTagsHtml(c) +
       renewalNoticeHtml(c, 'card') +
       pendingPaymentNoticeHtml(c, 'card') +
