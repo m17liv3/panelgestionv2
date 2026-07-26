@@ -4539,3 +4539,115 @@ button:disabled {
 .bottomNavItem:active small {
   color: #f3fcff !important;
 }
+
+
+/* =========================================================
+   FIX DEFINITIVO VISIBILIDAD BARRA INFERIOR
+   ========================================================= */
+.bottomNav {
+  left: 10px !important;
+  right: 10px !important;
+  bottom: calc(9px + var(--safe)) !important;
+  z-index: 9998 !important;
+  padding: 8px !important;
+  gap: 7px !important;
+  min-height: 76px !important;
+  background:
+    linear-gradient(180deg, rgba(12, 28, 46, .98), rgba(5, 12, 24, .99)) !important;
+  border: 1.5px solid rgba(0, 231, 255, .38) !important;
+  border-radius: 26px !important;
+  box-shadow:
+    0 -10px 35px rgba(0,0,0,.62),
+    0 0 28px rgba(0,231,255,.14),
+    inset 0 1px 0 rgba(255,255,255,.10) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  opacity: 1 !important;
+  filter: none !important;
+  visibility: visible !important;
+}
+
+.bottomNavItem {
+  min-height: 58px !important;
+  padding: 7px 3px !important;
+  border-radius: 18px !important;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.105), rgba(255,255,255,.045)) !important;
+  border: 1px solid rgba(255,255,255,.10) !important;
+  color: #ffffff !important;
+  opacity: 1 !important;
+  filter: none !important;
+  visibility: visible !important;
+  text-shadow: none !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08) !important;
+}
+
+.bottomNavItem span {
+  display: grid !important;
+  place-items: center !important;
+  width: 28px !important;
+  height: 28px !important;
+  margin: 0 auto 2px !important;
+  border-radius: 12px !important;
+  background: rgba(0,231,255,.16) !important;
+  border: 1px solid rgba(0,231,255,.24) !important;
+  color: #ffffff !important;
+  opacity: 1 !important;
+  filter: none !important;
+  font-size: 1.12rem !important;
+  line-height: 1 !important;
+  text-shadow: 0 0 10px rgba(0,231,255,.55) !important;
+}
+
+.bottomNavItem small {
+  display: block !important;
+  color: #ffffff !important;
+  opacity: 1 !important;
+  filter: none !important;
+  font-size: .68rem !important;
+  line-height: 1.1 !important;
+  font-weight: 950 !important;
+  letter-spacing: .01em !important;
+  text-shadow: 0 1px 8px rgba(0,0,0,.85) !important;
+}
+
+.bottomNavItem.active,
+.bottomNavItem:active {
+  background:
+    linear-gradient(135deg, rgba(0,231,255,.32), rgba(114,255,91,.22)) !important;
+  border-color: rgba(0,231,255,.50) !important;
+  color: #ffffff !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.10),
+    0 0 18px rgba(0,231,255,.18) !important;
+}
+
+.bottomNavItem.active span,
+.bottomNavItem:active span {
+  background: linear-gradient(135deg, rgba(0,231,255,.95), rgba(114,255,91,.80)) !important;
+  color: #031018 !important;
+  text-shadow: none !important;
+  border-color: rgba(255,255,255,.28) !important;
+}
+
+.bottomNavItem.active small,
+.bottomNavItem:active small {
+  color: #ffffff !important;
+}
+
+@media (max-width: 380px) {
+  .bottomNav {
+    left: 6px !important;
+    right: 6px !important;
+    gap: 5px !important;
+    padding: 7px !important;
+  }
+  .bottomNavItem small {
+    font-size: .62rem !important;
+  }
+  .bottomNavItem span {
+    width: 26px !important;
+    height: 26px !important;
+    font-size: 1.04rem !important;
+  }
+}
