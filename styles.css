@@ -4651,3 +4651,7 @@ button:disabled {
     font-size: 1.04rem !important;
   }
 }
+
+
+/* Ocultar nota informativa de PELÍCULA 3 */
+.movieTplDirectNote{display:none !important;}

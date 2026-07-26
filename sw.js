@@ -1,4 +1,4 @@
-const CACHE_NAME = 'm17liv3-barra-visible-fuerte-1785077285';
+const CACHE_NAME = 'm17liv3-sin-nota-pelicula3-1785077797';
 const APP_SHELL = [
   './',
   './index.html',
