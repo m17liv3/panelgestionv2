@@ -4655,3 +4655,236 @@ button:disabled {
 
 /* Ocultar nota informativa de PELÍCULA 3 */
 .movieTplDirectNote{display:none !important;}
+
+
+/* ===== Concepto D · Neon limpio para tarjetas de clientes ===== */
+.clientCard.clientCard-neon {
+  position: relative;
+  margin-bottom: 14px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,.08);
+  background:
+    linear-gradient(180deg, rgba(16,20,34,.94) 0%, rgba(12,15,25,.98) 100%),
+    radial-gradient(circle at top right, rgba(0,229,255,.08), transparent 42%);
+  overflow: hidden;
+  box-shadow: 0 10px 28px rgba(0,0,0,.28);
+}
+.clientCard-neon .clientCard-accent {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: linear-gradient(90deg, rgba(0,229,255,.95), rgba(105,255,71,.55));
+  opacity: .95;
+}
+.clientCard-neon.status-warn .clientCard-accent {
+  background: linear-gradient(90deg, rgba(255,170,0,.95), rgba(0,229,255,.50));
+}
+.clientCard-neon.status-exp .clientCard-accent {
+  background: linear-gradient(90deg, rgba(255,77,77,.95), rgba(255,170,0,.50));
+}
+.clientCard-neon.status-pay .clientCard-accent {
+  background: linear-gradient(90deg, rgba(255,170,0,.95), rgba(105,255,71,.55));
+}
+.clientCard-neon .clientCard-header {
+  align-items: flex-start;
+  padding: 16px 16px 8px;
+  gap: 12px;
+}
+.clientCard-neon .clientCard-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 15px;
+  background: linear-gradient(180deg, rgba(0,229,255,.16), rgba(255,255,255,.04));
+  border: 1px solid rgba(0,229,255,.18);
+  color: var(--cyan);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 0 18px rgba(0,229,255,.08);
+}
+.clientCard-headMain {
+  flex: 1;
+  min-width: 0;
+}
+.clientCard-nameRow {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) auto;
+  gap: 10px;
+  align-items: start;
+}
+.clientCard-neon .clientCard-name {
+  font-size: 1rem;
+  font-weight: 900;
+  letter-spacing: .2px;
+}
+.clientCard-neon .clientCard-app {
+  margin-top: 4px;
+  color: #98a5c7;
+  font-size: .78rem;
+}
+.clientCard-miniStatus {
+  justify-self: end;
+  text-align: right;
+  font-size: .68rem;
+  color: var(--muted);
+  white-space: nowrap;
+  padding: 6px 10px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 999px;
+  background: rgba(255,255,255,.035);
+}
+.clientCard-neon .clientCard-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+.clientCard-neon .badge {
+  padding: 5px 10px;
+  font-size: .68rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.06);
+  letter-spacing: .2px;
+}
+.clientCard-neon .clientCard-body {
+  padding: 8px 16px 8px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap: 10px;
+}
+.clientCard-neon .clientCard-body .phoneField {
+  grid-column: 1 / -1;
+}
+.clientCard-neon .clientInfoField {
+  min-width: 0;
+  padding: 11px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.065);
+  background: linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.03));
+}
+.clientFieldLine {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.clientFieldLine .copyField-val {
+  flex: 1;
+  min-width: 0;
+}
+.clientCard-neon .copyField-label {
+  font-size: .66rem;
+  letter-spacing: .8px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  color: #8b97bc;
+}
+.clientCard-neon .copyField-val {
+  font-size: .87rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.clientCard-neon .copyField-val.pass {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+.clientCard-neon .btnCopy {
+  flex-shrink: 0;
+  padding: 7px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(0,229,255,.18);
+  background: rgba(0,229,255,.06);
+  color: var(--cyan);
+  font-weight: 800;
+}
+.clientCard-neon .clientCard-expiry {
+  margin: 2px 16px 12px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.065);
+  background: linear-gradient(90deg, rgba(0,229,255,.08), rgba(255,255,255,.025));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.clientCard-expiry-label {
+  color: #8b97bc;
+  font-size: .7rem;
+  text-transform: uppercase;
+  letter-spacing: .8px;
+}
+.clientCard-neon .clientCard-expiry strong {
+  color: #fff;
+  font-size: .9rem;
+}
+.clientCard-neon .clientCard-expiry small {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: .72rem;
+}
+.clientCard-neon .clientCard-actions {
+  padding: 0 16px 16px;
+  border-top: none;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 48px;
+  gap: 8px;
+}
+.clientCard-neon .clientCard-actions button {
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.04);
+  border-radius: 14px;
+  padding: 11px 10px;
+  font-size: .78rem;
+  font-weight: 800;
+  color: var(--text);
+}
+.clientCard-neon .clientCard-actions .act-ver {
+  color: var(--text);
+}
+.clientCard-neon .clientCard-actions .act-renew {
+  color: var(--green);
+  border-color: rgba(105,255,71,.18);
+  background: rgba(105,255,71,.06);
+}
+.clientCard-neon .clientCard-actions .act-msg {
+  color: var(--orange);
+  border-color: rgba(255,170,0,.18);
+  background: rgba(255,170,0,.06);
+}
+.clientCard-neon .clientCard-actions .act-more {
+  padding: 0;
+  font-size: 1.35rem;
+  color: var(--cyan);
+  border-color: rgba(0,229,255,.20);
+  background: rgba(0,229,255,.06);
+}
+.clientCard-neon .paymentNotice,
+.clientCard-neon .renewNotice {
+  margin-left: 16px;
+  margin-right: 16px;
+  border-radius: 14px;
+}
+@media (max-width: 720px) {
+  .clientCard-neon .clientCard-body {
+    grid-template-columns: 1fr;
+  }
+  .clientCard-neon .clientCard-body .phoneField {
+    grid-column: auto;
+  }
+  .clientCard-nameRow {
+    grid-template-columns: 1fr;
+  }
+  .clientCard-miniStatus {
+    justify-self: start;
+    text-align: left;
+  }
+  .clientCard-neon .clientCard-actions {
+    grid-template-columns: 1fr 1fr;
+  }
+  .clientCard-neon .clientCard-actions .act-more {
+    grid-column: span 2;
+    min-height: 42px;
+  }
+  .clientCard-neon .clientCard-expiry small {
+    margin-left: 0;
+    width: 100%;
+  }
+}
