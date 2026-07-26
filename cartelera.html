@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#050914">
+  <meta name="color-scheme" content="dark">
+  <title>M17LIV3 · Cartelera del día</title>
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+  <style>
+    :root {
+      --bg:#050914;
+      --panel:#0c1422;
+      --panel2:#101b2c;
+      --text:#eef7ff;
+      --muted:#7f9ab2;
+      --cyan:#00d8ff;
+      --green:#6cff43;
+      --border:rgba(134,188,224,.16);
+      --safe:env(safe-area-inset-bottom, 0px);
+    }
+    * { box-sizing:border-box; }
+    html { min-height:100%; background:var(--bg); }
+    body {
+      min-height:100vh;
+      margin:0;
+      color:var(--text);
+      font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      background:
+        radial-gradient(circle at 50% -8%, rgba(0,216,255,.16), transparent 31rem),
+        radial-gradient(circle at 100% 34%, rgba(108,255,67,.07), transparent 25rem),
+        linear-gradient(180deg,#07101e 0%,#050914 52%,#03060d 100%);
+    }
+    body::before {
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      opacity:.18;
+      background-image:linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px);
+      background-size:26px 26px;
+      mask-image:linear-gradient(to bottom,#000,transparent 75%);
+    }
+    button { font:inherit; }
+    .page {
+      position:relative;
+      width:min(920px,100%);
+      margin:0 auto;
+      padding:20px 15px calc(34px + var(--safe));
+    }
+    .topbar {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+      margin-bottom:18px;
+    }
+    .brand {
+      display:flex;
+      align-items:center;
+      gap:11px;
+      min-width:0;
+    }
+    .brand img {
+      width:48px;
+      height:48px;
+      border-radius:15px;
+      object-fit:contain;
+      background:rgba(0,0,0,.24);
+      border:1px solid rgba(0,216,255,.18);
+      box-shadow:0 0 26px rgba(0,216,255,.12);
+    }
+    .brandName {
+      font-size:1.16rem;
+      font-weight:950;
+      letter-spacing:.08em;
+      white-space:nowrap;
+    }
+    .brandName span:first-child { color:var(--cyan); }
+    .brandName span:last-child { color:var(--green); }
+    .refreshBtn {
+      flex:0 0 auto;
+      height:42px;
+      min-width:42px;
+      padding:0 13px;
+      border-radius:13px;
+      border:1px solid rgba(0,216,255,.20);
+      background:rgba(0,216,255,.07);
+      color:var(--cyan);
+      font-weight:850;
+      cursor:pointer;
+    }
+    .refreshBtn:disabled { opacity:.55; cursor:wait; }
+    .status {
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      text-align:center;
+      min-height:54px;
+      padding:13px 15px;
+      margin-bottom:14px;
+      border:1px solid var(--border);
+      border-radius:16px;
+      color:var(--muted);
+      background:rgba(12,20,34,.76);
+    }
+    .spinner {
+      width:20px;
+      height:20px;
+      border:2px solid rgba(0,216,255,.18);
+      border-top-color:var(--cyan);
+      border-radius:50%;
+      animation:spin .75s linear infinite;
+    }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .eventCard,.scheduleCard {
+      overflow:hidden;
+      margin-bottom:15px;
+      border:1px solid var(--border);
+      border-radius:21px;
+      background:linear-gradient(145deg,rgba(13,25,42,.92),rgba(7,13,24,.94));
+      box-shadow:0 22px 60px rgba(0,0,0,.32),inset 0 1px rgba(255,255,255,.035);
+    }
+    .sectionLabel {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:11px 16px;
+      color:var(--cyan);
+      font-size:.67rem;
+      font-weight:900;
+      letter-spacing:.18em;
+      text-transform:uppercase;
+      border-bottom:1px solid var(--border);
+      background:linear-gradient(90deg,rgba(0,216,255,.09),rgba(108,255,67,.035));
+    }
+    .sectionLabel .live {
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      color:var(--green);
+      letter-spacing:.08em;
+    }
+    .sectionLabel .live::before {
+      content:"";
+      width:7px;
+      height:7px;
+      border-radius:50%;
+      background:var(--green);
+      box-shadow:0 0 12px var(--green);
+    }
+    .scheduleHeading {
+      position:relative;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:5px;
+      padding:17px 16px 15px;
+      text-align:center;
+      border-bottom:1px solid rgba(0,216,255,.18);
+      background:
+        radial-gradient(circle at 50% 0%,rgba(0,216,255,.15),transparent 72%),
+        linear-gradient(90deg,rgba(0,216,255,.075),rgba(108,255,67,.04));
+    }
+    .scheduleHeading::after {
+      content:"";
+      position:absolute;
+      left:30%;
+      right:30%;
+      bottom:-1px;
+      height:2px;
+      background:linear-gradient(90deg,transparent,var(--cyan),var(--green),transparent);
+      box-shadow:0 0 14px rgba(0,216,255,.42);
+    }
+    .scheduleKicker {
+      color:var(--cyan);
+      font-size:.62rem;
+      font-weight:950;
+      letter-spacing:.2em;
+      text-transform:uppercase;
+    }
+    .scheduleDate {
+      color:var(--text);
+      font-size:clamp(1rem,4.5vw,1.28rem);
+      line-height:1.18;
+      font-weight:950;
+      letter-spacing:.035em;
+      text-transform:uppercase;
+    }
+    .scheduleBrand {
+      color:var(--green);
+      font-size:.62rem;
+      font-weight:900;
+      letter-spacing:.18em;
+      text-transform:uppercase;
+      opacity:.9;
+    }
+    .eventImageWrap { background:#000; }
+    .eventImage {
+      display:block;
+      width:100%;
+      height:auto;
+      max-height:70vh;
+      object-fit:contain;
+    }
+    .scheduleBody { padding:18px; }
+    .scheduleText {
+      margin:0;
+      color:var(--text);
+      font-family:inherit;
+      font-size:clamp(.94rem,3.4vw,1.06rem);
+      line-height:1.72;
+      white-space:pre-wrap;
+      overflow-wrap:anywhere;
+    }
+    .empty {
+      padding:34px 20px;
+      text-align:center;
+      color:var(--muted);
+    }
+    .emptyIcon { font-size:2rem; margin-bottom:9px; }
+    .empty strong { display:block; color:var(--text); margin-bottom:5px; }
+    .footer {
+      padding:10px 4px 0;
+      text-align:center;
+      color:rgba(127,154,178,.72);
+      font-size:.72rem;
+    }
+    .updated { margin-top:5px; }
+
+
+    /* Protección visual básica: evita selección, arrastre y pulsación prolongada. */
+    html, body, body * {
+      -webkit-user-select:none;
+      -moz-user-select:none;
+      -ms-user-select:none;
+      user-select:none;
+      -webkit-touch-callout:none;
+    }
+    body *::selection {
+      background:transparent !important;
+      color:inherit !important;
+    }
+    body *::-moz-selection {
+      background:transparent !important;
+      color:inherit !important;
+    }
+    img, svg {
+      -webkit-user-drag:none;
+      user-drag:none;
+      pointer-events:none;
+    }
+    .eventImageWrap {
+      position:relative;
+      overflow:hidden;
+    }
+    .eventImageWrap::after {
+      content:"";
+      position:absolute;
+      inset:0;
+      z-index:2;
+      background:transparent;
+      pointer-events:auto;
+    }
+
+    [hidden] { display:none !important; }
+    @media (max-width:480px) {
+      .page { padding-left:10px; padding-right:10px; }
+      .topbar { margin-bottom:14px; }
+      .intro { padding:21px 12px 19px; border-radius:21px; }
+      .scheduleHeading { padding:15px 10px 14px; }
+    }
+    @media (min-width:700px) {
+      .page { padding-top:28px; }
+      .intro { padding:28px 24px 26px; }
+      .scheduleBody { padding:24px 26px; }
+      .scheduleHeading { padding:20px 18px 18px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="topbar">
+      <div class="brand">
+        <img src="assets/logo.png" alt="M17LIV3" draggable="false">
+        <div class="brandName"><span>M17</span><span>LIV3</span></div>
+      </div>
+      <button id="refreshBtn" class="refreshBtn" type="button" aria-label="Actualizar cartelera" title="Actualizar cartelera">↻</button>
+    </header>
+
+
+    <div id="status" class="status"><span class="spinner" aria-hidden="true"></span><span>Cargando cartelera…</span></div>
+
+    <section id="eventCard" class="eventCard" hidden>
+      <div class="sectionLabel"><span>Evento destacado</span><span class="live">Hoy</span></div>
+      <div class="eventImageWrap"><img id="eventImage" class="eventImage" alt="Evento destacado de M17LIV3" draggable="false"></div>
+    </section>
+
+    <section id="scheduleCard" class="scheduleCard" hidden>
+      <div class="scheduleHeading">
+        <span class="scheduleKicker">Programación de hoy</span>
+        <strong id="scheduleDate" class="scheduleDate"></strong>
+        <span class="scheduleBrand">M17LIV3</span>
+      </div>
+      <div class="scheduleBody"><div id="scheduleText" class="scheduleText"></div></div>
+    </section>
+
+    <section id="emptyCard" class="scheduleCard" hidden>
+      <div class="empty">
+        <div class="emptyIcon">📺</div>
+        <strong>Aún no hay cartelera publicada</strong>
+        <span>Vuelve a consultar este enlace un poco más tarde.</span>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div>M17LIV3 · Tu entretenimiento en un solo lugar</div>
+      <div id="updated" class="updated"></div>
+    </footer>
+  </main>
+
+  <script src="config.js"></script>
+  <script>
+    (function () {
+      'use strict';
+
+      var cfg = window.M17_CONFIG || {};
+      var binId = cfg.cartBinId || '';
+      var binKey = cfg.cartKey || '';
+      var endpoint = 'https://api.jsonbin.io/v3/b/' + encodeURIComponent(binId);
+      var statusEl = document.getElementById('status');
+      var eventCard = document.getElementById('eventCard');
+      var eventImage = document.getElementById('eventImage');
+      var scheduleCard = document.getElementById('scheduleCard');
+      var scheduleText = document.getElementById('scheduleText');
+      var emptyCard = document.getElementById('emptyCard');
+      var refreshBtn = document.getElementById('refreshBtn');
+      var updatedEl = document.getElementById('updated');
+
+      function headers() {
+        return {
+          'X-Master-Key': binKey,
+          'X-Access-Key': binKey,
+          'Cache-Control': 'no-cache'
+        };
+      }
+
+      function todayKey() {
+        var d = new Date();
+        var y = d.getFullYear();
+        var m = String(d.getMonth() + 1).padStart(2, '0');
+        var day = String(d.getDate()).padStart(2, '0');
+        return y + '-' + m + '-' + day;
+      }
+
+      function setDate() {
+        var now = new Date();
+        var scheduleText = new Intl.DateTimeFormat('es-ES', {
+          weekday:'long', day:'numeric', month:'long', year:'numeric'
+        }).format(now);
+        document.getElementById('scheduleDate').textContent = scheduleText;
+      }
+
+      function setLoading(loading) {
+        refreshBtn.disabled = loading;
+        if (loading) {
+          statusEl.hidden = false;
+          statusEl.innerHTML = '<span class="spinner" aria-hidden="true"></span><span>Cargando cartelera…</span>';
+        }
+      }
+
+      function render(record) {
+        var text = String(record.texto || '').trim();
+        var imageUrl = String(record.imagen_dia || '').trim();
+
+        statusEl.hidden = true;
+        eventCard.hidden = !imageUrl;
+        scheduleCard.hidden = !text;
+        emptyCard.hidden = !!(imageUrl || text);
+
+        if (imageUrl) {
+          eventImage.src = imageUrl;
+          eventImage.onerror = function () { eventCard.hidden = true; };
+        } else {
+          eventImage.removeAttribute('src');
+        }
+        scheduleText.textContent = text;
+        updatedEl.textContent = 'Actualizado: ' + new Intl.DateTimeFormat('es-ES', {
+          hour:'2-digit', minute:'2-digit'
+        }).format(new Date());
+      }
+
+      async function incrementVisit(record) {
+        try {
+          var sessionKey = 'm17liv3_cartelera_visit_' + todayKey();
+          if (sessionStorage.getItem(sessionKey)) return;
+          var visits = record.visits && typeof record.visits === 'object' ? record.visits : {};
+          visits[todayKey()] = Number(visits[todayKey()] || 0) + 1;
+          record.visits = visits;
+          var response = await fetch(endpoint, {
+            method:'PUT',
+            headers:Object.assign({'Content-Type':'application/json'}, headers()),
+            body:JSON.stringify(record)
+          });
+          if (response.ok) sessionStorage.setItem(sessionKey, '1');
+        } catch (e) {
+          // El contador nunca debe impedir que se vea la cartelera.
+        }
+      }
+
+      async function loadCartelera() {
+        setLoading(true);
+        eventCard.hidden = true;
+        scheduleCard.hidden = true;
+        emptyCard.hidden = true;
+        try {
+          if (!binId || !binKey) throw new Error('Configuración incompleta');
+          var response = await fetch(endpoint + '/latest?t=' + Date.now(), { headers:headers(), cache:'no-store' });
+          if (!response.ok) throw new Error('No se pudo cargar la cartelera');
+          var data = await response.json();
+          var record = data.record || {};
+          render(record);
+          incrementVisit(record);
+        } catch (error) {
+          statusEl.hidden = false;
+          statusEl.innerHTML = '<span>⚠️ No se pudo cargar la cartelera. Pulsa ↻ para volver a intentarlo.</span>';
+          updatedEl.textContent = '';
+        } finally {
+          refreshBtn.disabled = false;
+        }
+      }
+
+
+
+      // Protección básica frente a copia/selección y guardado casual de imágenes.
+      function blockInteraction(event) {
+        event.preventDefault();
+      }
+      document.addEventListener('contextmenu', blockInteraction, { passive:false });
+      document.addEventListener('dragstart', blockInteraction, { passive:false });
+      document.addEventListener('selectstart', blockInteraction, { passive:false });
+      document.addEventListener('copy', blockInteraction, { passive:false });
+      document.addEventListener('cut', blockInteraction, { passive:false });
+      document.addEventListener('selectionchange', function () {
+        try {
+          var selection = window.getSelection ? window.getSelection() : null;
+          if (selection && selection.rangeCount) selection.removeAllRanges();
+        } catch (e) {}
+      });
+      document.addEventListener('mousedown', function (event) {
+        if (!event.target.closest('button')) {
+          try {
+            var selection = window.getSelection ? window.getSelection() : null;
+            if (selection) selection.removeAllRanges();
+          } catch (e) {}
+        }
+      }, true);
+      document.addEventListener('keydown', function (event) {
+        var key = String(event.key || '').toLowerCase();
+        if ((event.ctrlKey || event.metaKey) && (key === 'c' || key === 'x' || key === 's' || key === 'u')) {
+          event.preventDefault();
+        }
+      });
+
+      setDate();
+      refreshBtn.addEventListener('click', loadCartelera);
+      loadCartelera();
+    }());
+  </script>
+</body>
+</html>
