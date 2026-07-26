@@ -5285,3 +5285,318 @@ button:disabled {
     width: 100% !important;
   }
 }
+
+/* =========================================================
+   CLIENTES · DISEÑO LIMPIO OPTION A
+   ========================================================= */
+.clientBrowserSheet {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(0,229,255,.08), transparent 34%),
+    linear-gradient(180deg, #060d18 0%, #040914 100%) !important;
+}
+
+.clientBrowserTop,
+.clientBrowserSearchBox {
+  border: 1px solid rgba(0,229,255,.14) !important;
+  background: linear-gradient(180deg, rgba(12,21,35,.92), rgba(8,14,25,.97)) !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,.22) !important;
+}
+
+.clientBrowserSearchBox input {
+  background: rgba(5,12,22,.95) !important;
+  border: 1px solid rgba(0,229,255,.12) !important;
+}
+
+.clientCleanShell {
+  animation: clientBrowserSlideIn .24s ease both !important;
+}
+
+.clientCleanCard {
+  border: 1px solid rgba(0,229,255,.12);
+  border-radius: 22px;
+  padding: 16px;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(0,229,255,.07), transparent 34%),
+    linear-gradient(180deg, rgba(12,21,35,.98), rgba(7,12,22,.99));
+  box-shadow: 0 16px 34px rgba(0,0,0,.26), inset 0 1px 0 rgba(255,255,255,.04);
+}
+
+.clientCleanCard.warning { border-color: rgba(255,170,0,.22); }
+.clientCleanCard.expired { border-color: rgba(255,77,77,.22); }
+.clientCleanCard.active { border-color: rgba(0,229,255,.14); }
+
+.clientCleanHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.clientCleanIdentity {
+  display: flex;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
+}
+
+.clientCleanAvatar {
+  width: 54px;
+  height: 54px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.45rem;
+  font-weight: 900;
+  color: var(--cyan);
+  background: linear-gradient(180deg, rgba(0,229,255,.12), rgba(255,255,255,.03));
+  border: 1px solid rgba(0,229,255,.16);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+}
+
+.clientCleanMain { min-width: 0; flex: 1; }
+.clientCleanNameRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.clientCleanNameRow h4 {
+  margin: 0;
+  color: #f4fbff;
+  font-size: 1.15rem;
+  font-weight: 900;
+  line-height: 1.1;
+}
+.clientCleanMiniTag {
+  padding: 4px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(0,229,255,.14);
+  background: rgba(0,229,255,.06);
+  color: var(--cyan);
+  font-size: .68rem;
+  font-weight: 900;
+  letter-spacing: .35px;
+  text-transform: uppercase;
+}
+.clientCleanSub {
+  margin-top: 5px;
+  color: #98a8c6;
+  font-size: .81rem;
+  line-height: 1.35;
+}
+
+.clientCleanStatus {
+  min-width: 88px;
+  padding: 9px 11px;
+  border-radius: 16px;
+  border: 1px solid rgba(0,229,255,.16);
+  background: rgba(0,229,255,.05);
+  text-align: right;
+}
+.clientCleanStatus span {
+  display: block;
+  color: #95a7c5;
+  font-size: .67rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+}
+.clientCleanStatus strong {
+  display: block;
+  margin-top: 3px;
+  color: var(--cyan);
+  font-size: 1rem;
+  font-weight: 900;
+}
+.clientCleanStatus.warning { border-color: rgba(255,170,0,.22); background: rgba(255,170,0,.06); }
+.clientCleanStatus.warning strong { color: var(--orange); }
+.clientCleanStatus.expired { border-color: rgba(255,77,77,.22); background: rgba(255,77,77,.06); }
+.clientCleanStatus.expired strong { color: var(--red); }
+.clientCleanStatus.active { border-color: rgba(105,255,71,.18); background: rgba(105,255,71,.06); }
+.clientCleanStatus.active strong { color: var(--green); }
+
+.clientCleanMetaGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+.clientCleanMeta {
+  padding: 12px 13px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.06);
+  background: rgba(255,255,255,.03);
+}
+.clientCleanMeta small {
+  display: block;
+  color: #8ea1c0;
+  font-size: .67rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .45px;
+}
+.clientCleanMeta strong {
+  display: block;
+  margin-top: 5px;
+  color: #f4fbff;
+  font-size: .9rem;
+  line-height: 1.25;
+}
+
+.clientCleanTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+.clientCleanTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: .69rem;
+  font-weight: 900;
+  line-height: 1;
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.05);
+  color: #dfeaff;
+}
+.clientCleanTag.svc.todo,
+.clientCleanTag.answered { border-color: rgba(0,229,255,.16); background: rgba(0,229,255,.07); color: var(--cyan); }
+.clientCleanTag.svc.esp,
+.clientCleanTag.pay { border-color: rgba(255,170,0,.18); background: rgba(255,170,0,.07); color: var(--orange); }
+.clientCleanTag.advised,
+.clientCleanTag.renewYes { border-color: rgba(105,255,71,.18); background: rgba(105,255,71,.07); color: var(--green); }
+.clientCleanTag.renewNo,
+.clientCleanTag.noanswer { border-color: rgba(255,77,77,.18); background: rgba(255,77,77,.07); color: #ff8c8c; }
+
+.clientCleanShell .renewNotice,
+.clientCleanShell .paymentNotice,
+.clientCleanSection {
+  margin-top: 12px;
+  border-radius: 18px !important;
+  border: 1px solid rgba(255,255,255,.06) !important;
+  background: linear-gradient(180deg, rgba(12,21,35,.92), rgba(8,14,25,.97)) !important;
+  box-shadow: 0 10px 24px rgba(0,0,0,.18) !important;
+}
+
+.clientCleanSection {
+  padding: 14px;
+}
+.clientCleanSectionTitle {
+  margin: 0 0 10px;
+  color: var(--cyan);
+  font-size: .79rem;
+  font-weight: 900;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+}
+.clientCleanQuickGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap: 10px;
+}
+.clientCleanSection .premiumDataCard {
+  border-radius: 16px !important;
+  border: 1px solid rgba(255,255,255,.06) !important;
+  background: rgba(255,255,255,.03) !important;
+  box-shadow: none !important;
+}
+.clientCleanSection .premiumDataValue {
+  font-size: .93rem !important;
+}
+.clientCleanSection .premiumCopy {
+  background: rgba(0,229,255,.05) !important;
+}
+
+.clientCleanApps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.clientCleanAppPill,
+.clientCleanAppMore {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 11px;
+  border-radius: 14px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.06);
+  color: #e7f2ff;
+  font-size: .79rem;
+}
+.clientCleanAppPill strong { font-weight: 800; }
+.clientCleanAppPill span {
+  color: var(--cyan);
+  font-size: .66rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+.clientCleanAppMore { color: #9eb2d0; }
+
+.clientCleanActions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+.clientCleanActions button {
+  min-height: 48px;
+  padding: 12px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.08);
+  background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.025));
+  color: #f3fbff;
+  font-weight: 900;
+  letter-spacing: .1px;
+}
+.clientCleanActions button.primary {
+  border-color: rgba(0,229,255,.18);
+  background: linear-gradient(180deg, rgba(0,229,255,.14), rgba(0,229,255,.06));
+  color: var(--cyan);
+}
+.clientCleanActions button.danger {
+  border-color: rgba(255,77,77,.18);
+  background: linear-gradient(180deg, rgba(255,77,77,.12), rgba(255,77,77,.05));
+  color: #ff8d8d;
+}
+.clientCleanActions button:hover {
+  transform: translateY(-1px);
+}
+
+.clientCleanShell .noticeActions button,
+.clientCleanShell .paymentNotice button {
+  min-height: 40px;
+  border-radius: 13px !important;
+}
+.clientCleanShell .noticeActions {
+  gap: 8px !important;
+}
+.clientCleanShell .renewNotice strong,
+.clientCleanShell .paymentNotice strong {
+  color: #f4fbff !important;
+}
+
+.clientCleanShell .clientBrowserHint {
+  margin-top: 10px;
+  text-align: center;
+  color: #8396b5 !important;
+}
+
+@media (max-width: 480px) {
+  .clientCleanHeader {
+    flex-direction: column;
+  }
+  .clientCleanStatus {
+    width: 100%;
+    text-align: left;
+  }
+  .clientCleanMetaGrid,
+  .clientCleanQuickGrid,
+  .clientCleanActions {
+    grid-template-columns: 1fr;
+  }
+}

@@ -807,43 +807,70 @@ function clientBrowserCardHtml(c, direction) {
   var svcLabel = c.service === 'ESPANA' ? 'ESPAÑA' : esc(c.service || '-');
   var status = getStatus(c.expiry);
   var heroClass = status === 'exp' ? 'expired' : (status === 'warn' ? 'warning' : 'active');
+  var statusLabel = status === 'exp' ? 'Expirado' : (status === 'warn' ? 'Expira pronto' : 'Activo');
   var mainApp = getClientMainApp(c);
+  var days = getDaysLeft(c.expiry);
+  var daysChip = status === 'exp' ? ('Hace ' + Math.abs(days) + 'd') : (status === 'warn' ? (days === 0 ? 'Hoy' : days + 'd') : 'OK');
+  var tags = '';
+  tags += '<span class="clientCleanTag svc ' + (c.service === 'TODO' ? 'todo' : 'esp') + '">' + svcLabel + '</span>';
+  if (clientHasPendingPayment(c)) tags += '<span class="clientCleanTag pay">Pago pendiente</span>';
+  if (clientHasRenewalNotice(c)) tags += '<span class="clientCleanTag advised">Avisado</span>';
+  if (c.aviso_renovacion_contestado) tags += '<span class="clientCleanTag answered">Contestó</span>';
+  if (c.renovacion_respuesta === 'renueva') tags += '<span class="clientCleanTag renewYes">Renueva</span>';
+  else if (c.renovacion_respuesta === 'no_renueva') tags += '<span class="clientCleanTag renewNo">No renueva</span>';
+  else if (c.aviso_renovacion_contestado === false && clientHasRenewalNotice(c)) tags += '<span class="clientCleanTag noanswer">Sin contestar</span>';
+
   var html = '';
-  html += '<div class="clientBrowserCardShell '+(direction === 'prev' ? 'fromLeft' : 'fromRight')+'">';
-  html +=   '<div class="premiumClientHero '+heroClass+' clientBrowserHero">';
-  html +=     '<div class="premiumHeroTop">';
-  html +=       '<div class="premiumAvatar">'+esc(avatarLetter(c.name))+'</div>';
-  html +=       '<div class="premiumHeroInfo">';
-  html +=         '<div class="premiumClientName">'+esc(c.name)+'</div>';
-  html +=         '<div class="premiumClientSub">'+esc(mainApp || '-')+'</div>';
+  html += '<div class="clientBrowserCardShell clientCleanShell ' + (direction === 'prev' ? 'fromLeft' : 'fromRight') + '">';
+  html +=   '<div class="clientCleanCard ' + heroClass + '">';
+  html +=     '<div class="clientCleanHeader">';
+  html +=       '<div class="clientCleanIdentity">';
+  html +=         '<div class="clientCleanAvatar">' + esc(avatarLetter(c.name)) + '</div>';
+  html +=         '<div class="clientCleanMain">';
+  html +=           '<div class="clientCleanNameRow"><h4>' + esc(c.name) + '</h4><span class="clientCleanMiniTag">' + svcLabel + '</span></div>';
+  html +=           '<div class="clientCleanSub">Usuario: ' + esc(c.user || '-') + (mainApp ? ' · App principal: ' + esc(mainApp) : '') + '</div>';
+  html +=         '</div>';
   html +=       '</div>';
+  html +=       '<div class="clientCleanStatus ' + heroClass + '"><span>' + esc(statusLabel) + '</span><strong>' + esc(daysChip) + '</strong></div>';
   html +=     '</div>';
-  html +=     '<div class="premiumHeroBadges"><span class="badge '+(c.service==='TODO'?'badgeTodo':'badgeEs')+'">'+svcLabel+'</span>'+statusBadge(c.expiry)+(clientHasPendingPayment(c)?' <span class="badge badgePayPending">Pago pendiente</span>':'')+(clientHasRenewalNotice(c)?' <span class="badge badgeAdvised">Avisado</span>':'')+renewalReplyBadgeHtml(c)+'</div>';
-  html +=     '<div class="premiumExpiryLine"><span>Estado</span><strong>'+esc(clientBrowserStatusText(c))+'</strong><small>Expira: '+formatDate(c.expiry)+'</small></div>';
+  html +=     '<div class="clientCleanMetaGrid">';
+  html +=       '<div class="clientCleanMeta"><small>Estado</small><strong>' + esc(clientBrowserStatusText(c)) + '</strong></div>';
+  html +=       '<div class="clientCleanMeta"><small>Expira</small><strong>' + formatDate(c.expiry) + '</strong></div>';
+  html +=       '<div class="clientCleanMeta"><small>Servicio</small><strong>' + svcLabel + '</strong></div>';
+  html +=       '<div class="clientCleanMeta"><small>Teléfono</small><strong>' + esc(c.phone || '-') + '</strong></div>';
+  html +=     '</div>';
+  html +=     '<div class="clientCleanTags">' + tags + '</div>';
   html +=   '</div>';
+
   html += renewalNoticeHtml(c, 'view');
   html += pendingPaymentNoticeHtml(c, 'view');
-  html +=   '<div class="premiumSectionTitle">Datos rápidos</div>';
-  html +=   '<div class="premiumDataGrid">';
-  html +=     premiumDataCard('Usuario', c.user || '-', c.user || '', 'cyan');
-  html +=     premiumDataCard('Contraseña', c.pass || '-', c.pass || '', '');
+
+  html +=   '<div class="clientCleanSection">';
+  html +=     '<div class="clientCleanSectionTitle">Datos rápidos</div>';
+  html +=     '<div class="clientCleanQuickGrid">';
+  html +=       premiumDataCard('Usuario', c.user || '-', c.user || '', 'cyan');
+  html +=       premiumDataCard('Contraseña', c.pass || '-', c.pass || '', '');
   if (c.phone) html += premiumDataCard('Teléfono', c.phone, c.phone, 'green');
-  html +=     premiumDataCard('Servicio', c.service === 'ESPANA' ? 'ESPAÑA' : (c.service || '-'), '', '');
+  html +=       premiumDataCard('Servicio', svcLabel, '', '');
+  html +=     '</div>';
   html +=   '</div>';
+
   if ((c.apps || []).length) {
-    html += '<div class="premiumSectionTitle">Apps</div><div class="clientBrowserApps">';
-    (c.apps || []).slice(0, 4).forEach(function(a, i){
-      html += '<div class="clientBrowserApp"><strong>'+esc(a.customName || a.name || '-')+'</strong>'+(i===0?'<span>Principal</span>':'')+'</div>';
+    html += '<div class="clientCleanSection">';
+    html +=   '<div class="clientCleanSectionTitle">Apps instaladas</div><div class="clientCleanApps">';
+    (c.apps || []).slice(0, 5).forEach(function(a, i){
+      html += '<div class="clientCleanAppPill"><strong>' + esc(a.customName || a.name || '-') + '</strong>' + (i === 0 ? '<span>Principal</span>' : '') + '</div>';
     });
-    if ((c.apps || []).length > 4) html += '<div class="clientBrowserMoreApps">+'+((c.apps || []).length - 4)+' app(s) más</div>';
-    html += '</div>';
+    if ((c.apps || []).length > 5) html += '<div class="clientCleanAppMore">+' + ((c.apps || []).length - 5) + ' más</div>';
+    html += '</div></div>';
   }
-  html += '<div class="clientBrowserActions">';
-  html +=   '<button class="primary" data-id="'+esc(c.id)+'" onclick="clientBrowserRenew(this.dataset.id)">&#8635; Renovar</button>';
-  html +=   '<button data-id="'+esc(c.id)+'" onclick="clientBrowserOpenFull(this.dataset.id)">&#128065; Ver ficha</button>';
-  html +=   '<button data-id="'+esc(c.id)+'" onclick="clientBrowserMessages(this.dataset.id)">&#128203; Msg</button>';
-  html +=   '<button data-id="'+esc(c.id)+'" onclick="clientBrowserEdit(this.dataset.id)">&#9998; Editar</button>';
-  html +=   '<button class="danger" data-id="'+esc(c.id)+'" onclick="clientBrowserDelete(this.dataset.id)">&#128465; Borrar</button>';
+
+  html += '<div class="clientCleanActions">';
+  html +=   '<button class="primary" data-id="' + esc(c.id) + '" onclick="clientBrowserRenew(this.dataset.id)">&#8635; Renovar</button>';
+  html +=   '<button data-id="' + esc(c.id) + '" onclick="clientBrowserMessages(this.dataset.id)">&#128203; Msg</button>';
+  html +=   '<button data-id="' + esc(c.id) + '" onclick="clientBrowserOpenFull(this.dataset.id)">&#128065; Ver ficha</button>';
+  html +=   '<button data-id="' + esc(c.id) + '" onclick="clientBrowserEdit(this.dataset.id)">&#9998; Editar</button>';
+  html +=   '<button class="danger" data-id="' + esc(c.id) + '" onclick="clientBrowserDelete(this.dataset.id)">&#128465; Borrar</button>';
   html += '</div>';
   html += '<div class="clientBrowserHint">Desliza para cambiar de cliente</div>';
   html += '</div>';
