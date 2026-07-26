@@ -8572,3 +8572,47 @@ document.addEventListener('DOMContentLoaded', function(){
   setTimeout(refreshPanelLinksSoon, 250);
   setTimeout(refreshPanelLinksSoon, 1800);
 });
+
+
+// ========== PROTECCION DE SELECCION EN CARTELERA ADMIN ==========
+function clearCarteleraProtectedSelection() {
+  try {
+    var selection = window.getSelection ? window.getSelection() : null;
+    if (selection && selection.rangeCount) selection.removeAllRanges();
+  } catch (e) {}
+}
+
+function installCarteleraProtectedSelectionGuard() {
+  var sheet = document.getElementById('carteleraSheet');
+  if (!sheet || sheet.dataset.selectionGuard === '1') return;
+  sheet.dataset.selectionGuard = '1';
+
+  var protectedSelector = '.cartProtectedDisplay, #cart-prev-evento, #cart-prev-text, #cart-preview-img';
+  ['selectstart', 'dragstart', 'contextmenu'].forEach(function(type) {
+    sheet.addEventListener(type, function(event) {
+      if (event.target && event.target.closest && event.target.closest(protectedSelector)) {
+        event.preventDefault();
+        clearCarteleraProtectedSelection();
+      }
+    }, true);
+  });
+
+  sheet.addEventListener('mousedown', function(event) {
+    if (event.target && event.target.closest && event.target.closest(protectedSelector)) {
+      clearCarteleraProtectedSelection();
+      if (event.detail > 1) event.preventDefault();
+    }
+  }, true);
+
+  document.addEventListener('selectionchange', function() {
+    var selection = window.getSelection ? window.getSelection() : null;
+    if (!selection || !selection.rangeCount || !selection.anchorNode) return;
+    var node = selection.anchorNode.nodeType === 1 ? selection.anchorNode : selection.anchorNode.parentElement;
+    if (node && node.closest && node.closest('#carteleraSheet') && node.closest(protectedSelector)) {
+      selection.removeAllRanges();
+    }
+  });
+}
+
+document.addEventListener('DOMContentLoaded', installCarteleraProtectedSelectionGuard);
+// ========== FIN PROTECCION DE SELECCION EN CARTELERA ADMIN ==========

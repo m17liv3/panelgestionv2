@@ -6155,3 +6155,33 @@ button:disabled {
   grid-row: auto !important;
   min-height: 37px !important;
 }
+
+
+/* ===== Cartelera: bloqueo fuerte de selección y arrastre en contenido mostrado ===== */
+#carteleraSheet .cartProtectedDisplay,
+#carteleraSheet .cartProtectedDisplay *,
+#carteleraSheet #cart-prev-evento,
+#carteleraSheet #cart-prev-evento *,
+#carteleraSheet #cart-prev-text,
+#carteleraSheet #cart-prev-text * {
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
+  -webkit-touch-callout: none !important;
+}
+#carteleraSheet .cartProtectedDisplay::selection,
+#carteleraSheet .cartProtectedDisplay *::selection,
+#carteleraSheet #cart-prev-evento::selection,
+#carteleraSheet #cart-prev-evento *::selection,
+#carteleraSheet #cart-prev-text::selection,
+#carteleraSheet #cart-prev-text *::selection {
+  background: transparent !important;
+  color: inherit !important;
+}
+#carteleraSheet #cart-preview-img,
+#carteleraSheet #cart-prev-evento img {
+  -webkit-user-drag: none !important;
+  user-drag: none !important;
+  -webkit-touch-callout: none !important;
+}
