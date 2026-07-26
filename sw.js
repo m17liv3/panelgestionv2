@@ -1,4 +1,4 @@
-const CACHE_NAME = 'm17liv3-clientes-compactos-expandibles-navfix-cartelera-20260726-v3';
+const CACHE_NAME = 'm17liv3-clientes-compactos-expandibles-navfix-cartelera-protegida-20260726-v4';
 const APP_SHELL = [
   './',
   './index.html',

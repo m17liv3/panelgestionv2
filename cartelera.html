@@ -208,6 +208,34 @@
       font-size:.72rem;
     }
     .updated { margin-top:5px; }
+
+
+    /* Protección visual básica: evita selección, arrastre y pulsación prolongada. */
+    html, body, body * {
+      -webkit-user-select:none;
+      -moz-user-select:none;
+      -ms-user-select:none;
+      user-select:none;
+      -webkit-touch-callout:none;
+    }
+    img, svg {
+      -webkit-user-drag:none;
+      user-drag:none;
+      pointer-events:none;
+    }
+    .eventImageWrap {
+      position:relative;
+      overflow:hidden;
+    }
+    .eventImageWrap::after {
+      content:"";
+      position:absolute;
+      inset:0;
+      z-index:2;
+      background:transparent;
+      pointer-events:auto;
+    }
+
     [hidden] { display:none !important; }
     @media (min-width:700px) {
       .page { padding-top:28px; }
@@ -220,7 +248,7 @@
   <main class="page">
     <header class="topbar">
       <div class="brand">
-        <img src="assets/logo.png" alt="M17LIV3">
+        <img src="assets/logo.png" alt="M17LIV3" draggable="false">
         <div class="brandName"><span>M17</span><span>LIV3</span></div>
       </div>
       <button id="refreshBtn" class="refreshBtn" type="button" aria-label="Actualizar cartelera" title="Actualizar cartelera">↻</button>
@@ -236,7 +264,7 @@
 
     <section id="eventCard" class="eventCard" hidden>
       <div class="sectionLabel"><span>Evento destacado</span><span class="live">Hoy</span></div>
-      <div class="eventImageWrap"><img id="eventImage" class="eventImage" alt="Evento destacado de M17LIV3"></div>
+      <div class="eventImageWrap"><img id="eventImage" class="eventImage" alt="Evento destacado de M17LIV3" draggable="false"></div>
     </section>
 
     <section id="scheduleCard" class="scheduleCard" hidden>
@@ -367,6 +395,24 @@
           refreshBtn.disabled = false;
         }
       }
+
+
+
+      // Protección básica frente a copia/selección y guardado casual de imágenes.
+      function blockInteraction(event) {
+        event.preventDefault();
+      }
+      document.addEventListener('contextmenu', blockInteraction, { passive:false });
+      document.addEventListener('dragstart', blockInteraction, { passive:false });
+      document.addEventListener('selectstart', blockInteraction, { passive:false });
+      document.addEventListener('copy', blockInteraction, { passive:false });
+      document.addEventListener('cut', blockInteraction, { passive:false });
+      document.addEventListener('keydown', function (event) {
+        var key = String(event.key || '').toLowerCase();
+        if ((event.ctrlKey || event.metaKey) && (key === 'c' || key === 'x' || key === 's' || key === 'u')) {
+          event.preventDefault();
+        }
+      });
 
       setDate();
       refreshBtn.addEventListener('click', loadCartelera);
