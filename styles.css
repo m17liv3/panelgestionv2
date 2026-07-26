@@ -3847,3 +3847,656 @@ button:active,
 .movieTplStatus {
   overflow-wrap: anywhere;
 }
+
+
+/* =========================================================
+   M17LIV3 PRO VISUAL THEME
+   Premium neon / streaming / glass UI
+   ========================================================= */
+:root {
+  --bg: #050914;
+  --card: rgba(10, 18, 31, .86);
+  --card2: rgba(15, 27, 43, .78);
+  --border: rgba(118, 214, 255, .15);
+  --cyan: #00e7ff;
+  --green: #72ff5b;
+  --orange: #ffb02e;
+  --red: #ff4f68;
+  --text: #f4fbff;
+  --muted: #8eacc6;
+  --m17-blue: #0a1730;
+  --m17-deep: #030711;
+  --m17-glass: rgba(13, 25, 42, .72);
+  --m17-glass-strong: rgba(18, 34, 55, .88);
+  --m17-border: rgba(0, 231, 255, .18);
+  --m17-border-soft: rgba(255, 255, 255, .075);
+  --m17-shadow: 0 18px 55px rgba(0, 0, 0, .46);
+  --m17-shadow-soft: 0 10px 28px rgba(0, 0, 0, .28);
+  --m17-glow-cyan: 0 0 28px rgba(0, 231, 255, .18);
+  --m17-glow-green: 0 0 26px rgba(114, 255, 91, .12);
+  --radius: 18px;
+}
+
+html, body {
+  background: #050914;
+}
+
+body {
+  background:
+    radial-gradient(circle at 12% -10%, rgba(0, 231, 255, .20), transparent 36%),
+    radial-gradient(circle at 86% 6%, rgba(114, 255, 91, .11), transparent 30%),
+    radial-gradient(circle at 50% 110%, rgba(0, 90, 255, .12), transparent 42%),
+    linear-gradient(180deg, #06101f 0%, #040711 48%, #03050c 100%);
+  color: var(--text);
+  letter-spacing: .01em;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  background:
+    linear-gradient(115deg, transparent 0%, rgba(0, 231, 255, .035) 38%, transparent 55%),
+    radial-gradient(circle at 50% 0%, rgba(255,255,255,.045), transparent 28%);
+  opacity: .75;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  background-image:
+    linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px);
+  background-size: 46px 46px;
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,.55), transparent 70%);
+  opacity: .45;
+}
+
+/* Topbar Pro */
+.topbar {
+  background:
+    linear-gradient(180deg, rgba(8, 17, 31, .96), rgba(8, 17, 31, .76)),
+    radial-gradient(circle at 10% 0%, rgba(0,231,255,.18), transparent 35%);
+  border-bottom: 1px solid rgba(0,231,255,.13);
+  box-shadow: 0 10px 32px rgba(0,0,0,.28);
+  backdrop-filter: blur(18px);
+}
+.topbar img {
+  filter: drop-shadow(0 0 18px rgba(0,231,255,.30));
+}
+.topbar-title {
+  font-weight: 900;
+  letter-spacing: .5px;
+  background: linear-gradient(135deg, #fff, var(--cyan) 46%, var(--green));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent !important;
+}
+.iconBtn,
+.sheet-close,
+.btnPasteCode {
+  border: 1px solid rgba(0,231,255,.18) !important;
+  background: linear-gradient(180deg, rgba(20,38,59,.9), rgba(8,17,31,.92)) !important;
+  color: var(--cyan) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 8px 22px rgba(0,0,0,.22);
+}
+.iconBtn:active,
+.sheet-close:active,
+.btnPasteCode:active {
+  transform: scale(.97);
+}
+
+/* Scroll / app background */
+#appPage,
+#mainScroll {
+  background: transparent !important;
+}
+#mainScroll {
+  scroll-behavior: smooth;
+}
+
+/* Hero / cards */
+.homeHeroControl,
+.homeHeroSimple,
+.homePanelLinks,
+.homeStatusCard,
+.card,
+.clientCard,
+.homeStatusListItem,
+.fixedSlotCard,
+.backupNotice,
+.renewalCalendarItem,
+.renewalCalendarIntro,
+.renewalCalendarEmpty {
+  background:
+    linear-gradient(145deg, rgba(18,34,55,.84), rgba(8,17,31,.82)),
+    radial-gradient(circle at top left, rgba(0,231,255,.13), transparent 38%) !important;
+  border: 1px solid rgba(0,231,255,.14) !important;
+  box-shadow: var(--m17-shadow-soft);
+  backdrop-filter: blur(16px);
+}
+.homeHeroControl {
+  position: relative;
+  overflow: hidden;
+  border-radius: 24px !important;
+}
+.homeHeroControl::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  pointer-events: none;
+  background:
+    linear-gradient(110deg, transparent, rgba(0,231,255,.15), transparent 55%),
+    radial-gradient(circle at 90% 18%, rgba(114,255,91,.16), transparent 24%);
+  opacity: .75;
+}
+.homeHeroControl > * {
+  position: relative;
+  z-index: 1;
+}
+.homeEyebrow,
+.dailyPromptKicker,
+.dailyPosterKicker,
+.movieTplBrand,
+.fixedSlotTitle,
+.sheet-header h3 {
+  text-shadow: 0 0 18px rgba(0,231,255,.28);
+}
+.homeStatusCard {
+  position: relative;
+  overflow: hidden;
+  border-radius: 22px !important;
+  transition: transform .22s ease, border-color .22s ease, box-shadow .22s ease, background .22s ease;
+}
+.homeStatusCard::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(135deg, rgba(255,255,255,.07), transparent 34%);
+  opacity: .62;
+}
+.homeStatusCard:active,
+.clientCard:active,
+.homeStatusListItem:active,
+.menuItem:active,
+.fixedSlotCard:active {
+  transform: scale(.985);
+}
+.homeStatusCard.warn {
+  border-color: rgba(255,176,46,.22) !important;
+}
+.homeStatusCard.expired {
+  border-color: rgba(255,79,104,.25) !important;
+}
+.homeStatusCard.active {
+  border-color: rgba(114,255,91,.18) !important;
+}
+
+/* Bottom nav */
+.bottomNav {
+  background:
+    linear-gradient(180deg, rgba(8,17,31,.84), rgba(4,8,16,.98)) !important;
+  border-top: 1px solid rgba(0,231,255,.14) !important;
+  box-shadow: 0 -12px 34px rgba(0,0,0,.36);
+  backdrop-filter: blur(18px);
+}
+.bottomNavItem {
+  border-radius: 16px;
+  transition: transform .18s ease, background .18s ease, color .18s ease;
+}
+.bottomNavItem.active,
+.bottomNavItem:active {
+  background: rgba(0,231,255,.075);
+  color: var(--cyan);
+}
+.bottomNavItem.active span {
+  filter: drop-shadow(0 0 12px rgba(0,231,255,.35));
+}
+
+/* Floating add button */
+.fab,
+.fabPremium {
+  background: linear-gradient(135deg, var(--cyan), #49b8ff 45%, var(--green)) !important;
+  color: #031018 !important;
+  box-shadow: 0 18px 44px rgba(0,231,255,.25), 0 0 26px rgba(114,255,91,.16) !important;
+  border: 1px solid rgba(255,255,255,.18);
+}
+.fab:active {
+  transform: translateY(1px) scale(.98);
+}
+
+/* Sheets / overlays */
+.sheet-overlay.active {
+  background:
+    radial-gradient(circle at center, rgba(0,231,255,.10), transparent 42%),
+    rgba(0,0,0,.72) !important;
+  backdrop-filter: blur(4px);
+}
+.sheet {
+  background:
+    linear-gradient(180deg, rgba(12,24,40,.98), rgba(5,10,20,.98)),
+    radial-gradient(circle at 16% 0%, rgba(0,231,255,.16), transparent 34%) !important;
+  border-top: 1px solid rgba(0,231,255,.22) !important;
+  box-shadow: 0 -22px 60px rgba(0,0,0,.56);
+  border-radius: 28px 28px 0 0 !important;
+  transition: transform .38s cubic-bezier(.2,.78,.24,1);
+}
+.sheet-handle {
+  background: linear-gradient(90deg, rgba(0,231,255,.24), rgba(114,255,91,.30)) !important;
+  box-shadow: 0 0 18px rgba(0,231,255,.24);
+}
+.sheet-header {
+  border-bottom: 1px solid rgba(255,255,255,.045);
+}
+.sheet-header h3 {
+  color: var(--cyan) !important;
+  font-weight: 950;
+  letter-spacing: .3px;
+}
+
+/* Menu Pro */
+.menuItem {
+  margin: 7px 0;
+  padding: 13px 12px !important;
+  border: 1px solid rgba(255,255,255,.07) !important;
+  border-radius: 17px;
+  background: linear-gradient(135deg, rgba(255,255,255,.045), rgba(0,231,255,.032));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.035);
+  transition: transform .18s ease, border-color .18s ease, background .18s ease;
+}
+.menuItem:hover {
+  border-color: rgba(0,231,255,.18) !important;
+}
+.menuItem .ico2 {
+  width: 34px !important;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: rgba(0,231,255,.075);
+  border: 1px solid rgba(0,231,255,.11);
+}
+
+/* Inputs */
+input,
+textarea,
+select,
+.inp,
+.dailyPromptTextarea,
+.dailyPromptEvents,
+.dailyPosterTextarea,
+.dailyGeneratedPrompt,
+.movieTplPanel input,
+.movieTplPanel textarea,
+.extraPromptInput {
+  background:
+    linear-gradient(180deg, rgba(4,10,18,.82), rgba(8,18,30,.88)) !important;
+  border: 1px solid rgba(0,231,255,.18) !important;
+  color: var(--text) !important;
+  border-radius: 15px !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.035);
+  transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+}
+input:focus,
+textarea:focus,
+select:focus,
+.inp:focus,
+.dailyPromptTextarea:focus,
+.dailyPromptEvents:focus,
+.dailyPosterTextarea:focus,
+.dailyGeneratedPrompt:focus,
+.movieTplPanel input:focus,
+.movieTplPanel textarea:focus {
+  border-color: rgba(0,231,255,.55) !important;
+  box-shadow: 0 0 0 3px rgba(0,231,255,.075), inset 0 1px 0 rgba(255,255,255,.04) !important;
+}
+
+/* Buttons Pro */
+button,
+.btnMain,
+.btnFull,
+.movieTplBtn,
+.dailyPromptActions button,
+.dailyPosterActions button,
+.fixedSlotActions button,
+.homeStatusListActions button,
+.renewalCalendarActions button,
+.premiumActionRow button,
+.msgActionsGrid button {
+  border-radius: 15px !important;
+  font-weight: 900 !important;
+  letter-spacing: .01em;
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, filter .18s ease, background .18s ease;
+}
+button:not(:disabled):active,
+.btnMain:not(:disabled):active,
+.btnFull:not(:disabled):active,
+.movieTplBtn:not(:disabled):active,
+.dailyPromptActions button:not(:disabled):active,
+.dailyPosterActions button:not(:disabled):active {
+  transform: translateY(1px) scale(.985);
+}
+.btnMain,
+.btnFull.primary,
+.movieTplBtn.primary,
+.dailyPromptActions .primary,
+.dailyPosterActions .primary,
+.homeStatusListActions button:first-child,
+.renewalCalendarActions button.primary {
+  background: linear-gradient(135deg, #00e7ff 0%, #32b7ff 48%, #72ff5b 100%) !important;
+  color: #041018 !important;
+  border: 1px solid rgba(255,255,255,.18) !important;
+  box-shadow: 0 12px 28px rgba(0,231,255,.18), inset 0 1px 0 rgba(255,255,255,.28) !important;
+}
+.btnFull.gray,
+.movieTplBtn.secondary,
+.movieTplBtn.outline,
+.dailyPromptActions button,
+.dailyPosterActions button,
+.fixedSlotActions button,
+.homeStatusListActions button,
+.renewalCalendarActions button {
+  background: linear-gradient(180deg, rgba(20,38,59,.86), rgba(8,17,31,.88)) !important;
+  color: var(--text) !important;
+  border: 1px solid rgba(0,231,255,.16) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.055), 0 8px 22px rgba(0,0,0,.16);
+}
+.btnFull.danger,
+button.danger,
+.dailyPromptActions .danger,
+.fixedSlotActions .danger {
+  background: linear-gradient(180deg, rgba(255,79,104,.15), rgba(255,79,104,.07)) !important;
+  color: #ff7b8f !important;
+  border: 1px solid rgba(255,79,104,.32) !important;
+  box-shadow: 0 10px 24px rgba(255,79,104,.08) !important;
+}
+.btnFull.success,
+button.success,
+.dailyPromptActions .success,
+.dailyPosterActions .success {
+  background: linear-gradient(135deg, rgba(114,255,91,.98), rgba(0,231,255,.88)) !important;
+  color: #041018 !important;
+  border: 1px solid rgba(255,255,255,.18) !important;
+  box-shadow: 0 12px 28px rgba(114,255,91,.12) !important;
+}
+button:disabled {
+  opacity: .55 !important;
+  filter: grayscale(.25);
+}
+
+/* Badges */
+.badge {
+  border-radius: 999px !important;
+  border: 1px solid rgba(255,255,255,.09);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+}
+
+/* Cartelera / Promps Pro */
+.dailyPosterBox,
+.dailyPromptBox,
+.eventPromptBox,
+.extraPromptBox,
+.fixedImageIntro,
+.panelLinksEditorIntro,
+.customIntro {
+  position: relative;
+  overflow: hidden;
+  border-radius: 22px !important;
+  border: 1px solid rgba(0,231,255,.16) !important;
+  background:
+    radial-gradient(circle at 0% 0%, rgba(0,231,255,.14), transparent 38%),
+    radial-gradient(circle at 100% 20%, rgba(114,255,91,.08), transparent 34%),
+    linear-gradient(145deg, rgba(16,32,53,.84), rgba(7,14,26,.86)) !important;
+  box-shadow: var(--m17-shadow-soft);
+  backdrop-filter: blur(16px);
+}
+.dailyPosterBox::before,
+.dailyPromptBox::before,
+.eventPromptBox::before,
+.extraPromptBox::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(120deg, rgba(255,255,255,.075), transparent 22%, transparent 75%, rgba(0,231,255,.055));
+  opacity: .68;
+}
+.dailyPosterBox > *,
+.dailyPromptBox > *,
+.eventPromptBox > *,
+.extraPromptBox > * {
+  position: relative;
+  z-index: 1;
+}
+.dailyPromptTop,
+.dailyPosterTop {
+  align-items: flex-start;
+}
+.dailyPromptKicker,
+.dailyPosterKicker {
+  color: var(--cyan) !important;
+  letter-spacing: 2.4px !important;
+}
+.dailyPromptDateBox,
+.dailyPosterDateBox,
+.extraPromptImageHint,
+.movieTplDirectNote {
+  background: rgba(114,255,91,.06) !important;
+  border: 1px solid rgba(114,255,91,.18) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+}
+.dailyPromptFinalUpload,
+.dailyPosterUploadBox,
+.fixedSlotPreviewPanel,
+.movieTplFixedPreviewCard {
+  background: rgba(255,255,255,.045) !important;
+  border: 1px solid rgba(0,231,255,.12) !important;
+  border-radius: 18px !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.035);
+}
+.dailyPromptFinalPreview,
+.dailyPosterPreviewWrap {
+  border-radius: 20px !important;
+  overflow: hidden;
+  border: 1px solid rgba(0,231,255,.16) !important;
+  box-shadow: 0 14px 34px rgba(0,0,0,.28);
+}
+.dailyGeneratedPrompt,
+.dailyPromptTextarea,
+.dailyPromptEvents {
+  min-height: 170px;
+}
+
+/* Cartelera admin / fixed links */
+.fixedSlotCard {
+  border-radius: 22px !important;
+  overflow: hidden;
+}
+.fixedSlotTop {
+  gap: 12px;
+}
+.fixedSlotTitle {
+  font-weight: 950 !important;
+}
+.fixedSlotPath {
+  color: rgba(142,172,198,.82) !important;
+}
+.fixedSlotPreviewBox {
+  background:
+    linear-gradient(145deg, rgba(4,10,18,.94), rgba(16,31,50,.82)),
+    radial-gradient(circle at center, rgba(0,231,255,.10), transparent 44%) !important;
+  border: 1px solid rgba(255,255,255,.06) !important;
+  border-radius: 16px !important;
+}
+
+/* Movie / Series template Pro */
+.movieTplSheet {
+  background:
+    radial-gradient(circle at 18% -4%, rgba(0,231,255,.18), transparent 32%),
+    radial-gradient(circle at 84% 0%, rgba(114,255,91,.10), transparent 28%),
+    linear-gradient(180deg, rgba(8,16,30,.99), rgba(4,8,16,.99)) !important;
+}
+.movieTplIntro {
+  border-radius: 24px !important;
+  border: 1px solid rgba(0,231,255,.18) !important;
+  background:
+    linear-gradient(145deg, rgba(18,36,58,.90), rgba(8,17,31,.86)),
+    radial-gradient(circle at left top, rgba(0,231,255,.18), transparent 38%) !important;
+  box-shadow: var(--m17-shadow-soft);
+}
+.movieTplBrand {
+  font-size: 1.22rem !important;
+}
+.movieTplBrand span {
+  background: linear-gradient(135deg, var(--cyan), #fff 42%, var(--green)) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+}
+.movieTplPanel {
+  border-radius: 22px !important;
+  border: 1px solid rgba(0,231,255,.13) !important;
+  background:
+    linear-gradient(145deg, rgba(16,31,50,.86), rgba(7,14,26,.86)),
+    radial-gradient(circle at top left, rgba(0,231,255,.08), transparent 34%) !important;
+  box-shadow: var(--m17-shadow-soft);
+  backdrop-filter: blur(14px);
+}
+.movieTplPanel h4 {
+  color: var(--cyan) !important;
+  letter-spacing: .2px;
+  font-weight: 950 !important;
+}
+.movieTplStageContainer,
+.movieTplPreviewWrap canvas,
+#tplCanvas,
+#seriesTplCanvas {
+  border-radius: 24px !important;
+}
+.movieTplStageContainer {
+  padding: 8px;
+  background:
+    linear-gradient(145deg, rgba(0,231,255,.12), rgba(114,255,91,.06)),
+    rgba(255,255,255,.035) !important;
+  border: 1px solid rgba(0,231,255,.18) !important;
+  box-shadow: 0 20px 56px rgba(0,0,0,.38), 0 0 30px rgba(0,231,255,.10);
+}
+.movieTplActions {
+  gap: 10px !important;
+}
+.movieTplStatus {
+  border-radius: 16px !important;
+  overflow-wrap: anywhere;
+}
+.movieTplPosterGallery img,
+.movieTplResults img {
+  border-radius: 14px !important;
+}
+.movieTplResults > div,
+.movieTplPosterGallery > * {
+  transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+.movieTplResults > div:active,
+.movieTplPosterGallery > *:active {
+  transform: scale(.985);
+}
+
+/* Loading / toast */
+.loadingOverlay {
+  background:
+    radial-gradient(circle at center, rgba(0,231,255,.16), transparent 38%),
+    rgba(2,5,12,.82) !important;
+  backdrop-filter: blur(10px);
+}
+.loadingCard {
+  border-radius: 28px !important;
+  border: 1px solid rgba(0,231,255,.18) !important;
+  background:
+    linear-gradient(145deg, rgba(18,36,58,.92), rgba(6,12,22,.92)) !important;
+  box-shadow: 0 28px 72px rgba(0,0,0,.55), 0 0 32px rgba(0,231,255,.14);
+}
+#loadingLogo {
+  filter: drop-shadow(0 0 20px rgba(0,231,255,.35));
+}
+#toastMsg.toastMsg,
+#toastMsg {
+  border: 1px solid rgba(0,231,255,.18) !important;
+  background:
+    linear-gradient(145deg, rgba(19,35,56,.96), rgba(7,13,25,.96)) !important;
+  box-shadow: 0 18px 52px rgba(0,0,0,.48), 0 0 20px rgba(0,231,255,.10) !important;
+}
+
+/* Smooth animations */
+@keyframes m17FadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes m17SoftPulse {
+  0%, 100% { box-shadow: 0 0 0 rgba(0,231,255,0); }
+  50% { box-shadow: 0 0 22px rgba(0,231,255,.16); }
+}
+.homeStatusCard,
+.homePanelLinks,
+.clientCard,
+.card,
+.dailyPromptBox,
+.eventPromptBox,
+.dailyPosterBox,
+.movieTplPanel,
+.fixedSlotCard {
+  animation: m17FadeUp .38s ease both;
+}
+.refreshBtn {
+  animation: m17SoftPulse 3.5s ease-in-out infinite;
+}
+
+/* Scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0,231,255,.30) rgba(255,255,255,.04);
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-track {
+  background: rgba(255,255,255,.035);
+}
+*::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(0,231,255,.45), rgba(114,255,91,.28));
+  border-radius: 99px;
+}
+
+/* Mobile polish */
+@media (max-width: 520px) {
+  .sheet {
+    border-radius: 24px 24px 0 0 !important;
+  }
+  .movieTplGrid {
+    gap: 12px !important;
+  }
+  .movieTplPanel,
+  .dailyPromptBox,
+  .eventPromptBox,
+  .dailyPosterBox {
+    border-radius: 20px !important;
+  }
+  .homeStatusCard {
+    border-radius: 20px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
