@@ -4500,3 +4500,42 @@ button:disabled {
     scroll-behavior: auto !important;
   }
 }
+
+
+/* === FIX VISIBILIDAD BARRA INFERIOR === */
+.bottomNav {
+  background: linear-gradient(180deg, rgba(6,14,25,.96), rgba(4,9,18,.98)) !important;
+  border: 1px solid rgba(0,231,255,.20) !important;
+  box-shadow: 0 -10px 30px rgba(0,0,0,.34), 0 0 0 1px rgba(255,255,255,.03) inset !important;
+}
+.bottomNavItem {
+  color: #cfeaf6 !important;
+  opacity: .95;
+  min-height: 60px;
+  justify-content: center;
+}
+.bottomNavItem span {
+  color: #ecfbff !important;
+  font-size: 1.18rem !important;
+  text-shadow: 0 0 10px rgba(0,231,255,.18);
+}
+.bottomNavItem small {
+  color: #cfeaf6 !important;
+  font-size: .69rem !important;
+  letter-spacing: .02em;
+}
+.bottomNavItem.active,
+.bottomNavItem:active {
+  background: linear-gradient(135deg, rgba(0,231,255,.16), rgba(114,255,91,.12)) !important;
+  color: #ffffff !important;
+  box-shadow: inset 0 0 0 1px rgba(0,231,255,.22), 0 10px 24px rgba(0,231,255,.08) !important;
+}
+.bottomNavItem.active span,
+.bottomNavItem:active span {
+  color: var(--cyan) !important;
+  filter: drop-shadow(0 0 12px rgba(0,231,255,.38));
+}
+.bottomNavItem.active small,
+.bottomNavItem:active small {
+  color: #f3fcff !important;
+}
