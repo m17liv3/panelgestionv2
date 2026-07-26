@@ -1,9 +1,9 @@
-const CACHE_NAME = 'm17liv3-conceptoD-vista-deslizante-1785083989';
+const CACHE_NAME = 'm17liv3-clientes-clean-opcionA-1785086418';
 const APP_SHELL = [
   './',
   './index.html',
-  './styles.css',
-  './script.js',
+  './styles.clientes-clean-1785086418.css',
+  './script.clientes-clean-1785086418.js',
   './config.js',
   './manifest.webmanifest',
   './assets/logo.png',
