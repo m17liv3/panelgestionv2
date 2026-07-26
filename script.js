@@ -7330,8 +7330,7 @@ async function movieTplUploadPelicula3Direct(btnEl) {
 
   try {
     var publicUrl = await uploadBlobToExactFixedPath(exactPath, blob, 'image/jpeg');
-    var verifyUrl = publicUrl ? (publicUrl + (publicUrl.indexOf('?') === -1 ? '?' : '&') + 'v=' + Date.now()) : '';
-    movieTplSetStatus('Subida correctamente a PELÍCULA RECOMENDADA 3. Si el enlace fijo tarda, comprueba con versión sin caché: ' + verifyUrl, 'ok');
+    movieTplSetStatus('Subida correctamente a PELÍCULA RECOMENDADA 3', 'ok');
 
     try { movieTplRefreshFixedPreview('pelicula_3', 'tplFixedPreview3'); } catch(e) {}
     try { loadFixedSlotImage('pelicula_3'); } catch(e) {}
