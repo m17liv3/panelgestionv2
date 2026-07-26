@@ -1,9 +1,9 @@
-const CACHE_NAME = 'm17liv3-clientes-compactos-expandibles-20260726-v1';
+const CACHE_NAME = 'm17liv3-clientes-compactos-expandibles-navfix-20260726-v2';
 const APP_SHELL = [
   './',
   './index.html',
-  './styles.clientes-compactos-expandibles-20260726.css',
-  './script.clientes-compactos-expandibles-20260726.js',
+  './styles.clientes-compactos-expandibles-navfix-20260726.css',
+  './script.clientes-compactos-expandibles-navfix-20260726.js',
   './config.js',
   './manifest.webmanifest',
   './assets/logo.png',
