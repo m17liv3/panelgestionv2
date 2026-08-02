@@ -1,4 +1,4 @@
-const CACHE_NAME = 'm17liv3-movie3-proxy-v18-20260802';
+const CACHE_NAME = 'm17liv3-cartelera-clean-header-v19-20260802';
 const APP_SHELL = [
   './',
   './index.html',

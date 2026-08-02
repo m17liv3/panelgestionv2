@@ -49,49 +49,6 @@
       margin:0 auto;
       padding:20px 15px calc(34px + var(--safe));
     }
-    .topbar {
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:14px;
-      margin-bottom:18px;
-    }
-    .brand {
-      display:flex;
-      align-items:center;
-      gap:11px;
-      min-width:0;
-    }
-    .brand img {
-      width:48px;
-      height:48px;
-      border-radius:15px;
-      object-fit:contain;
-      background:rgba(0,0,0,.24);
-      border:1px solid rgba(0,216,255,.18);
-      box-shadow:0 0 26px rgba(0,216,255,.12);
-    }
-    .brandName {
-      font-size:1.16rem;
-      font-weight:950;
-      letter-spacing:.08em;
-      white-space:nowrap;
-    }
-    .brandName span:first-child { color:var(--cyan); }
-    .brandName span:last-child { color:var(--green); }
-    .refreshBtn {
-      flex:0 0 auto;
-      height:42px;
-      min-width:42px;
-      padding:0 13px;
-      border-radius:13px;
-      border:1px solid rgba(0,216,255,.20);
-      background:rgba(0,216,255,.07);
-      color:var(--cyan);
-      font-weight:850;
-      cursor:pointer;
-    }
-    .refreshBtn:disabled { opacity:.55; cursor:wait; }
     .status {
       display:flex;
       align-items:center;
@@ -270,7 +227,6 @@
     [hidden] { display:none !important; }
     @media (max-width:480px) {
       .page { padding-left:10px; padding-right:10px; }
-      .topbar { margin-bottom:14px; }
       .intro { padding:21px 12px 19px; border-radius:21px; }
       .scheduleHeading { padding:15px 10px 14px; }
     }
@@ -284,15 +240,6 @@
 </head>
 <body>
   <main class="page">
-    <header class="topbar">
-      <div class="brand">
-        <img src="assets/logo.png" alt="M17LIV3" draggable="false">
-        <div class="brandName"><span>M17</span><span>LIV3</span></div>
-      </div>
-      <button id="refreshBtn" class="refreshBtn" type="button" aria-label="Actualizar cartelera" title="Actualizar cartelera">↻</button>
-    </header>
-
-
     <div id="status" class="status"><span class="spinner" aria-hidden="true"></span><span>Cargando cartelera…</span></div>
 
     <section id="eventCard" class="eventCard" hidden>
@@ -338,7 +285,6 @@
       var scheduleCard = document.getElementById('scheduleCard');
       var scheduleText = document.getElementById('scheduleText');
       var emptyCard = document.getElementById('emptyCard');
-      var refreshBtn = document.getElementById('refreshBtn');
       var updatedEl = document.getElementById('updated');
 
       function headers() {
@@ -366,7 +312,6 @@
       }
 
       function setLoading(loading) {
-        refreshBtn.disabled = loading;
         if (loading) {
           statusEl.hidden = false;
           statusEl.innerHTML = '<span class="spinner" aria-hidden="true"></span><span>Cargando cartelera…</span>';
@@ -427,10 +372,8 @@
           incrementVisit(record);
         } catch (error) {
           statusEl.hidden = false;
-          statusEl.innerHTML = '<span>⚠️ No se pudo cargar la cartelera. Pulsa ↻ para volver a intentarlo.</span>';
+          statusEl.innerHTML = '<span>⚠️ No se pudo cargar la cartelera. Actualiza la página para volver a intentarlo.</span>';
           updatedEl.textContent = '';
-        } finally {
-          refreshBtn.disabled = false;
         }
       }
 
@@ -467,7 +410,6 @@
       });
 
       setDate();
-      refreshBtn.addEventListener('click', loadCartelera);
       loadCartelera();
     }());
   </script>
