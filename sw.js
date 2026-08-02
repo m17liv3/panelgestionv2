@@ -1,4 +1,4 @@
-const CACHE_NAME = 'm17liv3-neon-pro-v20-20260802';
+const CACHE_NAME = 'm17liv3-neon-pro-v21-20260802';
 const APP_SHELL = [
   './',
   './index.html',
