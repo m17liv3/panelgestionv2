@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#050812">
+<title>M17LIV3 · Prueba técnica resultados 7 agosto</title>
+<style>
+:root{--bg:#050812;--panel:#0b1422;--text:#f5fbff;--muted:#8da3b8;--cyan:#00e5ff;--green:#77ff58;--border:rgba(130,190,230,.17);--focus:0 0 0 4px rgba(119,255,88,.15),0 0 34px rgba(119,255,88,.20)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;min-height:100%;background:radial-gradient(circle at 50% -8%,rgba(0,229,255,.12),transparent 30%),radial-gradient(circle at 90% 100%,rgba(119,255,88,.07),transparent 27%),var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;user-select:none;-webkit-user-select:none}body{padding:max(18px,env(safe-area-inset-top)) max(18px,env(safe-area-inset-right)) max(30px,env(safe-area-inset-bottom)) max(18px,env(safe-area-inset-left));overflow-x:hidden}.wrap{width:min(1180px,100%);margin:auto}.top{display:flex;align-items:center;justify-content:space-between;gap:12px}.action{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:56px;color:var(--cyan);text-decoration:none;border:2px solid rgba(0,229,255,.30);background:rgba(0,229,255,.07);padding:13px 20px;border-radius:16px;font-weight:950;outline:none;position:relative;letter-spacing:.02em}.action.refresh{color:var(--green);border-color:rgba(119,255,88,.24);background:rgba(119,255,88,.06)}.action:focus,.action:focus-visible{border-color:var(--green);color:#fff;background:linear-gradient(135deg,rgba(0,229,255,.20),rgba(119,255,88,.17));box-shadow:0 0 0 4px rgba(119,255,88,.32),0 0 38px rgba(0,229,255,.30),0 0 58px rgba(119,255,88,.22);transform:scale(1.08);z-index:5}.action:focus::after,.action:focus-visible::after{content:"SELECCIONADO";position:absolute;left:50%;top:calc(100% + 8px);transform:translateX(-50%);font-size:.60rem;line-height:1;background:var(--green);color:#04100a;padding:5px 8px;border-radius:999px;letter-spacing:.08em;white-space:nowrap;box-shadow:0 0 16px rgba(119,255,88,.38)}.hero{text-align:center;margin:16px 0 20px}.brand{color:var(--cyan);font-size:.78rem;font-weight:950;letter-spacing:.22em;text-transform:uppercase}.heroIcon{width:72px;height:72px;margin:10px auto 12px;border-radius:21px;border:1px solid rgba(119,255,88,.22);background:rgba(119,255,88,.07);color:var(--green);display:grid;place-items:center;box-shadow:0 0 28px rgba(119,255,88,.08)}.heroIcon svg{width:46px;height:46px;filter:drop-shadow(0 0 8px rgba(119,255,88,.25))}.hero h1{font-size:clamp(1.8rem,4.7vw,4rem);letter-spacing:-.05em;line-height:1.02;margin:0 0 8px}.hero p{margin:0;color:var(--muted);font-size:clamp(.9rem,1.7vw,1.06rem)}.summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;margin:0 auto 20px;max-width:720px}.stat{background:linear-gradient(145deg,rgba(14,25,42,.96),rgba(9,16,29,.96));border:1px solid var(--border);border-radius:18px;padding:15px;text-align:center}.stat strong{display:block;font-size:clamp(1.5rem,3vw,2rem);line-height:1.1}.stat.final strong{color:var(--green)}.stat span{display:block;color:var(--muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;margin-top:5px}.remoteHint{text-align:center;color:#6f879d;font-size:.78rem;margin:2px 0 14px}.leagueGroup{margin:20px 0}.leagueTitle{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 10px;padding:0 4px}.leagueTitle h2{font-size:1rem;margin:0}.leagueTitle span{color:var(--muted);font-size:.76rem}.events{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.event{background:linear-gradient(145deg,rgba(15,27,46,.98),rgba(8,16,29,.98));border:1px solid var(--border);border-radius:19px;padding:16px 17px;outline:none;position:relative;overflow:hidden}.event:before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--green);box-shadow:0 0 14px rgba(119,255,88,.5)}.event:focus,.event:focus-visible{border:3px solid var(--green);background:linear-gradient(145deg,rgba(18,43,58,.99),rgba(10,28,37,.99));box-shadow:0 0 0 4px rgba(119,255,88,.26),0 0 36px rgba(0,229,255,.24),0 0 52px rgba(119,255,88,.20);transform:scale(1.035);z-index:3}.event:focus::after,.event:focus-visible::after{content:"SELECCIONADO";position:absolute;right:12px;bottom:10px;padding:5px 9px;border-radius:999px;background:var(--green);color:#04100a;font-size:.60rem;font-weight:950;letter-spacing:.08em;box-shadow:0 0 18px rgba(119,255,88,.35)}.meta{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}.competition{color:#7f9ab0;font-size:.76rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:72%}.status{font-size:.69rem;font-weight:950;text-transform:uppercase;letter-spacing:.06em;border-radius:999px;padding:5px 8px;color:#caffbb;background:rgba(119,255,88,.09);border:1px solid rgba(119,255,88,.18)}.row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px 16px;align-items:center}.teamWrap{display:flex;align-items:center;gap:9px;min-width:0}.teamLogo{width:26px;height:26px;object-fit:contain;flex:0 0 auto}.team{font-weight:900;font-size:clamp(.96rem,2vw,1.12rem);overflow-wrap:anywhere}.score{font-size:1.38rem;font-weight:950;min-width:36px;text-align:right;color:#fff}.loading,.empty,.error{text-align:center;padding:50px 18px;border:1px dashed rgba(130,190,230,.22);border-radius:20px;color:var(--muted);background:rgba(13,23,39,.55)}.error{color:#ff9cab;border-color:rgba(255,93,116,.28)}.foot{text-align:center;color:#5f788e;font-size:.73rem;margin-top:26px;line-height:1.55}.source{color:#7894a9}.updated{color:#7790a5;font-size:.77rem;text-align:center;margin:9px 0 0}
+.matchInfo{max-width:820px;margin:0 auto 16px;padding:11px 14px;border-radius:14px;border:1px solid rgba(0,229,255,.14);background:rgba(0,229,255,.045);color:#7690a6;font-size:.76rem;text-align:center;line-height:1.5}.matchInfo b{color:#dff8ff}.pending{color:#ffcf70}.coverage{max-width:980px;margin:0 auto 16px;display:flex;flex-wrap:wrap;justify-content:center;gap:8px}.covChip{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:7px 10px;font-size:.72rem;font-weight:850;border:1px solid var(--border);background:rgba(13,23,39,.7);color:#9bb1c5}.covChip.ok{border-color:rgba(119,255,88,.24);color:#caffbb;background:rgba(119,255,88,.06)}.covChip.no{border-color:rgba(255,195,92,.22);color:#ffd58a;background:rgba(255,180,70,.05)}.sportSection{margin:22px 0 6px}.sportHeader{display:flex;align-items:center;gap:10px;margin:0 0 10px;padding:0 4px}.sportIcon{font-size:1.25rem}.sportHeader h2{margin:0;font-size:1.08rem}.sportHeader small{color:var(--muted)}
+@media(max-width:700px){.events{grid-template-columns:1fr}.top{align-items:stretch}.action{padding:10px 12px}.hero{margin-top:10px}.event{min-height:0}}
+@media(prefers-reduced-motion:no-preference){.event,.action{transition:.16s ease}}
+</style>
+</head>
+<body oncontextmenu="return false">
+<main class="wrap">
+  <div class="top">
+    <a class="action" href="cliente.html" id="backBtn" tabindex="0">← ATRÁS</a>
+    <button class="action refresh" type="button" id="refreshBtn" tabindex="0">↻ ACTUALIZAR</button>
+  </div>
+  <section class="hero">
+    <div class="brand">M17LIV3</div>
+    <div class="heroIcon" aria-hidden="true">
+      <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="7" y="12" width="50" height="40" rx="6" stroke="currentColor" stroke-width="3"/>
+        <path d="M17 22H27M17 30H27M37 22H47M37 30H47" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+        <path d="M20 40L25 45L35 35" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M41 40H49" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <h1>PRUEBA TÉCNICA · RESULTADOS 7 AGOSTO</h1>
+    <p id="dateText"></p>
+    <div class="updated" id="updatedText">Conectando…</div>
+  </section>
+  <section class="summary" aria-label="Resumen">
+    <div class="stat final"><strong id="countFinal">0</strong><span>Resultados encontrados</span></div>
+    <div class="stat"><strong id="countDay">0</strong><span>Eventos que ofreces hoy</span></div>
+  </section>
+  <div class="matchInfo" id="matchInfo">Prueba aislada: no modifica ni publica tu cartelera actual.</div>
+  <div class="coverage" id="coverage"></div>
+  <div class="remoteHint">MANDO TV · ↑ ↓ ← → para moverte · OK / Enter para seleccionar · Atrás para volver</div>
+  <div id="content"><div class="loading">Consultando resultados finalizados…</div></div>
+  <div class="foot"><span class="source">Prueba técnica · Datos de tenis: TheRundown</span> · No modifica la cartelera de producción.</div>
+</main>
+<script>
+(function(){
+ const API_PROXY='https://qjbnjhojwhcndcfjcyrc.supabase.co/functions/v1/resultados-dia';
+ const TEST_DATE='2026-08-07';
+ const offered=[
+  {sport:'Tennis',type:'match',home:'Jódar',away:'Musetti',time:'01:05',title:'Torneo de Montreal: Jódar 🆚 Musetti'},
+  {sport:'Tennis',type:'match',home:'Mérida',away:'Michelsen',time:'18:35',title:'Torneo de Montreal: Mérida 🆚 Michelsen'},
+  {sport:'Tennis',type:'match',home:'Griekspoor',away:'Arnaldi',time:'18:35',title:'Torneo de Montreal: Griekspoor 🆚 Arnaldi'},
+  {sport:'Tennis',type:'match',home:'Van de Zandschulp',away:'Hurkacz',time:'20:35',title:'Torneo de Montreal: Van de Zandschulp 🆚 Hurkacz'},
+  {sport:'Tennis',type:'match',home:'Bergs',away:'Shelton',time:'20:35',title:'Torneo de Montreal: Bergs 🆚 Shelton'}
+ ];
+ const $=s=>document.querySelector(s);
+ let events=[];
+ function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+ function normalize(v){return String(v||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim()}
+ function toks(v){return normalize(v).split(' ').filter(x=>x.length>1)}
+ function sim(a,b){a=normalize(a);b=normalize(b);if(!a||!b)return 0;if(a===b)return 1;if(a.includes(b)||b.includes(a))return .92;const A=toks(a),B=toks(b);let hit=0;for(const x of A){if(B.some(y=>x===y||(x.length>=4&&y.length>=4&&(x.startsWith(y)||y.startsWith(x)))))hit++}return hit/Math.max(A.length,B.length)}
+ function matchOne(o,list,used){let best=null,bs=0;for(const e of list){if(used.has(e.event_id))continue;const direct=(sim(o.home,e.away)+sim(o.away,e.home))/2;const swapped=(sim(o.home,e.home)+sim(o.away,e.away))/2;const score=Math.max(direct,swapped);if(score>bs){bs=score;best={e,score,swapped:swapped>direct}}}return bs>=.62?best:null}
+ function setsText(e,swapped){let a=Array.isArray(e.sets_away)?e.sets_away:[],h=Array.isArray(e.sets_home)?e.sets_home:[];if(swapped)[a,h]=[h,a];return a.map((x,i)=>`${x}-${h[i]??'—'}`).join(' · ')}
+ function eventHtml(x){const e=x.api,o=x.offered,sw=x.swapped;const left=o.home,right=o.away;let ls=sw?e.score_home:e.score_away,rs=sw?e.score_away:e.score_home;return `<article class="event" tabindex="0"><div class="meta"><span class="competition">${esc([e.league,e.tournament,e.round].filter(Boolean).join(' · '))}</span><span class="status">Finalizado</span></div><div class="row"><div class="teamWrap"><div class="team">${esc(left)}</div></div><div class="score">${esc(ls)}</div><div class="teamWrap"><div class="team">${esc(right)}</div></div><div class="score">${esc(rs)}</div></div><div style="margin-top:10px;color:#9bb1c5;font-size:.82rem">Sets: <b style="color:#dff8ff">${esc(setsText(e,sw))}</b></div></article>`}
+ function render(){ $('#countFinal').textContent=events.length; $('#countDay').textContent=offered.length; $('#coverage').innerHTML='<span class="covChip ok">🎾 Tennis · prueba histórica aislada</span>'; if(!events.length){$('#content').innerHTML='<div class="empty">No se localizaron coincidencias finalizadas.</div>';return;} $('#content').innerHTML=`<section class="sportSection"><div class="sportHeader"><span class="sportIcon">🎾</span><h2>Tenis</h2><small>${events.length} resultados</small></div><div class="events">${events.map(eventHtml).join('')}</div></section>`; }
+ async function load(){ $('#dateText').textContent='Viernes, 7 de agosto de 2026'; $('#updatedText').textContent='Actualizando prueba…'; $('#refreshBtn').disabled=true; try{const r=await fetch(`${API_PROXY}?date=${TEST_DATE}&sports=Tennis&_=${Date.now()}`,{cache:'no-store'}); const j=await r.json(); if(!r.ok||j.error)throw new Error(j.error||`Respuesta ${r.status}`); const api=Array.isArray(j.events)?j.events:[]; const used=new Set(); events=[]; const missing=[]; for(const o of offered){const m=matchOne(o,api,used); if(m){used.add(m.e.event_id);events.push({offered:o,api:m.e,swapped:m.swapped,score:m.score});} else missing.push(o);} $('#matchInfo').innerHTML=`<b>${events.length}</b> coincidencias finalizadas de <b>${offered.length}</b> partidos de prueba${missing.length?` · <span class="pending">${missing.length} sin coincidencia: ${missing.map(x=>esc(x.home+'–'+x.away)).join(', ')}</span>`:''}. <br><b>Esta página no publica ni modifica nada.</b>`; $('#updatedText').textContent='Prueba actualizada '+new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}); render();}catch(err){events=[];$('#content').innerHTML=`<div class="error">${esc(err?.message||'Error en la prueba')}</div>`;$('#updatedText').textContent='No se pudo actualizar';}finally{$('#refreshBtn').disabled=false}}
+ function cards(){return Array.from(document.querySelectorAll('.event'))}
+ $('#refreshBtn').addEventListener('click',load);
+ document.addEventListener('keydown',e=>{const key=e.key,cs=cards(),el=document.activeElement;if(key==='Escape'||key==='BrowserBack'||key==='GoBack'){e.preventDefault();location.href='cliente.html';return}if(el===$('#backBtn')&&key==='ArrowRight'){e.preventDefault();$('#refreshBtn').focus();return}if(el===$('#refreshBtn')&&key==='ArrowLeft'){e.preventDefault();$('#backBtn').focus();return}if((el===$('#backBtn')||el===$('#refreshBtn'))&&key==='ArrowDown'&&cs.length){e.preventDefault();cs[0].focus();return}if(cs.includes(el)){let i=cs.indexOf(el),cols=window.innerWidth>700?2:1;if(key==='ArrowDown'){e.preventDefault();cs[Math.min(cs.length-1,i+cols)].focus();return}if(key==='ArrowUp'){e.preventDefault();const ni=i-cols;if(ni<0)$('#backBtn').focus();else cs[ni].focus();return}if(key==='ArrowLeft'||key==='ArrowRight'){e.preventDefault();cs[Math.max(0,Math.min(cs.length-1,i+(key==='ArrowRight'?1:-1)))].focus();return}}});
+ load();setTimeout(()=>{$('#backBtn').focus()},150);
+})();
+</script>
+</body>
+</html>
