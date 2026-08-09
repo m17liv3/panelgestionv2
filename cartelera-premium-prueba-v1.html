@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#071018" />
+  <title>M17LIV3 · Cartelera Premium</title>
+  <style>
+    :root{
+      --bg:#050b11;--panel:#0a131d;--panel2:#0d1924;--line:rgba(122,226,255,.18);
+      --text:#f4f8fb;--muted:#8ca2b3;--cyan:#55ddff;--lime:#c6ff36;--gold:#ffd166;
+      --radius:20px;--shadow:0 16px 46px rgba(0,0,0,.34)
+    }
+    *{box-sizing:border-box} html,body{margin:0;background:radial-gradient(circle at 18% -10%,rgba(34,190,255,.12),transparent 28%),radial-gradient(circle at 85% 10%,rgba(198,255,54,.07),transparent 24%),var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    body{min-height:100vh;-webkit-tap-highlight-color:transparent}
+    .page{width:min(1180px,100%);margin:auto;padding:24px 16px 54px}
+    .hero{display:flex;align-items:end;justify-content:space-between;gap:18px;padding:14px 2px 24px;border-bottom:1px solid var(--line)}
+    .eyebrow{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--cyan);font-weight:900}.hero h1{margin:7px 0 4px;font-size:clamp(28px,5vw,54px);line-height:.98;letter-spacing:-.045em}.hero p{margin:0;color:var(--muted);font-size:14px}.brand{font-weight:950;letter-spacing:.04em;font-size:18px}.brand b{color:var(--lime)}
+    .summary{display:grid;grid-template-columns:1fr auto;align-items:center;gap:16px;margin:20px 0 26px;padding:16px 18px;background:linear-gradient(135deg,rgba(11,25,36,.94),rgba(8,16,24,.92));border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)}
+    .summary strong{font-size:16px}.summary span{color:var(--muted);font-size:13px}.count{min-width:72px;text-align:center;padding:10px 14px;border-radius:14px;background:rgba(85,221,255,.08);border:1px solid rgba(85,221,255,.22)}.count b{display:block;color:var(--cyan);font-size:24px;line-height:1}.count small{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em}
+    .featured{margin-bottom:28px;border-radius:22px;overflow:hidden;border:1px solid var(--line);background:var(--panel);box-shadow:var(--shadow)}.featured img{display:block;width:100%;max-height:520px;object-fit:cover}
+    .sport{margin:0 0 30px}.sportHead{display:flex;align-items:center;gap:10px;margin:0 0 12px}.sportIcon{width:38px;height:38px;display:grid;place-items:center;border-radius:12px;background:linear-gradient(145deg,rgba(85,221,255,.14),rgba(198,255,54,.08));border:1px solid var(--line);font-size:21px}.sportHead h2{margin:0;font-size:18px;letter-spacing:.02em}.sportHead .sportCount{margin-left:auto;color:var(--muted);font-size:12px;font-weight:800}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    .event{position:relative;overflow:hidden;min-height:138px;padding:16px 17px 15px;background:linear-gradient(145deg,rgba(14,27,39,.97),rgba(8,17,25,.97));border:1px solid rgba(124,217,244,.16);border-radius:17px;box-shadow:0 10px 26px rgba(0,0,0,.22)}
+    .event:before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:0 5px 5px 0;background:linear-gradient(var(--cyan),var(--lime));opacity:.85}
+    .top{display:flex;align-items:center;gap:9px;margin-bottom:11px}.time{font-size:17px;font-weight:950;color:var(--lime);font-variant-numeric:tabular-nums}.badge{font-size:10px;font-weight:900;letter-spacing:.09em;text-transform:uppercase;padding:5px 8px;border-radius:999px;background:rgba(85,221,255,.08);border:1px solid rgba(85,221,255,.18);color:var(--cyan)}
+    .title{font-size:12px;font-weight:900;letter-spacing:.10em;text-transform:uppercase;color:#9fb1bf;margin-bottom:7px}.match{font-size:18px;font-weight:900;line-height:1.18;letter-spacing:-.02em}.detail{font-size:14px;font-weight:750;line-height:1.35;color:#d7e2e9;margin-top:4px}.meta{display:flex;flex-wrap:wrap;gap:7px;margin-top:13px}.pill{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;font-weight:800;color:#a9bbc8;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07);padding:6px 8px;border-radius:9px}.pill.channel{color:#e8f7ff;border-color:rgba(85,221,255,.14)}
+    .empty,.status{padding:42px 18px;text-align:center;color:var(--muted);border:1px solid var(--line);border-radius:20px;background:var(--panel)}.status{margin-top:22px}.spinner{width:20px;height:20px;display:inline-block;border:2px solid rgba(85,221,255,.18);border-top-color:var(--cyan);border-radius:50%;animation:spin .8s linear infinite;vertical-align:-4px;margin-right:9px}@keyframes spin{to{transform:rotate(360deg)}}
+    footer{margin-top:34px;text-align:center;color:#647887;font-size:11px;line-height:1.6}.updated{color:#8096a5}
+    @media(max-width:760px){.page{padding:15px 10px 38px}.hero{align-items:start}.brand{font-size:14px}.grid{grid-template-columns:1fr}.summary{grid-template-columns:1fr auto;margin-top:14px}.event{min-height:0}.hero h1{font-size:34px}.featured img{max-height:390px}.match{font-size:17px}}
+    @media(min-width:1280px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+    [hidden]{display:none!important}
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <div><div class="eyebrow">Programación premium</div><h1>Eventos de hoy</h1><p id="dateText"></p></div>
+      <div class="brand">M17<b>LIV3</b></div>
+    </header>
+
+    <div id="status" class="status"><span class="spinner"></span>Cargando cartelera…</div>
+
+    <section id="featured" class="featured" hidden><img id="featuredImg" alt="Evento destacado" draggable="false"></section>
+
+    <section id="content" hidden>
+      <div class="summary"><div><strong>Todo el deporte de hoy, mejor organizado.</strong><br><span>La misma cartelera publicada, convertida automáticamente en una experiencia visual.</span></div><div class="count"><b id="eventCount">0</b><small>eventos</small></div></div>
+      <div id="sports"></div>
+    </section>
+
+    <section id="empty" class="empty" hidden><strong>Aún no hay cartelera publicada</strong><br><span>Vuelve a consultar más tarde.</span></section>
+
+    <footer>M17LIV3 · Tu entretenimiento en un solo lugar<div id="updated" class="updated"></div></footer>
+  </main>
+
+  <script src="config.js"></script>
+  <script>
+  (function(){
+    'use strict';
+    const cfg=window.M17_CONFIG||{};
+    const endpoint='https://api.jsonbin.io/v3/b/'+encodeURIComponent(cfg.cartBinId||'');
+    const sportNames={
+      'BALONCESTO':'Baloncesto','CICLISMO':'Ciclismo','FÚTBOL INTERNACIONAL':'Fútbol internacional','FUTBOL INTERNACIONAL':'Fútbol internacional','FÚTBOL':'Fútbol','FUTBOL':'Fútbol','GOLF':'Golf','HÍPICA':'Hípica','HIPICA':'Hípica','MOTOCICLISMO':'Motociclismo','MOTOR':'Motor','PÁDEL':'Pádel','PADEL':'Pádel','SNOOKER':'Snooker','TENIS':'Tenis','NATACIÓN':'Natación','NATACION':'Natación'
+    };
+    const sportIcons={'Baloncesto':'🏀','Ciclismo':'🚴','Fútbol internacional':'⚽','Fútbol':'⚽','Golf':'⛳','Hípica':'🏇','Motociclismo':'🏍','Motor':'🏎','Pádel':'🎾','Snooker':'🎱','Tenis':'🎾','Natación':'🏊','Otros':'◆'};
+    function headers(){return {'X-Master-Key':cfg.cartKey||'','X-Access-Key':cfg.cartKey||''}}
+    function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+    function cleanSep(s){return String(s||'').replace(/^[\s·:\-–—]+|[\s·:\-–—]+$/g,'').trim()}
+    function stripFlags(s){return String(s||'').replace(/[\u{1F1E6}-\u{1F1FF}]{2}/gu,'').replace(/[\u{1F3F4}\u{E0000}-\u{E007F}]+/gu,'').replace(/�+/g,'').trim()}
+    function sectionName(line){
+      let s=String(line||'').replace(/[─━═]/g,'').trim();
+      if(!s || /^⏰/.test(s) || /^📺|^🗂/.test(s)) return null;
+      s=s.replace(/^[^\p{L}]+|[^\p{L}]+$/gu,'').trim().toUpperCase();
+      return sportNames[s]||null;
+    }
+    function parse(text){
+      const lines=String(text||'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+      const groups=[]; let group=null; let event=null;
+      function ensure(name){let g=groups.find(x=>x.name===name);if(!g){g={name,events:[]};groups.push(g)}return g}
+      function push(){if(event&&group){group.events.push(event)} event=null}
+      for(const line of lines){
+        if(/^🏆\s*N[úu]mero total/i.test(line)||/^🏆\s*\d+\s*eventos/i.test(line)) continue;
+        const sec=sectionName(line); if(sec){push();group=ensure(sec);continue}
+        const m=line.match(/^⏰\s*(\d{1,2}:\d{2})\s*[·\-–—:]\s*(.+)$/u);
+        if(m){push(); if(!group)group=ensure('Otros'); event={time:m[1],title:cleanSep(m[2]),detail:'',channel:'',folder:'',match:''}; continue}
+        if(!event) continue;
+        if(/^📺/.test(line)){event.channel=cleanSep(line.replace(/^📺\s*(CANAL\s*:)?/i,''));continue}
+        if(/^🗂/.test(line)){event.folder=cleanSep(line.replace(/^🗂\s*(CARPETA\s*:)?/i,''));continue}
+        if(/🆚|\bvs\.?\b/i.test(line)){event.match=stripFlags(cleanSep(line));continue}
+        event.detail=event.detail?event.detail+' · '+cleanSep(line):cleanSep(line);
+      }
+      push(); return groups.filter(g=>g.events.length);
+    }
+    function render(record){
+      const text=String(record.texto||'').trim(); const image=String(record.imagen_dia||'').trim();
+      document.getElementById('status').hidden=true;
+      if(image){const f=document.getElementById('featured');const im=document.getElementById('featuredImg');im.src=image;f.hidden=false;im.onerror=()=>f.hidden=true}
+      if(!text){document.getElementById('empty').hidden=false;return}
+      const groups=parse(text); const total=groups.reduce((n,g)=>n+g.events.length,0);
+      document.getElementById('eventCount').textContent=total;
+      const root=document.getElementById('sports'); root.innerHTML='';
+      for(const g of groups){
+        const sec=document.createElement('section');sec.className='sport';
+        sec.innerHTML=`<div class="sportHead"><div class="sportIcon">${sportIcons[g.name]||'◆'}</div><h2>${esc(g.name)}</h2><span class="sportCount">${g.events.length} ${g.events.length===1?'evento':'eventos'}</span></div><div class="grid"></div>`;
+        const grid=sec.querySelector('.grid');
+        for(const e of g.events){
+          const card=document.createElement('article');card.className='event';
+          const main=e.match?`<div class="match">${esc(e.match)}</div>`:(e.detail?`<div class="detail">${esc(e.detail)}</div>`:'');
+          const meta=[e.channel?`<span class="pill channel">📺 ${esc(e.channel)}</span>`:'',e.folder?`<span class="pill">${esc(e.folder)}</span>`:''].join('');
+          card.innerHTML=`<div class="top"><span class="time">${esc(e.time)}</span><span class="badge">${esc(g.name)}</span></div><div class="title">${esc(e.title)}</div>${main}${e.match&&e.detail?`<div class="detail">${esc(e.detail)}</div>`:''}${meta?`<div class="meta">${meta}</div>`:''}`;
+          grid.appendChild(card);
+        }
+        root.appendChild(sec);
+      }
+      document.getElementById('content').hidden=false;
+      document.getElementById('updated').textContent='Actualizado: '+new Intl.DateTimeFormat('es-ES',{hour:'2-digit',minute:'2-digit'}).format(new Date());
+    }
+    async function load(){
+      try{
+        if(!cfg.cartBinId||!cfg.cartKey)throw new Error('Configuración incompleta');
+        const r=await fetch(endpoint+'/latest?t='+Date.now(),{headers:headers(),cache:'no-store'}); if(!r.ok)throw new Error('HTTP '+r.status);
+        const d=await r.json();render(d.record||{});
+      }catch(e){const s=document.getElementById('status');s.innerHTML='⚠️ No se pudo cargar la cartelera de prueba.'}
+    }
+    document.getElementById('dateText').textContent=new Intl.DateTimeFormat('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(new Date());
+    load();
+  })();
+  </script>
+</body>
+</html>
