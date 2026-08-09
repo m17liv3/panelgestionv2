@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#050812">
+<title>M17LIV3 · Prueba SportScore fútbol</title>
+<style>
+:root{--bg:#050812;--panel:#0b1422;--text:#f5fbff;--muted:#8da3b8;--cyan:#00e5ff;--green:#77ff58;--amber:#ffc857;--red:#ff6b81;--border:rgba(130,190,230,.18)}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:radial-gradient(circle at 50% -8%,rgba(0,229,255,.11),transparent 30%),var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif}body{padding:22px}.wrap{width:min(1180px,100%);margin:auto}.top{display:flex;justify-content:space-between;align-items:center;gap:12px}.btn{appearance:none;border:1px solid rgba(0,229,255,.35);background:rgba(0,229,255,.07);color:var(--cyan);font-weight:900;border-radius:14px;padding:12px 16px;cursor:pointer}.btn.run{color:var(--green);border-color:rgba(119,255,88,.3);background:rgba(119,255,88,.06)}.hero{text-align:center;margin:22px 0 20px}.hero h1{font-size:clamp(1.7rem,4vw,3.4rem);margin:0 0 8px;letter-spacing:-.04em}.hero p{color:var(--muted);margin:4px 0}.notice{max-width:900px;margin:0 auto 18px;border:1px solid rgba(255,200,87,.22);background:rgba(255,200,87,.06);color:#ffe2a1;padding:12px 14px;border-radius:14px;text-align:center;font-size:.88rem}.summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:18px auto;max-width:800px}.stat{border:1px solid var(--border);background:var(--panel);padding:14px;border-radius:16px;text-align:center}.stat strong{display:block;font-size:1.7rem}.stat span{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}.events{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.card{border:1px solid var(--border);background:linear-gradient(145deg,rgba(15,27,46,.98),rgba(8,16,29,.98));border-radius:18px;padding:16px;position:relative;overflow:hidden}.card:before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:#42566d}.card.ok:before{background:var(--green)}.card.maybe:before{background:var(--amber)}.card.no:before{background:var(--red)}.teams{font-weight:950;font-size:1.06rem;margin-bottom:8px}.meta{font-size:.78rem;color:var(--muted);margin-bottom:10px}.state{display:inline-flex;padding:5px 8px;border-radius:999px;font-size:.7rem;font-weight:950;text-transform:uppercase;letter-spacing:.05em}.state.ok{color:#caffbb;background:rgba(119,255,88,.09);border:1px solid rgba(119,255,88,.2)}.state.maybe{color:#ffe4a0;background:rgba(255,200,87,.08);border:1px solid rgba(255,200,87,.2)}.state.no{color:#ffb1bd;background:rgba(255,107,129,.08);border:1px solid rgba(255,107,129,.2)}.score{font-size:1.5rem;font-weight:950;margin:10px 0}.small{font-size:.77rem;color:#7894a9;line-height:1.45;overflow-wrap:anywhere}.raw{margin-top:10px;padding:10px;background:#060c15;border:1px solid rgba(130,190,230,.13);border-radius:10px;max-height:150px;overflow:auto;font:11px/1.4 ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre-wrap;color:#9eb7ca}.loading,.error,.empty{border:1px dashed rgba(130,190,230,.23);border-radius:18px;padding:36px;text-align:center;color:var(--muted)}.error{color:#ff9cab;border-color:rgba(255,107,129,.3)}.foot{text-align:center;margin-top:24px;color:#6f879b;font-size:.78rem}.foot a{color:#9fcfff}.apiBox{margin:18px 0 0;border:1px solid var(--border);border-radius:14px;padding:12px;color:#93aec2;font-size:.8rem;background:rgba(9,16,29,.65)}
+@media(max-width:760px){.events{grid-template-columns:1fr}.summary{grid-template-columns:1fr 1fr}.summary .stat:last-child{grid-column:1/-1}.top{align-items:stretch}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <div class="top">
+    <a class="btn" href="resultados.html">← RESULTADOS</a>
+    <button class="btn run" id="runBtn">▶ PROBAR SPORTScore</button>
+  </div>
+  <section class="hero">
+    <h1>PRUEBA TÉCNICA · FÚTBOL V45</h1>
+    <p>Comprueba si SportScore localiza los partidos de fútbol publicados hoy.</p>
+    <p id="updated">Sin ejecutar</p>
+  </section>
+  <div class="notice">Esta página es solo de diagnóstico. No modifica la cartelera ni la página de resultados.</div>
+  <section class="summary">
+    <div class="stat"><strong id="offeredCount">0</strong><span>Partidos de fútbol</span></div>
+    <div class="stat"><strong id="foundCount">0</strong><span>Localizados</span></div>
+    <div class="stat"><strong id="finishedCount">0</strong><span>Con marcador detectado</span></div>
+  </section>
+  <div id="content"><div class="loading">Pulsa “PROBAR SPORTScore”.</div></div>
+  <div class="apiBox" id="apiInfo">Se probarán el feed reciente y búsquedas directas por partido/equipo. No requiere API key.</div>
+  <div class="foot">Prueba basada en la API gratuita de <a href="https://sportscore.com/" rel="dofollow" target="_blank">SportScore</a>.</div>
+</main>
+<script src="config.js"></script>
+<script>
+(function(){
+const cfg=window.M17_CONFIG||{};
+const BIN_ID=cfg.cartBinId||'';
+const BIN_KEY=cfg.cartKey||'';
+const $=s=>document.querySelector(s);
+const SRC='m17liv3-test';
+function norm(v){return String(v||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\b(fc|cf|afc|sc|ac|cd|ud|ue|sd|rc|club|deportivo|deportes|futbol|football|soccer|women|femenino|femenina)\b/g,' ').replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim()}
+function slug(v,dropConnectors=false){let s=norm(v);if(dropConnectors)s=s.replace(/\b(de|del|la|el|los|las)\b/g,' ').replace(/\s+/g,' ').trim();return s.replace(/\s+/g,'-')}
+function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function sportMap(s){const t=String(s||'').toLowerCase();return /foot|soccer|futbol|fútbol/.test(t)?'Football':'Other'}
+function cleanParticipant(v){let s=String(v||'').replace(/\s+(?:📺|🗂)\s*(?:CANAL|CARPETA)?\s*:?.*$/i,'').replace(/\s+[|·]\s+.*$/,'').trim();const flags=[...s.matchAll(/[\u{1F1E6}-\u{1F1FF}]{2}\s*/gu)];if(flags.length){const m=flags[flags.length-1];s=s.slice((m.index||0)+m[0].length).trim()}return s.replace(/^[^\p{L}\p{N}]+/u,'').trim()}
+function parseText(text){let current='Other',out=[];for(const raw of String(text||'').split(/\r?\n/)){let line=raw.replace(/\u00a0/g,' ').replace(/\s+/g,' ').trim();if(!line)continue;if(!/^⏰/.test(line)&&!/^\d{1,2}[:.]\d{2}/.test(line)){if(/futbol|fútbol|football|soccer/i.test(line))current='Football';else if(/tenis|tennis|basket|golf|cicl|moto|padel|pádel|nataci/i.test(line))current='Other';continue}const tm=(line.match(/(?:^|⏰\s*)([0-2]?\d[:.][0-5]\d)/)||[])[1]||'';let title=line.replace(/^\s*⏰\s*[0-2]?\d[:.][0-5]\d\s*[-–—|·:]?\s*/,'').replace(/^\s*[0-2]?\d[:.][0-5]\d\s*[-–—|·:]?\s*/,'').trim();const sep=title.match(/\s*(?:🆚|\bvs\.?\b|\bv\.?\b|\bcontra\b)\s*/i);if(!sep)continue;let left=title.slice(0,sep.index).trim(),right=title.slice(sep.index+sep[0].length).trim();if(left.includes(':'))left=left.split(':').pop().trim();const home=cleanParticipant(left),away=cleanParticipant(right);if(home&&away)out.push({sport:current,type:'match',home,away,time:tm.replace('.',':'),sourceLine:line})}return out}
+async function loadPublished(){
+  if(!BIN_ID||!BIN_KEY)throw new Error('Falta la configuración de JSONBin en config.js');
+  const r=await fetch(`https://api.jsonbin.io/v3/b/${encodeURIComponent(BIN_ID)}/latest?_=${Date.now()}`,{cache:'no-store',headers:{'X-Master-Key':BIN_KEY,'X-Access-Key':BIN_KEY}});
+  if(!r.ok)throw new Error('No se pudo leer la cartelera publicada');
+  const j=await r.json(),rec=j.record||{};
+  const snap=Array.isArray(rec.resultados_eventos)&&rec.resultados_eventos.length?rec.resultados_eventos:(Array.isArray(rec.eventos_datos)?rec.eventos_datos:[]);
+  const txt=typeof rec.resultados_texto==='string'&&rec.resultados_texto.trim()?rec.resultados_texto:(rec.texto||'');
+
+  // V44: para la prueba NO confiamos solo en el snapshot estructurado.
+  // Reconstruimos desde el texto publicado, que conserva los encabezados de deporte.
+  const parsed=parseText(txt);
+  const combined=[...parsed,...snap];
+  const seen=new Set();
+  const cleaned=[];
+  for(const raw of combined){
+    if(!raw||typeof raw!=='object')continue;
+    const x={...raw};
+    x.home=cleanParticipant(x.home);
+    x.away=cleanParticipant(x.away);
+    if((!x.home||!x.away)&&x.sourceLine){
+      const p=parseText(x.sourceLine);
+      if(p[0]){x.home=cleanParticipant(p[0].home);x.away=cleanParticipant(p[0].away);x.type=p[0].type||x.type;x.sport=p[0].sport||x.sport;}
+    }
+    const key=[norm(x.home),norm(x.away),x.time||''].join('|');
+    if(!x.home||!x.away||seen.has(key))continue;
+    seen.add(key);cleaned.push(x);
+  }
+
+  let football=cleaned.filter(x=>x.type==='match'&&sportMap(x.sport)==='Football');
+
+  // Respaldo: si una versión previa guardó el deporte como Unknown, usamos el
+  // contexto del texto publicado para recuperar los enfrentamientos de fútbol.
+  if(!football.length){
+    football=parsed.filter(x=>x.type==='match'&&sportMap(x.sport)==='Football');
+  }
+
+  window.__V44_PARSE_DIAG={textLength:txt.length,
+    snapshot:snap.length,
+    parsed:parsed.length,
+    parsedMatches:parsed.filter(x=>x.type==='match').length,
+    parsedFootball:parsed.filter(x=>x.type==='match'&&sportMap(x.sport)==='Football').length,
+    football:football.length
+  };
+  return football;
+}
+async function getJson(url){const r=await fetch(url,{cache:'no-store'});let data=null,text='';try{text=await r.text();data=JSON.parse(text)}catch{data={raw:text}}return {ok:r.ok,status:r.status,data,url}}
+function jsonNorm(data){return norm(JSON.stringify(data||{}))}
+function hasTeams(data,a,b){const s=jsonNorm(data),A=norm(a),B=norm(b);const toksA=A.split(' ').filter(x=>x.length>=3),toksB=B.split(' ').filter(x=>x.length>=3);const hitA=toksA.some(x=>s.includes(x)),hitB=toksB.some(x=>s.includes(x));return hitA&&hitB}
+function findScore(obj){let best=null;function walk(x,depth=0){if(!x||depth>7||best)return;if(Array.isArray(x)){for(const y of x)walk(y,depth+1);return}if(typeof x!=='object')return;const keys=Object.keys(x);const pairs=[['home_score','away_score'],['score_home','score_away'],['homeScore','awayScore'],['home_score_display','away_score_display']];for(const [hk,ak] of pairs){if(hk in x&&ak in x){const h=x[hk],a=x[ak];if((typeof h==='number'||/^\d+$/.test(String(h)))&&(typeof a==='number'||/^\d+$/.test(String(a)))){best={home:h,away:a};return}}}if(typeof x.score==='string'&&/^\s*\d+\s*[-:]\s*\d+\s*$/.test(x.score)){const m=x.score.match(/(\d+)\s*[-:]\s*(\d+)/);best={home:m[1],away:m[2]};return}for(const k of keys)walk(x[k],depth+1)}walk(obj);return best}
+function findStatus(obj){let out='';function walk(x,d=0){if(!x||d>6||out)return;if(Array.isArray(x)){for(const y of x)walk(y,d+1);return}if(typeof x!=='object')return;for(const k of Object.keys(x)){if(/^(status|state|match_status|status_text)$/i.test(k)&&typeof x[k]==='string'){out=x[k];return}}for(const k of Object.keys(x))walk(x[k],d+1)}walk(obj);return out}
+function variants(team){const set=new Set([slug(team,false),slug(team,true)]);const n=norm(team);if(n.includes('atletico madrid'))set.add('atletico-madrid');if(n.includes('manchester city'))set.add('manchester-city');if(n.includes('manchester united'))set.add('manchester-united');return [...set].filter(Boolean)}
+async function probeMatch(ev,recent){if(recent&&hasTeams(recent,ev.home,ev.away)){return {kind:'recent',response:recent,score:findScore(recent),status:findStatus(recent),url:'feed reciente'}}
+ const A=variants(ev.home),B=variants(ev.away);const slugs=[];for(const a of A)for(const b of B){slugs.push(`${a}-vs-${b}`,`${b}-vs-${a}`)}
+ let last=null;for(const ms of [...new Set(slugs)].slice(0,12)){const u=`https://sportscore.com/api/widget/match/?sport=football&slug=${encodeURIComponent(ms)}&src=${SRC}`;const r=await getJson(u);last=r;if(r.ok&&hasTeams(r.data,ev.home,ev.away))return {kind:'match',response:r.data,score:findScore(r.data),status:findStatus(r.data),url:u,http:r.status}}
+ // Team schedule fallback: try both sides and look for the opponent in returned JSON.
+ for(const t of [...A,...B].slice(0,6)){const u=`https://sportscore.com/api/widget/team/?sport=football&slug=${encodeURIComponent(t)}&limit=20&src=${SRC}`;const r=await getJson(u);last=r;if(r.ok&&hasTeams(r.data,ev.home,ev.away))return {kind:'team',response:r.data,score:findScore(r.data),status:findStatus(r.data),url:u,http:r.status}}
+ return {kind:'none',response:last?.data||null,score:null,status:'',url:last?.url||'',http:last?.status||0}}
+function card(ev,res){const found=res.kind!=='none';const sc=res.score;const cls=found?(sc?'ok':'maybe'):'no';const label=found?(sc?'LOCALIZADO + MARCADOR':'LOCALIZADO, REVISAR DATOS'):'NO LOCALIZADO';return `<article class="card ${cls}"><div class="teams">${esc(ev.home)} 🆚 ${esc(ev.away)}</div><div class="meta">${esc(ev.time||'')} · ${esc(res.kind==='recent'?'feed reciente':res.kind==='match'?'búsqueda directa':res.kind==='team'?'calendario de equipo':'sin coincidencia')}</div><span class="state ${cls}">${label}</span>${sc?`<div class="score">${esc(sc.home)} – ${esc(sc.away)}</div>`:''}${res.status?`<div class="small">Estado detectado: <strong>${esc(res.status)}</strong></div>`:''}<div class="small">HTTP: ${esc(res.http||200)}${res.url?` · ${esc(res.url.replace('https://sportscore.com',''))}`:''}</div>${res.response?`<details><summary class="small" style="cursor:pointer;margin-top:9px">Ver respuesta recibida</summary><div class="raw">${esc(JSON.stringify(res.response,null,2).slice(0,7000))}</div></details>`:''}</article>`}
+async function run(){const btn=$('#runBtn');btn.disabled=true;btn.textContent='CONSULTANDO…';$('#content').innerHTML='<div class="loading">Leyendo tu cartelera y consultando SportScore…</div>';try{const events=await loadPublished();$('#offeredCount').textContent=events.length;if(!events.length){const d=window.__V44_PARSE_DIAG||{};$('#content').innerHTML='<div class="empty">No he encontrado partidos de fútbol. Diagnóstico: texto '+(d.textLength??'?')+' caracteres · snapshot '+(d.snapshot??'?')+' · parseados '+(d.parsed??'?')+' · enfrentamientos '+(d.parsedMatches??'?')+' · fútbol '+(d.parsedFootball??'?')+'.</div>';return}
+ let recent=null,recentStatus='';try{const rr=await getJson(`https://sportscore.com/api/widget/matches/?sport=football&limit=50&src=${SRC}`);recent=rr.data;recentStatus=`Feed general: HTTP ${rr.status}`;}catch(e){recentStatus='Feed general: error de red';}
+ const rows=[];let found=0,scored=0;for(let i=0;i<events.length;i++){btn.textContent=`PROBANDO ${i+1}/${events.length}…`;const r=await probeMatch(events[i],recent);if(r.kind!=='none')found++;if(r.score)scored++;rows.push(card(events[i],r));}
+ $('#foundCount').textContent=found;$('#finishedCount').textContent=scored;$('#content').innerHTML=`<div class="events">${rows.join('')}</div>`;const d=window.__V44_PARSE_DIAG||{};$('#apiInfo').textContent=`${recentStatus} · Se han probado ${events.length} partidos publicados. Parseo: texto ${d.textLength??'?'} caracteres · snapshot ${d.snapshot??'?'} · parser ${d.parsed??'?'} eventos · ${d.parsedFootball??'?'} partidos de fútbol.`;$('#updated').textContent='Prueba actualizada '+new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+ }catch(e){$('#content').innerHTML=`<div class="error">${esc(e?.message||e)}</div>`}finally{btn.disabled=false;btn.textContent='↻ REPETIR PRUEBA'}}
+$('#runBtn').addEventListener('click',run);
+})();
+</script>
+</body>
+</html>
