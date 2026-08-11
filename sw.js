@@ -1,7 +1,7 @@
-const CACHE_NAME = 'm17liv51-sportscore-fallback-20260809';
+const CACHE_NAME = 'm17liv52-finanzas-simple-20260811';
 const ASSETS = [
   './','./index.html','./cliente.html','./cartelera.html','./resultados.html','./config.js','./manifest.webmanifest',
-  './styles.m17liv3-neon-pro-v20-20260802.css','./script.m17liv3-eventos-auto-v26-20260807.js',
+  './styles.m17liv3-neon-pro-v20-20260802.css','./script.m17liv3-finanzas-simple-v27-20260811.js',
   './assets/logo.png','./assets/icons/icon-192.png','./assets/icons/icon-512.png'
 ];
 self.addEventListener('install', event => { event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)).then(()=>self.skipWaiting())); });
