@@ -69,9 +69,13 @@
     const cfg=window.M17_CONFIG||{};
     const endpoint='https://api.jsonbin.io/v3/b/'+encodeURIComponent(cfg.cartBinId||'');
     const sportNames={
-      'BALONCESTO':'Baloncesto','CICLISMO':'Ciclismo','FÚTBOL INTERNACIONAL':'Fútbol internacional','FUTBOL INTERNACIONAL':'Fútbol internacional','FÚTBOL':'Fútbol','FUTBOL':'Fútbol','GOLF':'Golf','HÍPICA':'Hípica','HIPICA':'Hípica','MOTOCICLISMO':'Motociclismo','MOTOR':'Motor','PÁDEL':'Pádel','PADEL':'Pádel','SNOOKER':'Snooker','TENIS':'Tenis','NATACIÓN':'Natación','NATACION':'Natación'
+      'BALONCESTO':'Baloncesto','CICLISMO':'Ciclismo','ATLETISMO':'Atletismo',
+      'FÚTBOL INTERNACIONAL':'Fútbol internacional','FUTBOL INTERNACIONAL':'Fútbol internacional','FÚTBOL':'Fútbol','FUTBOL':'Fútbol',
+      'GOLF':'Golf','HÍPICA':'Hípica','HIPICA':'Hípica','MOTOCICLISMO':'Motociclismo','MOTOR':'Motor',
+      'PÁDEL':'Pádel','PADEL':'Pádel','SNOOKER':'Snooker','TENIS':'Tenis','NATACIÓN':'Natación','NATACION':'Natación',
+      'BALONMANO':'Balonmano','VOLEIBOL':'Voleibol','RUGBY':'Rugby','HOCKEY':'Hockey','FÚTBOL AMERICANO':'Fútbol americano','FUTBOL AMERICANO':'Fútbol americano'
     };
-    const sportIcons={'Baloncesto':'🏀','Ciclismo':'🚴','Fútbol internacional':'⚽','Fútbol':'⚽','Golf':'⛳','Hípica':'🏇','Motociclismo':'🏍','Motor':'🏎','Pádel':'🎾','Snooker':'🎱','Tenis':'🎾','Natación':'🏊','Otros':'◆'};
+    const sportIcons={'Baloncesto':'🏀','Ciclismo':'🚴','Atletismo':'🏃','Fútbol internacional':'⚽','Fútbol':'⚽','Golf':'⛳','Hípica':'🏇','Motociclismo':'🏍','Motor':'🏎','Pádel':'🎾','Snooker':'🎱','Tenis':'🎾','Natación':'🏊','Balonmano':'🤾','Voleibol':'🏐','Rugby':'🏉','Hockey':'🏒','Fútbol americano':'🏈','Otros':'◆'};
     function headers(){return {'X-Master-Key':cfg.cartKey||'','X-Access-Key':cfg.cartKey||''}}
     function todayKey(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
     async function incrementVisit(record){
@@ -88,10 +92,18 @@
     function cleanSep(s){return String(s||'').replace(/^[\s·:\-–—]+|[\s·:\-–—]+$/g,'').trim()}
     function stripFlags(s){return String(s||'').replace(/[\u{1F1E6}-\u{1F1FF}]{2}/gu,'').replace(/[\u{1F3F4}\u{E0000}-\u{E007F}]+/gu,'').replace(/�+/g,'').trim()}
     function sectionName(line){
-      let s=String(line||'').replace(/[─━═]/g,'').trim();
-      if(!s || /^⏰/.test(s) || /^📺|^🗂/.test(s)) return null;
-      s=s.replace(/^[^\p{L}]+|[^\p{L}]+$/gu,'').trim().toUpperCase();
-      return sportNames[s]||null;
+      let s=String(line||'').replace(/[─━═…·.]/g,'').trim();
+      if(!s || /^⏰/.test(s) || /^(📺|🗂)/.test(s)) return null;
+      s=s.replace(/^[^\p{L}]+|[^\p{L})]+$/gu,'').trim().toUpperCase();
+      // Permite encabezados con aclaraciones, por ejemplo: “🏊 NATACIÓN (EUROPEO)”.
+      const base=s.replace(/\s*\([^)]*\)\s*$/u,'').trim();
+      if(sportNames[base]) return sportNames[base];
+      // También tolera encabezados del tipo “ATLETISMO - EUROPEO” o “NATACIÓN · EUROPEO”.
+      const keys=Object.keys(sportNames).sort((a,b)=>b.length-a.length);
+      for(const key of keys){
+        if(base===key || base.startsWith(key+' ') || base.startsWith(key+' - ') || base.startsWith(key+' · ')) return sportNames[key];
+      }
+      return null;
     }
     function parse(text){
       const lines=String(text||'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
