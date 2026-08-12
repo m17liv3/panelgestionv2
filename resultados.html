@@ -47,7 +47,7 @@
  const cfg=window.M17_CONFIG||{};
  const BIN_ID=cfg.cartBinId||'';
  const BIN_KEY=cfg.cartKey||'';
- // Fuentes automáticas activas en V51. Fútbol usa football-data.org y respaldo SportScore con validación estricta. El resto se omite para evitar resultados incorrectos.
+ // Fuentes automáticas activas. Tenis con gate horario + cierre automático local. Fútbol usa football-data.org y respaldo SportScore con validación estricta.
  const SUPPORTED=new Set(['Football','Tennis']);
  const ICONS={Football:'⚽',Tennis:'🎾',Basketball:'🏀',Baseball:'⚾',Hockey:'🏒',Handball:'🤾',Volleyball:'🏐',NFL:'🏈',Rugby:'🏉',Padel:'🎾',Cycling:'🚴',Golf:'⛳',Motorsport:'🏍️',Swimming:'🏊',Unknown:'•'};
  let matches=[],offered=[];
@@ -55,6 +55,14 @@
  const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
  function localDate(offsetDays=0){const d=new Date();d.setDate(d.getDate()+offsetDays);const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`}
  function isEarlyTime(t){const m=String(t||'').match(/^(\d{1,2}):(\d{2})$/);if(!m)return false;const mins=Number(m[1])*60+Number(m[2]);return mins<180}
+ function timeMins(t){const m=String(t||'').match(/^(\d{1,2}):(\d{2})$/);return m?Number(m[1])*60+Number(m[2]):null}
+ function madridNow(){const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Madrid',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(new Date());const get=t=>parts.find(p=>p.type===t)?.value||'';const hour=Number(get('hour'))%24,minute=Number(get('minute'));return {date:`${get('year')}-${get('month')}-${get('day')}`,mins:hour*60+minute}}
+ function tennisMatchesForGate(list){return (list||[]).filter(o=>sportMap(o.sport)==='Tennis'&&o.type==='match'&&o.home&&o.away&&timeMins(o.time)!=null)}
+ function tennisSignature(list){return tennisMatchesForGate(list).map(o=>`${o.time}|${normalize(o.home)}|${normalize(o.away)}`).sort().join('||')}
+ function tennisDoneKey(list,date){const sig=tennisSignature(list);return sig?`m17liv3_tennis_done_${date}_${sig}`:''}
+ function tennisAlreadyDone(list,date){const key=tennisDoneKey(list,date);if(!key)return false;try{return localStorage.getItem(key)==='1'}catch{return false}}
+ function tennisShouldQuery(list,date){const ms=tennisMatchesForGate(list);if(!ms.length)return false;if(tennisAlreadyDone(list,date))return false;const now=madridNow();if(date>now.date)return false;if(date<now.date)return true;const starts=ms.map(o=>timeMins(o.time)).filter(v=>v!=null);if(!starts.length)return false;const first=Math.min(...starts);return now.mins>=first+30}
+ function markTennisDone(list,found,date){const wanted=tennisMatchesForGate(list);if(!wanted.length)return;const tennisFound=(found||[]).filter(x=>sportMap(x?.api?.sport)==='Tennis');if(tennisFound.length<wanted.length)return;const key=tennisDoneKey(list,date);if(!key)return;try{localStorage.setItem(key,'1')}catch{}}
  function formatDate(){return new Intl.DateTimeFormat('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(new Date()).replace(/^./,c=>c.toUpperCase())}
  function normalize(v){return String(v||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\b(fc|cf|afc|sc|ac|cd|ud|ue|sd|rc|club|deportivo|deportes|futbol|football|soccer|women|woman|femenino|femenina|team)\b/g,' ').replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim()}
  function toks(v){return normalize(v).split(' ').filter(x=>x.length>1)}
@@ -125,8 +133,11 @@
    try{
      const published=await loadPublished();offered=(published.events||[]).map(cleanOfferedEvent);$('#countDay').textContent=offered.length;
      const targetDate=published.date||localDate();
-     const requested=[...new Set(offered.map(o=>sportMap(o.sport)).filter(s=>SUPPORTED.has(s)))];
-     const earlySports=[...new Set(offered.filter(o=>o.type==='match'&&isEarlyTime(o.time)).map(o=>sportMap(o.sport)).filter(s=>SUPPORTED.has(s)))];
+     const tennisReady=tennisShouldQuery(offered,targetDate);
+     const requested=[...new Set(offered.map(o=>sportMap(o.sport)).filter(s=>SUPPORTED.has(s)&&!(s==='Tennis'&&!tennisReady)))];
+     /* Con offset Madrid en TheRundown ya no necesitamos duplicar tenis contra el día anterior.
+        El fallback de madrugada se conserva solo para otros proveedores/deportes. */
+     const earlySports=[...new Set(offered.filter(o=>o.type==='match'&&isEarlyTime(o.time)).map(o=>sportMap(o.sport)).filter(s=>SUPPORTED.has(s)&&s!=='Tennis'))];
      let apiEvents=[];
      if(requested.length) apiEvents.push(...await fetchResults(targetDate,requested,force));
      if(earlySports.length){await new Promise(resolve=>setTimeout(resolve,1600));apiEvents.push(...await fetchResults(localDate(-1),earlySports,force))}
@@ -136,6 +147,7 @@
         Solo se incorporan resultados con fecha/hora exactas y estado finalizado. */
      const ssEvents=await sportScoreFallback(result.missing,targetDate);
      if(ssEvents.length){apiEvents=dedupeEvents([...apiEvents,...ssEvents]);result=matchEvents(offered,apiEvents)}
+     markTennisDone(offered,result.found,targetDate);
      matches=result.found;
      $('#updatedText').textContent='Actualizado '+new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});render();
    }catch(err){matches=[];$('#countFinal').textContent='0';$('#countDay').textContent=offered.length||'—';$('#updatedText').textContent='No se pudo actualizar';$('#content').innerHTML=`<div class="error">${esc(err?.message||'No se pudieron consultar los resultados.')}</div>`}
