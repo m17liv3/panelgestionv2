@@ -47,7 +47,7 @@
  const cfg=window.M17_CONFIG||{};
  const BIN_ID=cfg.cartBinId||'';
  const BIN_KEY=cfg.cartKey||'';
- // Fuentes automáticas activas. Tenis con gate horario + cierre automático local. Fútbol usa football-data.org y respaldo SportScore con validación estricta.
+ // Fuentes automáticas activas. V56: tenis con caché compartida + ventanas por partido. Fútbol usa football-data.org y respaldo SportScore con validación estricta.
  const SUPPORTED=new Set(['Football','Tennis']);
  const ICONS={Football:'⚽',Tennis:'🎾',Basketball:'🏀',Baseball:'⚾',Hockey:'🏒',Handball:'🤾',Volleyball:'🏐',NFL:'🏈',Rugby:'🏉',Padel:'🎾',Cycling:'🚴',Golf:'⛳',Motorsport:'🏍️',Swimming:'🏊',Unknown:'•'};
  let matches=[],offered=[];
@@ -61,9 +61,67 @@
  function tennisSignature(list){return tennisMatchesForGate(list).map(o=>`${o.time}|${normalize(o.home)}|${normalize(o.away)}`).sort().join('||')}
  function tennisDoneKey(list,date){const sig=tennisSignature(list);return sig?`m17liv3_tennis_done_${date}_${sig}`:''}
  function tennisAlreadyDone(list,date){const key=tennisDoneKey(list,date);if(!key)return false;try{return localStorage.getItem(key)==='1'}catch{return false}}
- function tennisGateInfo(list,date){const ms=tennisMatchesForGate(list);if(!ms.length)return {ready:false,done:false,reason:'no_matches'};const done=tennisAlreadyDone(list,date);if(done)return {ready:true,done:true,reason:'done_cached'};const now=madridNow();if(date>now.date)return {ready:false,done:false,reason:'future'};if(date<now.date)return {ready:true,done:false,reason:'past_date'};const starts=ms.map(o=>timeMins(o.time)).filter(v=>v!=null);if(!starts.length)return {ready:false,done:false,reason:'no_time'};const first=Math.min(...starts);return {ready:now.mins>=first+30,done:false,reason:now.mins>=first+30?'after_start':'waiting'} }
- function tennisShouldQuery(list,date){return tennisGateInfo(list,date).ready}
- function markTennisDone(list,found,date){const wanted=tennisMatchesForGate(list);if(!wanted.length)return false;const tennisFound=(found||[]).filter(x=>sportMap(x?.api?.sport)==='Tennis');if(tennisFound.length<wanted.length)return false;const key=tennisDoneKey(list,date);if(!key)return false;try{const was=localStorage.getItem(key)==='1';localStorage.setItem(key,'1');return !was}catch{return false}}
+ function tennisEventKey(o){return `${o.time}|${normalize(o.home)}|${normalize(o.away)}`}
+ function foundTennisKeys(found){const set=new Set();for(const x of (found||[])){if(sportMap(x?.api?.sport)!=='Tennis')continue;const o=x?.offered;if(o?.home&&o?.away)set.add(tennisEventKey(o))}return set}
+ /*
+   V56 · VENTANAS POR PARTIDO
+   Primera comprobación: 45 min después de la hora publicada.
+   Si todavía no está finalizado, la caché persistente limita los
+   reintentos reales de TheRundown a uno cada 30 min.
+
+   Lo importante: si un partido ya está encontrado y el siguiente
+   aún no ha llegado a +45 min, NO se refresca TheRundown.
+ */
+ function tennisRefreshDecision(list,found,date){
+   const wanted=tennisMatchesForGate(list);
+   if(!wanted.length)return {shouldRefresh:false,allResolved:false,reason:'no_matches',unresolved:[]};
+
+   const resolved=foundTennisKeys(found);
+   const unresolved=wanted.filter(o=>!resolved.has(tennisEventKey(o)));
+
+   if(!unresolved.length){
+     return {shouldRefresh:false,allResolved:true,reason:'all_resolved',unresolved:[]};
+   }
+
+   const now=madridNow();
+
+   if(date>now.date){
+     return {shouldRefresh:false,allResolved:false,reason:'future_date',unresolved};
+   }
+
+   if(date<now.date){
+     return {shouldRefresh:true,allResolved:false,reason:'past_date_unresolved',unresolved};
+   }
+
+   const eligible=unresolved.filter(o=>{
+     const start=timeMins(o.time);
+     return start!=null&&now.mins>=start+45;
+   });
+
+   if(!eligible.length){
+     const next=unresolved
+       .map(o=>({event:o,start:timeMins(o.time)}))
+       .filter(x=>x.start!=null)
+       .sort((a,b)=>a.start-b.start)[0];
+
+     return {
+       shouldRefresh:false,
+       allResolved:false,
+       reason:'waiting_for_next_window',
+       unresolved,
+       nextTime:next?.event?.time||''
+     };
+   }
+
+   return {
+     shouldRefresh:true,
+     allResolved:false,
+     reason:'unresolved_in_query_window',
+     unresolved,
+     eligible
+   };
+ }
+ function markTennisDone(list,found,date){const wanted=tennisMatchesForGate(list);if(!wanted.length)return false;const resolved=foundTennisKeys(found);if(resolved.size<wanted.length)return false;const key=tennisDoneKey(list,date);if(!key)return false;try{const was=localStorage.getItem(key)==='1';localStorage.setItem(key,'1');return !was}catch{return false}}
  function formatDate(){return new Intl.DateTimeFormat('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(new Date()).replace(/^./,c=>c.toUpperCase())}
  function normalize(v){return String(v||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\b(fc|cf|afc|sc|ac|cd|ud|ue|sd|rc|club|deportivo|deportes|futbol|football|soccer|women|woman|femenino|femenina|team)\b/g,' ').replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim()}
  function toks(v){return normalize(v).split(' ').filter(x=>x.length>1)}
@@ -97,6 +155,7 @@
    const params=new URLSearchParams({date,sports:sports.join(',')});
    if(force)params.set('force','1');
    if(options.tennisDone)params.set('tennis_done','1');
+   if(options.tennisCacheOnly)params.set('tennis_cache_only','1');
    const apiResponse=await fetch(`${API_PROXY}?${params.toString()}`,{cache:'no-store'});
    const j=await apiResponse.json();
    if(!apiResponse.ok||j.error)throw new Error(j.error||`Respuesta ${apiResponse.status}`);
@@ -136,23 +195,127 @@
    try{
      const published=await loadPublished();offered=(published.events||[]).map(cleanOfferedEvent);$('#countDay').textContent=offered.length;
      const targetDate=published.date||localDate();
-     const tennisGate=tennisGateInfo(offered,targetDate);
-     const tennisReady=tennisGate.ready;
-     const requested=[...new Set(offered.map(o=>sportMap(o.sport)).filter(s=>SUPPORTED.has(s)&&!(s==='Tennis'&&!tennisReady)))];
-     /* Con offset Madrid en TheRundown ya no necesitamos duplicar tenis contra el día anterior.
-        El fallback de madrugada se conserva solo para otros proveedores/deportes. */
-     const earlySports=[...new Set(offered.filter(o=>o.type==='match'&&isEarlyTime(o.time)).map(o=>sportMap(o.sport)).filter(s=>SUPPORTED.has(s)&&s!=='Tennis'))];
+
+     /*
+       V56:
+       1) Fútbol se consulta como siempre.
+       2) Tenis primero se lee SOLO desde la caché persistente.
+       3) Se cruza esa caché con los partidos publicados.
+       4) Solo si queda un partido sin resultado y ya han pasado
+          45 min desde SU propia hora, permitimos refrescar TheRundown.
+       5) Entre un partido resuelto y el siguiente: 0 llamadas reales.
+     */
+     const offeredSports=[...new Set(offered.map(o=>sportMap(o.sport)).filter(s=>SUPPORTED.has(s)))];
+     const nonTennisSports=offeredSports.filter(s=>s!=='Tennis');
+     const hasTennis=tennisMatchesForGate(offered).length>0;
+
+     /* Madrugada: se mantiene solo para proveedores no-tenis. */
+     const earlySports=[...new Set(
+       offered
+         .filter(o=>o.type==='match'&&isEarlyTime(o.time))
+         .map(o=>sportMap(o.sport))
+         .filter(s=>SUPPORTED.has(s)&&s!=='Tennis')
+     )];
+
      let apiEvents=[];
-     if(requested.length) apiEvents.push(...await fetchResults(targetDate,requested,force,{tennisDone:tennisGate.done}));
-     if(earlySports.length){await new Promise(resolve=>setTimeout(resolve,1600));apiEvents.push(...await fetchResults(localDate(-1),earlySports,force))}
+
+     if(nonTennisSports.length){
+       apiEvents.push(...await fetchResults(targetDate,nonTennisSports,force));
+     }
+
+     if(earlySports.length){
+       await new Promise(resolve=>setTimeout(resolve,1600));
+       apiEvents.push(...await fetchResults(localDate(-1),earlySports,force));
+     }
+
+     /*
+       Leer tenis sin gastar API.
+       Aunque la caché tenga más de 30 min, resultados-dia la entrega
+       en modo cache-only para que podamos decidir si hace falta refrescar.
+     */
+     let tennisApiEvents=[];
+     if(hasTennis){
+       tennisApiEvents=await fetchResults(
+         targetDate,
+         ['Tennis'],
+         false,
+         {tennisCacheOnly:true}
+       );
+       apiEvents.push(...tennisApiEvents);
+     }
+
      apiEvents=dedupeEvents(apiEvents);
+
+     /*
+       Primer cruce: nos dice qué partidos de la cartelera ya están
+       resueltos con la caché que tenemos.
+     */
      let result=matchEvents(offered,apiEvents);
-     /* V51: si football-data.org no cubre un partido, se intenta SportScore.
-        Solo se incorporan resultados con fecha/hora exactas y estado finalizado. */
+
+     if(hasTennis){
+       const decision=tennisRefreshDecision(
+         offered,
+         result.found,
+         targetDate
+       );
+
+       /*
+         Solo aquí se permite una actualización real de TheRundown.
+         La Edge Function seguirá aplicando la caché compartida de 30 min,
+         así que 50 clientes no generan 50 consultas.
+       */
+       if(decision.shouldRefresh){
+         const refreshedTennis=await fetchResults(
+           targetDate,
+           ['Tennis'],
+           false,
+           {tennisDone:false}
+         );
+
+         /*
+           Sustituimos los datos de tenis anteriores por los recién
+           obtenidos para que una caché antigua no gane en dedupe.
+         */
+         apiEvents=apiEvents.filter(e=>sportMap(e?.sport)!=='Tennis');
+         apiEvents.push(...refreshedTennis);
+         apiEvents=dedupeEvents(apiEvents);
+         result=matchEvents(offered,apiEvents);
+       }
+     }
+
+     /* V51: fallback estricto SportScore solo para fútbol. */
      const ssEvents=await sportScoreFallback(result.missing,targetDate);
-     if(ssEvents.length){apiEvents=dedupeEvents([...apiEvents,...ssEvents]);result=matchEvents(offered,apiEvents)}
-     const tennisJustCompleted=markTennisDone(offered,result.found,targetDate);
-     if(tennisJustCompleted){fetchResults(targetDate,['Tennis'],false,{tennisDone:true}).catch(()=>{})}
+     if(ssEvents.length){
+       apiEvents=dedupeEvents([...apiEvents,...ssEvents]);
+       result=matchEvents(offered,apiEvents);
+     }
+
+     /*
+       Cuando todos los partidos reales de tenis publicados están
+       encontrados, congelamos la caché compartida para ese día.
+       Esta llamada NO vuelve a TheRundown.
+     */
+     const tennisJustCompleted=markTennisDone(
+       offered,
+       result.found,
+       targetDate
+     );
+
+     const tennisDecisionAfter=tennisRefreshDecision(
+       offered,
+       result.found,
+       targetDate
+     );
+
+     if(hasTennis&&(tennisJustCompleted||tennisDecisionAfter.allResolved)){
+       fetchResults(
+         targetDate,
+         ['Tennis'],
+         false,
+         {tennisDone:true,tennisCacheOnly:true}
+       ).catch(()=>{});
+     }
+
      matches=result.found;
      $('#updatedText').textContent='Actualizado '+new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});render();
    }catch(err){matches=[];$('#countFinal').textContent='0';$('#countDay').textContent=offered.length||'—';$('#updatedText').textContent='No se pudo actualizar';$('#content').innerHTML=`<div class="error">${esc(err?.message||'No se pudieron consultar los resultados.')}</div>`}
