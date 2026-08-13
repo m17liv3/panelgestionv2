@@ -61,7 +61,37 @@
  function tennisSignature(list){return tennisMatchesForGate(list).map(o=>`${o.time}|${normalize(o.home)}|${normalize(o.away)}`).sort().join('||')}
  function tennisDoneKey(list,date){const sig=tennisSignature(list);return sig?`m17liv3_tennis_done_${date}_${sig}`:''}
  function tennisAlreadyDone(list,date){const key=tennisDoneKey(list,date);if(!key)return false;try{return localStorage.getItem(key)==='1'}catch{return false}}
- function tennisShouldQuery(list,date){const ms=tennisMatchesForGate(list);if(!ms.length)return false;if(tennisAlreadyDone(list,date))return false;const now=madridNow();if(date>now.date)return false;if(date<now.date)return true;const starts=ms.map(o=>timeMins(o.time)).filter(v=>v!=null);if(!starts.length)return false;const first=Math.min(...starts);return now.mins>=first+30}
+ function tennisGateInfo(list,date){
+   const ms=tennisMatchesForGate(list);
+   const firstEvent=ms.slice().sort((a,b)=>(timeMins(a.time)??9999)-(timeMins(b.time)??9999))[0]||null;
+   if(!ms.length)return {ready:false,reason:'no_real_tennis_matches',firstTime:'',firstEvent:''};
+   if(tennisAlreadyDone(list,date))return {ready:false,reason:'all_tennis_done_local',firstTime:firstEvent?.time||'',firstEvent:firstEvent?`${firstEvent.home} vs ${firstEvent.away}`:''};
+   const now=madridNow();
+   if(date>now.date)return {ready:false,reason:'future_date',firstTime:firstEvent?.time||'',firstEvent:firstEvent?`${firstEvent.home} vs ${firstEvent.away}`:''};
+   if(date<now.date)return {ready:true,reason:'past_date',firstTime:firstEvent?.time||'',firstEvent:firstEvent?`${firstEvent.home} vs ${firstEvent.away}`:''};
+   const starts=ms.map(o=>timeMins(o.time)).filter(v=>v!=null);
+   if(!starts.length)return {ready:false,reason:'no_valid_tennis_time',firstTime:'',firstEvent:''};
+   const first=Math.min(...starts);
+   const ready=now.mins>=first+30;
+   return {
+     ready,
+     reason:ready?'ready_after_30m':'waiting_30m_after_first_start',
+     firstTime:firstEvent?.time||'',
+     firstEvent:firstEvent?`${firstEvent.home} vs ${firstEvent.away}`:''
+   };
+ }
+ function tennisShouldQuery(list,date){return tennisGateInfo(list,date).ready}
+ function diagClientId(){
+   const key='m17liv3_diag_client_id';
+   try{
+     let v=localStorage.getItem(key);
+     if(!v){
+       v=(crypto?.randomUUID?crypto.randomUUID():`c-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+       localStorage.setItem(key,v);
+     }
+     return v;
+   }catch{return 'browser-unknown'}
+ }
  function markTennisDone(list,found,date){const wanted=tennisMatchesForGate(list);if(!wanted.length)return;const tennisFound=(found||[]).filter(x=>sportMap(x?.api?.sport)==='Tennis');if(tennisFound.length<wanted.length)return;const key=tennisDoneKey(list,date);if(!key)return;try{localStorage.setItem(key,'1')}catch{}}
  function formatDate(){return new Intl.DateTimeFormat('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(new Date()).replace(/^./,c=>c.toUpperCase())}
  function normalize(v){return String(v||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\b(fc|cf|afc|sc|ac|cd|ud|ue|sd|rc|club|deportivo|deportes|futbol|football|soccer|women|woman|femenino|femenina|team)\b/g,' ').replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim()}
@@ -91,10 +121,21 @@
  function competitionText(e){if(sportMap(e.sport)==='Tennis')return [e.league,e.tournament,e.round].filter(Boolean).join(' · ');return [e.competition,e.competition_code].filter(Boolean).join(' · ')}
  function eventHtml(x){const e=x.api,o=x.offered,[s1,s2]=displayScores(x),isTennis=sportMap(e.sport)==='Tennis',sets=isTennis?setsText(x):'';const retired=e.status==='STATUS_RETIRED';return `<article class="event" tabindex="0"><div class="meta"><span class="competition">${esc(competitionText(e))}</span><span class="status">${retired?'Retirado':'Finalizado'}</span></div><div class="row"><div class="teamWrap"><div class="team">${esc(o.home)}</div></div><div class="score">${esc(s1??'—')}</div><div class="teamWrap"><div class="team">${esc(o.away)}</div></div><div class="score">${esc(s2??'—')}</div></div>${sets?`<div style="margin-top:10px;color:#9bb1c5;font-size:.82rem">Sets: <b style="color:#dff8ff">${esc(sets)}</b></div>`:''}</article>`}
  function render(){$('#countFinal').textContent=matches.length;if(!matches.length){$('#content').innerHTML='<div class="empty"><b style="color:#dff8ff">Todavía no hay resultados finalizados disponibles.</b><br><span style="display:inline-block;margin-top:8px">Vuelve a consultar en unos minutos.</span></div>';return}const sports={};for(const x of matches){const s=sportMap(x.api.sport);(sports[s]||(sports[s]=[])).push(x)}$('#content').innerHTML=Object.entries(sports).map(([sport,arr])=>{const label=sport==='Football'?'Fútbol':sport==='Tennis'?'Tenis':sport;return `<section class="sportSection"><div class="sportHeader"><span class="sportIcon">${ICONS[sport]||'•'}</span><h2>${esc(label)}</h2><small>${arr.length} ${arr.length===1?'resultado':'resultados'}</small></div><div class="events">${arr.map(eventHtml).join('')}</div></section>`}).join('')}
- async function fetchResults(date,sports,force=false){
+ async function fetchResults(date,sports,force=false,diag={}){
    if(!sports.length)return [];
-   const forcePart=force?'&force=1':'';
-   const apiResponse=await fetch(`${API_PROXY}?date=${date}&sports=${encodeURIComponent(sports.join(','))}${forcePart}`,{cache:'no-store'});
+   const params=new URLSearchParams({
+     date,
+     sports:sports.join(','),
+     client_id:diagClientId(),
+     page_version:'resultados-v54-diagnostico'
+   });
+   if(force)params.set('force','1');
+   if(sports.includes('Tennis')){
+     params.set('gate_reason',diag.reason||'tennis_requested');
+     if(diag.firstTime)params.set('trigger_time',diag.firstTime);
+     if(diag.firstEvent)params.set('trigger_event',diag.firstEvent);
+   }
+   const apiResponse=await fetch(`${API_PROXY}?${params.toString()}`,{cache:'no-store'});
    const j=await apiResponse.json();
    if(!apiResponse.ok||j.error)throw new Error(j.error||`Respuesta ${apiResponse.status}`);
    return Array.isArray(j.events)?j.events:[];
@@ -133,13 +174,14 @@
    try{
      const published=await loadPublished();offered=(published.events||[]).map(cleanOfferedEvent);$('#countDay').textContent=offered.length;
      const targetDate=published.date||localDate();
-     const tennisReady=tennisShouldQuery(offered,targetDate);
+     const tennisGate=tennisGateInfo(offered,targetDate);
+     const tennisReady=tennisGate.ready;
      const requested=[...new Set(offered.map(o=>sportMap(o.sport)).filter(s=>SUPPORTED.has(s)&&!(s==='Tennis'&&!tennisReady)))];
      /* Con offset Madrid en TheRundown ya no necesitamos duplicar tenis contra el día anterior.
         El fallback de madrugada se conserva solo para otros proveedores/deportes. */
      const earlySports=[...new Set(offered.filter(o=>o.type==='match'&&isEarlyTime(o.time)).map(o=>sportMap(o.sport)).filter(s=>SUPPORTED.has(s)&&s!=='Tennis'))];
      let apiEvents=[];
-     if(requested.length) apiEvents.push(...await fetchResults(targetDate,requested,force));
+     if(requested.length) apiEvents.push(...await fetchResults(targetDate,requested,force,tennisGate));
      if(earlySports.length){await new Promise(resolve=>setTimeout(resolve,1600));apiEvents.push(...await fetchResults(localDate(-1),earlySports,force))}
      apiEvents=dedupeEvents(apiEvents);
      let result=matchEvents(offered,apiEvents);
