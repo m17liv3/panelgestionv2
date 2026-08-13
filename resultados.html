@@ -42,7 +42,7 @@
 </main>
 <script src="config.js"></script>
 <script>
- // M17LIV3 resultados V56.1 · fix lectura caché persistente
+ // M17LIV3 resultados V56.2 · lectura Supabase client
 (function(){
  const API_PROXY='https://qjbnjhojwhcndcfjcyrc.supabase.co/functions/v1/resultados-dia';
  const cfg=window.M17_CONFIG||{};
@@ -153,7 +153,7 @@
  function render(){$('#countFinal').textContent=matches.length;if(!matches.length){$('#content').innerHTML='<div class="empty"><b style="color:#dff8ff">Todavía no hay resultados finalizados disponibles.</b><br><span style="display:inline-block;margin-top:8px">Vuelve a consultar en unos minutos.</span></div>';return}const sports={};for(const x of matches){const s=sportMap(x.api.sport);(sports[s]||(sports[s]=[])).push(x)}$('#content').innerHTML=Object.entries(sports).map(([sport,arr])=>{const label=sport==='Football'?'Fútbol':sport==='Tennis'?'Tenis':sport;return `<section class="sportSection"><div class="sportHeader"><span class="sportIcon">${ICONS[sport]||'•'}</span><h2>${esc(label)}</h2><small>${arr.length} ${arr.length===1?'resultado':'resultados'}</small></div><div class="events">${arr.map(eventHtml).join('')}</div></section>`}).join('')}
  async function fetchResults(date,sports,force=false,options={}){
    if(!sports.length)return [];
-   const params=new URLSearchParams({date,sports:sports.join(','),v:'56.1'});
+   const params=new URLSearchParams({date,sports:sports.join(','),v:'56.2'});
    if(force)params.set('force','1');
    if(options.tennisDone)params.set('tennis_done','1');
    if(options.tennisCacheOnly)params.set('tennis_cache_only','1');
