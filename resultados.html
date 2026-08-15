@@ -42,7 +42,7 @@
 </main>
 <script src="config.js"></script>
 <script>
- // M17LIV3 resultados V57.3 · prioridad slug real SportScore
+ // M17LIV3 resultados V57.4 · reclasificación snapshot BALONCESTO
 (function(){
  const API_PROXY='https://qjbnjhojwhcndcfjcyrc.supabase.co/functions/v1/resultados-dia';
  const cfg=window.M17_CONFIG||{};
@@ -140,7 +140,90 @@
    const snapStored=Array.isArray(rec.resultados_eventos)?rec.resultados_eventos:(Array.isArray(rec.eventos_datos)?rec.eventos_datos:[]);
    if(snapDate&&snapDate!==localDate())return {events:[],date:snapDate,text:snapText};
    const parsedFromText=parseText(snapText);
-   const list=snapStored.length?snapStored:parsedFromText;
+
+   /*
+     V57.4 · RECLASIFICAR SNAPSHOT ANTIGUO
+
+     resultados_eventos puede haberse guardado con una versión anterior
+     del parser. En ese caso el bloque "BALONCESTO" puede existir en el
+     texto correcto, pero el objeto almacenado conservar sport="Unknown"
+     (o una clasificación vieja).
+
+     El texto publicado es la referencia para deporte/tipo/equipos.
+     Conservamos los demás campos del snapshot estructurado, pero
+     superponemos la clasificación nueva haciendo match por hora + línea/título.
+   */
+   let list;
+
+   if(snapStored.length && parsedFromText.length){
+     const used=new Set();
+
+     list=snapStored.map((stored,index)=>{
+       const st=cleanOfferedEvent(stored);
+
+       let bestIndex=-1;
+       let bestScore=-1;
+
+       for(let i=0;i<parsedFromText.length;i++){
+         if(used.has(i))continue;
+
+         const p=parsedFromText[i];
+         let score=0;
+
+         if(st.time && p.time && st.time===p.time)score+=5;
+
+         const stLine=normalize(st.sourceLine||st.title||'');
+         const pLine=normalize(p.sourceLine||p.title||'');
+
+         if(stLine && pLine){
+           if(stLine===pLine)score+=10;
+           else if(stLine.includes(pLine)||pLine.includes(stLine))score+=7;
+           else score+=sim(stLine,pLine)*4;
+         }
+
+         if(st.home&&p.home)score+=sim(st.home,p.home)*2;
+         if(st.away&&p.away)score+=sim(st.away,p.away)*2;
+
+         if(score>bestScore){
+           bestScore=score;
+           bestIndex=i;
+         }
+       }
+
+       /*
+         Con una coincidencia razonable usamos los datos recién parseados.
+         En caso contrario mantenemos el objeto almacenado.
+       */
+       if(bestIndex>=0 && bestScore>=5){
+         used.add(bestIndex);
+         const p=parsedFromText[bestIndex];
+
+         return {
+           ...stored,
+           sport:p.sport,
+           type:p.type,
+           title:p.title,
+           home:p.home,
+           away:p.away,
+           time:p.time,
+           sourceLine:p.sourceLine
+         };
+       }
+
+       return stored;
+     });
+
+     /*
+       Si el texto contiene algún evento que no estaba en el snapshot
+       estructurado, también lo añadimos.
+     */
+     parsedFromText.forEach((p,i)=>{
+       if(!used.has(i))list.push(p);
+     });
+   }else{
+     list=snapStored.length?snapStored:parsedFromText;
+   }
+
    return {events:list,date:snapDate,text:snapText}}
  function apiId(e){return String(e?.event_id??e?.id??'')}
  function apiSides(e){const sport=sportMap(e?.sport);if(sport==='Tennis')return {a:e.away||'',b:e.home||'',aScore:e.score_away,bScore:e.score_home};return {a:e.home||'',b:e.away||'',aScore:e.score_home,bScore:e.score_away}}
@@ -153,7 +236,7 @@
  function render(){$('#countFinal').textContent=matches.length;if(!matches.length){$('#content').innerHTML='<div class="empty"><b style="color:#dff8ff">Todavía no hay resultados finalizados disponibles.</b><br><span style="display:inline-block;margin-top:8px">Vuelve a consultar en unos minutos.</span></div>';return}const sports={};for(const x of matches){const s=sportMap(x.api.sport);(sports[s]||(sports[s]=[])).push(x)}$('#content').innerHTML=Object.entries(sports).map(([sport,arr])=>{const label=sport==='Football'?'Fútbol':sport==='Tennis'?'Tenis':sport==='Basketball'?'Baloncesto':sport;return `<section class="sportSection"><div class="sportHeader"><span class="sportIcon">${ICONS[sport]||'•'}</span><h2>${esc(label)}</h2><small>${arr.length} ${arr.length===1?'resultado':'resultados'}</small></div><div class="events">${arr.map(eventHtml).join('')}</div></section>`}).join('')}
  async function fetchResults(date,sports,force=false,options={}){
    if(!sports.length)return [];
-   const params=new URLSearchParams({date,sports:sports.join(','),v:'57.3'});
+   const params=new URLSearchParams({date,sports:sports.join(','),v:'57.4'});
    if(force)params.set('force','1');
    if(options.tennisDone)params.set('tennis_done','1');
    if(options.tennisCacheOnly)params.set('tennis_cache_only','1');
