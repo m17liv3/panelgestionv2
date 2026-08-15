@@ -75,6 +75,63 @@
   font-size:.76rem;
   margin-top:5px
 }
+
+.newResultsBanner{
+  display:none;
+  align-items:center;
+  gap:9px;
+  margin-top:9px;
+  padding:8px 12px;
+  width:max-content;
+  max-width:100%;
+  border:1px solid rgba(198,255,54,.28);
+  border-radius:999px;
+  background:rgba(198,255,54,.07);
+  color:#eaffd6;
+  font-size:.78rem;
+  font-weight:850;
+}
+.newResultsBanner.show{display:inline-flex}
+.newResultsBanner .newPulse{
+  width:8px;
+  height:8px;
+  flex:0 0 8px;
+  border-radius:50%;
+  background:var(--green);
+  animation:m17NewPulse 1.15s infinite;
+}
+.event.new-result{
+  border-color:rgba(198,255,54,.55);
+}
+.event.new-result .newBadge{
+  display:inline-flex;
+}
+.newBadge{
+  display:none;
+  position:absolute;
+  right:12px;
+  bottom:10px;
+  align-items:center;
+  padding:4px 8px;
+  border-radius:999px;
+  background:var(--green);
+  color:#102000;
+  font-size:.62rem;
+  line-height:1;
+  font-weight:950;
+  letter-spacing:.07em;
+}
+@keyframes m17NewPulse{
+  0%{box-shadow:0 0 0 0 rgba(198,255,54,.45);transform:scale(.95)}
+  60%{box-shadow:0 0 0 9px rgba(198,255,54,0);transform:scale(1.08)}
+  100%{box-shadow:0 0 0 0 rgba(198,255,54,0);transform:scale(.95)}
+}
+/* TV Box: señal visual sencilla, sin sombras/animaciones pesadas en tarjetas */
+@media (min-width:900px) and (orientation:landscape){
+  .event.new-result{box-shadow:none}
+  .newBadge{box-shadow:none}
+}
+
 .liveStatus{
   display:inline-flex;
   align-items:center;
@@ -146,6 +203,10 @@
       <p id="dateText" class="resultsDate"></p>
       <div class="liveStatus" id="liveStatus"><span class="liveDot"></span><strong id="liveStatusMain">Cargando resultados…</strong><span id="liveStatusSub">comprobando novedades</span></div>
       <div class="resultsUpdated" id="updatedText"></div>
+      <div class="newResultsBanner" id="newResultsBanner">
+        <span class="newPulse"></span>
+        <span id="newResultsText">Nuevo resultado añadido</span>
+      </div>
     </div>
     <div class="resultsBrand">M17<b>LIV3</b></div>
   </header>
@@ -158,7 +219,7 @@
 </main>
 <script src="config.js"></script>
 <script>
- // M17LIV3 resultados V60 · navegación TV nativa ultraligera
+ // M17LIV3 resultados V61 · aviso de nuevos resultados
 (function(){
  const API_PROXY='https://qjbnjhojwhcndcfjcyrc.supabase.co/functions/v1/resultados-dia';
  const cfg=window.M17_CONFIG||{};
@@ -348,7 +409,7 @@
  function setsText(x){const e=x.api;if(sportMap(e.sport)!=='Tennis')return '';let a=Array.isArray(e.sets_away)?[...e.sets_away]:[],h=Array.isArray(e.sets_home)?[...e.sets_home]:[];/* TheRundown: away/home. Determine published order directly. */const pubA=x.offered.home,pubB=x.offered.away;const awayFirst=(sim(pubA,e.away)>=sim(pubA,e.home));if(!awayFirst)[a,h]=[h,a];return a.map((v,i)=>`${v}-${h[i]??'—'}`).join(' · ')}
  function displayScores(x){const e=x.api,o=x.offered,s=sportMap(e.sport);if(s==='Tennis'){const firstIsAway=sim(o.home,e.away)>=sim(o.home,e.home);return firstIsAway?[e.score_away,e.score_home]:[e.score_home,e.score_away]}const firstIsHome=sim(o.home,e.home)>=sim(o.home,e.away);return firstIsHome?[e.score_home,e.score_away]:[e.score_away,e.score_home]}
  function competitionText(e){if(sportMap(e.sport)==='Tennis')return [e.league,e.tournament,e.round].filter(Boolean).join(' · ');return [e.competition,e.competition_code].filter(Boolean).join(' · ')}
- function eventHtml(x){const e=x.api,o=x.offered,[s1,s2]=displayScores(x),isTennis=sportMap(e.sport)==='Tennis',sets=isTennis?setsText(x):'';const retired=e.status==='STATUS_RETIRED';return `<article class="event"><div class="meta"><span class="competition">${esc(competitionText(e))}</span><span class="status">${retired?'Retirado':'Finalizado'}</span></div><div class="row"><div class="teamWrap"><div class="team">${esc(o.home)}</div></div><div class="score">${esc(s1??'—')}</div><div class="teamWrap"><div class="team">${esc(o.away)}</div></div><div class="score">${esc(s2??'—')}</div></div>${sets?`<div style="margin-top:10px;color:#9bb1c5;font-size:.82rem">Sets: <b style="color:#dff8ff">${esc(sets)}</b></div>`:''}</article>`}
+ function eventHtml(x){const e=x.api,o=x.offered,[s1,s2]=displayScores(x),isTennis=sportMap(e.sport)==='Tennis',sets=isTennis?setsText(x):'';const retired=e.status==='STATUS_RETIRED',isNew=newResultKeys.has(resultKey(x));return `<article class="event${isNew?' new-result':''}"><div class="meta"><span class="competition">${esc(competitionText(e))}</span><span class="status">${retired?'Retirado':'Finalizado'}</span></div><div class="row"><div class="teamWrap"><div class="team">${esc(o.home)}</div></div><div class="score">${esc(s1??'—')}</div><div class="teamWrap"><div class="team">${esc(o.away)}</div></div><div class="score">${esc(s2??'—')}</div></div>${sets?`<div style="margin-top:10px;color:#9bb1c5;font-size:.82rem">Sets: <b style="color:#dff8ff">${esc(sets)}</b></div>`:''}<span class="newBadge">NUEVO</span></article>`}
 
 
  function setLiveStatus(main,sub='',active=true){
@@ -356,6 +417,75 @@
    if(m)m.textContent=main||'';
    if(s)s.textContent=sub||'';
    if(box)box.classList.toggle('done',!active);
+ }
+
+
+ let baselineReady=false;
+ let knownResultKeys=new Set();
+ let newResultKeys=new Set();
+ let newResultTimer=null;
+ let newBannerTimer=null;
+
+ function resultKey(x){
+   const o=x?.offered||{};
+   const a=x?.api||{};
+   return [
+     sportMap(a.sport||o.sport||''),
+     normalize(o.home||a.home||''),
+     normalize(o.away||a.away||''),
+     o.time||'',
+     normalize(o.title||a.competition||'')
+   ].join('|');
+ }
+
+ function currentResultKeys(){
+   return new Set((matches||[]).map(resultKey));
+ }
+
+ function setInitialResultBaseline(){
+   knownResultKeys=currentResultKeys();
+   baselineReady=true;
+ }
+
+ function detectNewResults(previousKeys){
+   const current=currentResultKeys();
+
+   if(!baselineReady){
+     knownResultKeys=current;
+     baselineReady=true;
+     return;
+   }
+
+   const before=previousKeys instanceof Set ? previousKeys : knownResultKeys;
+   const added=[...current].filter(key=>!before.has(key));
+
+   knownResultKeys=current;
+
+   if(!added.length)return;
+
+   added.forEach(key=>newResultKeys.add(key));
+
+   const banner=$('#newResultsBanner');
+   const text=$('#newResultsText');
+
+   if(text){
+     text.textContent=added.length===1
+       ? '1 nuevo resultado añadido'
+       : `${added.length} nuevos resultados añadidos`;
+   }
+
+   if(banner)banner.classList.add('show');
+
+   clearTimeout(newBannerTimer);
+   newBannerTimer=setTimeout(()=>{
+     if(banner)banner.classList.remove('show');
+   },9000);
+
+   clearTimeout(newResultTimer);
+   newResultTimer=setTimeout(()=>{
+     newResultKeys.clear();
+     render();
+   },60000);
  }
 
  const FAST_CACHE_PREFIX='m17liv3_results_fast_v58_';
@@ -381,6 +511,7 @@
      $('#dateText').textContent=formatDate();
      $('#countDay').textContent=offered.length||0;
      render();
+     setInitialResultBaseline();
      const mins=Math.max(0,Math.round((Date.now()-(cached.savedAt||Date.now()))/60000));
      setLiveStatus('Resultados mostrados','comprobando novedades…',true);$('#updatedText').textContent=mins<2?'Última vista guardada recientemente':`Última vista guardada hace ${mins} min`;
      return true;
@@ -389,7 +520,7 @@
  function render(){$('#countFinal').textContent=matches.length;const heroCount=$('#heroResultCount');if(heroCount)heroCount.textContent=matches.length;if(!matches.length){$('#content').innerHTML='<div class="empty"><b style="color:#dff8ff">Todavía no hay resultados finalizados disponibles.</b><br><span style="display:inline-block;margin-top:8px">Vuelve a consultar en unos minutos.</span></div>';return}const sports={};for(const x of matches){const s=sportMap(x.api.sport);(sports[s]||(sports[s]=[])).push(x)}$('#content').innerHTML=Object.entries(sports).map(([sport,arr])=>{const label=sport==='Football'?'Fútbol':sport==='Tennis'?'Tenis':sport==='Basketball'?'Baloncesto':sport;return `<section class="sportSection"><div class="sportHeader"><span class="sportIcon">${ICONS[sport]||'•'}</span><h2>${esc(label)}</h2><small>${arr.length} ${arr.length===1?'resultado':'resultados'}</small></div><div class="events">${arr.map(eventHtml).join('')}</div></section>`}).join('')}
  async function fetchResults(date,sports,force=false,options={}){
    if(!sports.length)return [];
-   const params=new URLSearchParams({date,sports:sports.join(','),v:'60'});
+   const params=new URLSearchParams({date,sports:sports.join(','),v:'61'});
    if(force)params.set('force','1');
    if(options.tennisDone)params.set('tennis_done','1');
    if(options.tennisCacheOnly)params.set('tennis_cache_only','1');
@@ -629,7 +760,9 @@
        sin bloquear la pantalla.
      */
      let result=matchEvents(offered,apiEvents);
+     const beforeFirstUpdate=currentResultKeys();
      matches=result.found;
+     detectNewResults(beforeFirstUpdate);
      render();
      saveFastCache(targetDate);
      setLiveStatus('Resultados mostrados','comprobando novedades…',true);$('#updatedText').textContent='';
@@ -654,8 +787,10 @@
            apiEvents.push(...refreshedTennis);
            apiEvents=dedupeEvents(apiEvents);
 
+           const beforeTennisUpdate=currentResultKeys();
            result=matchEvents(offered,apiEvents);
            matches=result.found;
+           detectNewResults(beforeTennisUpdate);
            render();
            saveFastCache(targetDate);
          }catch{}
@@ -673,8 +808,10 @@
 
        if(ssEvents.length){
          apiEvents=dedupeEvents([...apiEvents,...ssEvents]);
+         const beforeSportScoreUpdate=currentResultKeys();
          result=matchEvents(offered,apiEvents);
          matches=result.found;
+         detectNewResults(beforeSportScoreUpdate);
          render();
          saveFastCache(targetDate);
        }
