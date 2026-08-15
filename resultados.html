@@ -42,14 +42,14 @@
 </main>
 <script src="config.js"></script>
 <script>
- // M17LIV3 resultados V56.2 · lectura Supabase client
+ // M17LIV3 resultados V57 · fútbol + tenis + baloncesto SportScore
 (function(){
  const API_PROXY='https://qjbnjhojwhcndcfjcyrc.supabase.co/functions/v1/resultados-dia';
  const cfg=window.M17_CONFIG||{};
  const BIN_ID=cfg.cartBinId||'';
  const BIN_KEY=cfg.cartKey||'';
  // Fuentes automáticas activas. V56: tenis con caché compartida + ventanas por partido. Fútbol usa football-data.org y respaldo SportScore con validación estricta.
- const SUPPORTED=new Set(['Football','Tennis']);
+ const SUPPORTED=new Set(['Football','Tennis','Basketball']);
  const ICONS={Football:'⚽',Tennis:'🎾',Basketball:'🏀',Baseball:'⚾',Hockey:'🏒',Handball:'🤾',Volleyball:'🏐',NFL:'🏈',Rugby:'🏉',Padel:'🎾',Cycling:'🚴',Golf:'⛳',Motorsport:'🏍️',Swimming:'🏊',Unknown:'•'};
  let matches=[],offered=[];
  const $=s=>document.querySelector(s);
@@ -150,10 +150,10 @@
  function displayScores(x){const e=x.api,o=x.offered,s=sportMap(e.sport);if(s==='Tennis'){const firstIsAway=sim(o.home,e.away)>=sim(o.home,e.home);return firstIsAway?[e.score_away,e.score_home]:[e.score_home,e.score_away]}const firstIsHome=sim(o.home,e.home)>=sim(o.home,e.away);return firstIsHome?[e.score_home,e.score_away]:[e.score_away,e.score_home]}
  function competitionText(e){if(sportMap(e.sport)==='Tennis')return [e.league,e.tournament,e.round].filter(Boolean).join(' · ');return [e.competition,e.competition_code].filter(Boolean).join(' · ')}
  function eventHtml(x){const e=x.api,o=x.offered,[s1,s2]=displayScores(x),isTennis=sportMap(e.sport)==='Tennis',sets=isTennis?setsText(x):'';const retired=e.status==='STATUS_RETIRED';return `<article class="event" tabindex="0"><div class="meta"><span class="competition">${esc(competitionText(e))}</span><span class="status">${retired?'Retirado':'Finalizado'}</span></div><div class="row"><div class="teamWrap"><div class="team">${esc(o.home)}</div></div><div class="score">${esc(s1??'—')}</div><div class="teamWrap"><div class="team">${esc(o.away)}</div></div><div class="score">${esc(s2??'—')}</div></div>${sets?`<div style="margin-top:10px;color:#9bb1c5;font-size:.82rem">Sets: <b style="color:#dff8ff">${esc(sets)}</b></div>`:''}</article>`}
- function render(){$('#countFinal').textContent=matches.length;if(!matches.length){$('#content').innerHTML='<div class="empty"><b style="color:#dff8ff">Todavía no hay resultados finalizados disponibles.</b><br><span style="display:inline-block;margin-top:8px">Vuelve a consultar en unos minutos.</span></div>';return}const sports={};for(const x of matches){const s=sportMap(x.api.sport);(sports[s]||(sports[s]=[])).push(x)}$('#content').innerHTML=Object.entries(sports).map(([sport,arr])=>{const label=sport==='Football'?'Fútbol':sport==='Tennis'?'Tenis':sport;return `<section class="sportSection"><div class="sportHeader"><span class="sportIcon">${ICONS[sport]||'•'}</span><h2>${esc(label)}</h2><small>${arr.length} ${arr.length===1?'resultado':'resultados'}</small></div><div class="events">${arr.map(eventHtml).join('')}</div></section>`}).join('')}
+ function render(){$('#countFinal').textContent=matches.length;if(!matches.length){$('#content').innerHTML='<div class="empty"><b style="color:#dff8ff">Todavía no hay resultados finalizados disponibles.</b><br><span style="display:inline-block;margin-top:8px">Vuelve a consultar en unos minutos.</span></div>';return}const sports={};for(const x of matches){const s=sportMap(x.api.sport);(sports[s]||(sports[s]=[])).push(x)}$('#content').innerHTML=Object.entries(sports).map(([sport,arr])=>{const label=sport==='Football'?'Fútbol':sport==='Tennis'?'Tenis':sport==='Basketball'?'Baloncesto':sport;return `<section class="sportSection"><div class="sportHeader"><span class="sportIcon">${ICONS[sport]||'•'}</span><h2>${esc(label)}</h2><small>${arr.length} ${arr.length===1?'resultado':'resultados'}</small></div><div class="events">${arr.map(eventHtml).join('')}</div></section>`}).join('')}
  async function fetchResults(date,sports,force=false,options={}){
    if(!sports.length)return [];
-   const params=new URLSearchParams({date,sports:sports.join(','),v:'56.2'});
+   const params=new URLSearchParams({date,sports:sports.join(','),v:'57'});
    if(force)params.set('force','1');
    if(options.tennisDone)params.set('tennis_done','1');
    if(options.tennisCacheOnly)params.set('tennis_cache_only','1');
@@ -186,11 +186,114 @@
  function ssFindSides(obj){let found=null;const pairs=[['home_team','away_team'],['homeTeam','awayTeam'],['team_home','team_away'],['home_name','away_name'],['homeName','awayName']];function walk(x,d=0){if(!x||d>7||found)return;if(Array.isArray(x)){for(const y of x)walk(y,d+1);return}if(typeof x!=='object')return;for(const [h,a] of pairs){if(h in x&&a in x){const hn=ssName(x[h]),an=ssName(x[a]);if(hn&&an){found={home:hn,away:an};return}}}for(const k of Object.keys(x))walk(x[k],d+1)}walk(obj);return found}
  function ssAnalyze(obj,ev,targetDate){const status=ssFindStatus(obj),score=ssFindScore(obj),sides=ssFindSides(obj),temps=ssTemporal(obj);const ranked=temps.map(t=>{const same=t.date===targetDate,diff=ssDiff(t.time,ev.time);let rank=(same?400:0)+(diff!=null?Math.max(0,180-diff):0)+100;if(/start|kick|sched|date|time/i.test(t.key))rank+=60;return {...t,same,diff,rank}}).sort((a,b)=>b.rank-a.rank);const bt=ranked[0]||null;let orientation='unknown';if(sides){const direct=(sim(ev.home,sides.home)+sim(ev.away,sides.away))/2,swap=(sim(ev.home,sides.away)+sim(ev.away,sides.home))/2;orientation=direct>=swap?'direct':'swapped'}return {status,score,sides,orientation,bestTemporal:bt,rank:(score?100:0)+(ssFinished(status)?120:0)+(bt?.same?350:0)+(bt?.diff!=null?Math.max(0,120-bt.diff):0)}}
  function ssSelect(data,ev,targetDate){let best=null;for(const c of ssTeamObjects(data,ev.home,ev.away)){const a=ssAnalyze(c.obj,ev,targetDate);if(!best||a.rank>best.rank)best={...a,obj:c.obj}}return best}
- function ssVariants(team){const set=new Set([ssSlug(team,false),ssSlug(team,true)]);const n=ssNorm(team);if(n.includes('atletico madrid'))set.add('atletico-madrid');if(n.includes('manchester city'))set.add('manchester-city');return [...set].filter(Boolean)}
+ function ssVariants(team,sport='football'){const set=new Set([ssSlug(team,false),ssSlug(team,true)]),n=ssNorm(team);if(n.includes('atletico madrid'))set.add('atletico-madrid');if(n.includes('manchester city'))set.add('manchester-city');if(sport==='basketball'){const base=ssSlug(team,false);if(base){set.add(`${base}-women`);set.add(`${base}-w`)}if(/alemania|germany|deutschland/.test(n)){set.add('germany-women');set.add('germany-w')}if(/espana|spain|spanien/.test(n)){set.add('spain-women');set.add('spain-w')}}return [...set].filter(Boolean)}
  function ssValidate(diag,ev,targetDate){if(!diag||!diag.score||!ssFinished(diag.status)||!diag.bestTemporal)return false;if(diag.bestTemporal.date!==targetDate)return false;if(diag.bestTemporal.diff==null||diag.bestTemporal.diff>30)return false;return true}
- async function ssProbe(ev,targetDate,recent){const cand=[];if(recent&&ssHasTeams(recent,ev.home,ev.away)){const d=ssSelect(recent,ev,targetDate);if(d)cand.push({diag:d,kind:'recent'})}const A=ssVariants(ev.home),B=ssVariants(ev.away),slugs=[];for(const a of A)for(const b of B)slugs.push(`${a}-vs-${b}`,`${b}-vs-${a}`);for(const slug of [...new Set(slugs)].slice(0,6)){const r=await ssGet(`https://sportscore.com/api/widget/match/?sport=football&slug=${encodeURIComponent(slug)}&src=${SPORT_SCORE_SRC}`);if(r.ok&&ssHasTeams(r.data,ev.home,ev.away)){const d=ssSelect(r.data,ev,targetDate);if(d)cand.push({diag:d,kind:'match'})}}if(!cand.some(x=>ssValidate(x.diag,ev,targetDate))){for(const t of [...new Set([...A,...B])].slice(0,3)){const r=await ssGet(`https://sportscore.com/api/widget/team/?sport=football&slug=${encodeURIComponent(t)}&limit=20&src=${SPORT_SCORE_SRC}`);if(r.ok&&ssHasTeams(r.data,ev.home,ev.away)){const d=ssSelect(r.data,ev,targetDate);if(d)cand.push({diag:d,kind:'team'})}}}cand.sort((a,b)=>b.diag.rank-a.diag.rank);const best=cand.find(x=>ssValidate(x.diag,ev,targetDate));if(!best)return null;const d=best.diag,sc=d.score;let h=sc.home,a=sc.away;if(d.orientation==='swapped')[h,a]=[a,h];return {source:'SportScore',sport:'Football',event_id:`ss-${normalize(ev.home)}-${normalize(ev.away)}-${targetDate}`,event_date:d.bestTemporal.iso,status:'FINISHED',home:ev.home,away:ev.away,score_home:h,score_away:a,finished:true,competition:ev.title||''}}
- function ssAlreadyElapsed(ev,targetDate){const now=new Date(),today=ssMadridYmd(now);if(targetDate<today)return true;if(targetDate>today)return false;const nowHm=ssMadridHm(now),n=ssMins(nowHm),e=ssMins(ev.time);return n!=null&&e!=null&&n>=e+95}
- async function sportScoreFallback(missing,targetDate){const candidates=missing.filter(e=>sportMap(e.sport)==='Football'&&e.type==='match'&&e.home&&e.away&&ssAlreadyElapsed(e,targetDate));if(!candidates.length)return [];let recent=null;try{const r=await ssGet(`https://sportscore.com/api/widget/matches/?sport=football&limit=50&src=${SPORT_SCORE_SRC}`);if(r.ok)recent=r.data}catch{}const out=[];for(const ev of candidates){try{const x=await ssProbe(ev,targetDate,recent);if(x)out.push(x)}catch{}}return out}
+ async function ssProbe(ev,targetDate,recent){
+   const mapped=sportMap(ev.sport);
+   const ssSport=mapped==='Basketball'?'basketball':'football';
+   const cand=[];
+   if(recent&&ssHasTeams(recent,ev.home,ev.away)){
+     const d=ssSelect(recent,ev,targetDate);
+     if(d)cand.push({diag:d,kind:'recent'});
+   }
+   const A=ssVariants(ev.home,ssSport),B=ssVariants(ev.away,ssSport),slugs=[];
+   for(const a of A)for(const b of B)slugs.push(`${a}-vs-${b}`,`${b}-vs-${a}`);
+   /*
+     V57:
+     En baloncesto damos prioridad al endpoint específico /match/.
+     Es el que validamos con Alemania Women 60-65 España Women y evita
+     mezclar marcadores de otros partidos presentes en una página de equipo.
+   */
+   const maxSlugs=ssSport==='basketball'?12:6;
+   for(const slug of [...new Set(slugs)].slice(0,maxSlugs)){
+     const r=await ssGet(`https://sportscore.com/api/widget/match/?sport=${ssSport}&slug=${encodeURIComponent(slug)}&src=${SPORT_SCORE_SRC}`);
+     if(r.ok&&ssHasTeams(r.data,ev.home,ev.away)){
+       const d=ssSelect(r.data,ev,targetDate);
+       if(d)cand.push({diag:d,kind:'match'});
+     }
+   }
+   /*
+     Para fútbol conservamos el fallback por equipo de V51.
+     Para baloncesto NO usamos objetos grandes de equipo como resultado final:
+     durante la prueba vimos que pueden contener marcadores de otros encuentros.
+   */
+   if(ssSport==='football'&&!cand.some(x=>ssValidate(x.diag,ev,targetDate))){
+     for(const t of [...new Set([...A,...B])].slice(0,3)){
+       const r=await ssGet(`https://sportscore.com/api/widget/team/?sport=${ssSport}&slug=${encodeURIComponent(t)}&limit=20&src=${SPORT_SCORE_SRC}`);
+       if(r.ok&&ssHasTeams(r.data,ev.home,ev.away)){
+         const d=ssSelect(r.data,ev,targetDate);
+         if(d)cand.push({diag:d,kind:'team'});
+       }
+     }
+   }
+   cand.sort((a,b)=>b.diag.rank-a.diag.rank);
+   /*
+     En baloncesto exigimos que la coincidencia validada proceda del endpoint
+     específico del partido. En fútbol mantenemos la lógica anterior.
+   */
+   const best=cand.find(x=>ssValidate(x.diag,ev,targetDate)&&(ssSport!=='basketball'||x.kind==='match'));
+   if(!best)return null;
+   const d=best.diag,sc=d.score;
+   let h=sc.home,a=sc.away;
+   if(d.orientation==='swapped')[h,a]=[a,h];
+   return {
+     source:'SportScore',
+     sport:mapped,
+     event_id:`ss-${ssSport}-${normalize(ev.home)}-${normalize(ev.away)}-${targetDate}`,
+     event_date:d.bestTemporal.iso,
+     status:'FINISHED',
+     home:ev.home,
+     away:ev.away,
+     score_home:h,
+     score_away:a,
+     finished:true,
+     competition:ev.title||''
+   };
+ }
+ function ssAlreadyElapsed(ev,targetDate){
+   const now=new Date(),today=ssMadridYmd(now);
+   if(targetDate<today)return true;
+   if(targetDate>today)return false;
+   const nowHm=ssMadridHm(now),n=ssMins(nowHm),e=ssMins(ev.time);
+   if(n==null||e==null)return false;
+   /*
+     V57:
+     fútbol: empieza a buscar resultado a los 95 min.
+     baloncesto: a los 125 min para evitar consultas mientras el partido
+     probablemente sigue en juego. Si acaba antes, aparecerá en la siguiente
+     actualización de 10 min.
+   */
+   const wait=sportMap(ev.sport)==='Basketball'?125:95;
+   return n>=e+wait;
+ }
+ async function sportScoreFallback(missing,targetDate){
+   const candidates=missing.filter(e=>{
+     const s=sportMap(e.sport);
+     return (s==='Football'||s==='Basketball')&&e.type==='match'&&e.home&&e.away&&ssAlreadyElapsed(e,targetDate);
+   });
+   if(!candidates.length)return [];
+   const recentBySport={};
+   /*
+     "matches" sigue siendo útil como atajo para fútbol.
+     En baloncesto se consulta también, pero el resultado definitivo solo
+     se acepta desde /match/ específico dentro de ssProbe.
+   */
+   for(const s of [...new Set(candidates.map(e=>sportMap(e.sport)))]){
+     const ssSport=s==='Basketball'?'basketball':'football';
+     try{
+       const r=await ssGet(`https://sportscore.com/api/widget/matches/?sport=${ssSport}&limit=50&src=${SPORT_SCORE_SRC}`);
+       if(r.ok)recentBySport[s]=r.data;
+     }catch{}
+   }
+   const out=[];
+   for(const ev of candidates){
+     try{
+       const x=await ssProbe(ev,targetDate,recentBySport[sportMap(ev.sport)]||null);
+       if(x)out.push(x);
+     }catch{}
+   }
+   return out;
+ }
  async function load(force=false){
    $('#dateText').textContent=formatDate();$('#updatedText').textContent='Actualizando…';$('#refreshBtn').disabled=true;
    try{
@@ -207,7 +310,7 @@
        5) Entre un partido resuelto y el siguiente: 0 llamadas reales.
      */
      const offeredSports=[...new Set(offered.map(o=>sportMap(o.sport)).filter(s=>SUPPORTED.has(s)))];
-     const nonTennisSports=offeredSports.filter(s=>s!=='Tennis');
+     const nonTennisSports=offeredSports.filter(s=>s==='Football');
      const hasTennis=tennisMatchesForGate(offered).length>0;
 
      /* Madrugada: se mantiene solo para proveedores no-tenis. */
@@ -215,7 +318,7 @@
        offered
          .filter(o=>o.type==='match'&&isEarlyTime(o.time))
          .map(o=>sportMap(o.sport))
-         .filter(s=>SUPPORTED.has(s)&&s!=='Tennis')
+         .filter(s=>s==='Football')
      )];
 
      let apiEvents=[];
@@ -284,7 +387,7 @@
        }
      }
 
-     /* V51: fallback estricto SportScore solo para fútbol. */
+     /* V57: fallback estricto SportScore para fútbol y baloncesto. */
      const ssEvents=await sportScoreFallback(result.missing,targetDate);
      if(ssEvents.length){
        apiEvents=dedupeEvents([...apiEvents,...ssEvents]);
