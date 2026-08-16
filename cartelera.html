@@ -47,51 +47,8 @@
       position:relative;
       width:min(920px,100%);
       margin:0 auto;
-      padding:20px 15px calc(34px + var(--safe));
+      padding:14px 15px calc(34px + var(--safe));
     }
-    .topbar {
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:14px;
-      margin-bottom:18px;
-    }
-    .brand {
-      display:flex;
-      align-items:center;
-      gap:11px;
-      min-width:0;
-    }
-    .brand img {
-      width:48px;
-      height:48px;
-      border-radius:15px;
-      object-fit:contain;
-      background:rgba(0,0,0,.24);
-      border:1px solid rgba(0,216,255,.18);
-      box-shadow:0 0 26px rgba(0,216,255,.12);
-    }
-    .brandName {
-      font-size:1.16rem;
-      font-weight:950;
-      letter-spacing:.08em;
-      white-space:nowrap;
-    }
-    .brandName span:first-child { color:var(--cyan); }
-    .brandName span:last-child { color:var(--green); }
-    .refreshBtn {
-      flex:0 0 auto;
-      height:42px;
-      min-width:42px;
-      padding:0 13px;
-      border-radius:13px;
-      border:1px solid rgba(0,216,255,.20);
-      background:rgba(0,216,255,.07);
-      color:var(--cyan);
-      font-weight:850;
-      cursor:pointer;
-    }
-    .refreshBtn:disabled { opacity:.55; cursor:wait; }
     .intro {
       margin-bottom:18px;
       padding:17px 18px;
@@ -328,14 +285,6 @@
 </head>
 <body>
   <main class="page">
-    <header class="topbar">
-      <div class="brand">
-        <img src="assets/logo.png" alt="M17LIV3" draggable="false">
-        <div class="brandName"><span>M17</span><span>LIV3</span></div>
-      </div>
-      <button id="refreshBtn" class="refreshBtn" type="button" aria-label="Actualizar cartelera" title="Actualizar cartelera">↻</button>
-    </header>
-
     <section class="intro">
       <div class="eyebrow">Programación premium</div>
       <div class="heroTitleRow"><span id="eventCount" class="heroCount">0</span><span class="heroLabel">eventos de hoy</span></div>
@@ -369,6 +318,7 @@
   </main>
 
   <script src="config.js"></script>
+  <!-- Cartelera Premium V3.3 · sin barra superior -->
   <script>
     (function () {
       'use strict';
@@ -383,7 +333,6 @@
       var scheduleCard = document.getElementById('scheduleCard');
       var scheduleText = document.getElementById('scheduleText');
       var emptyCard = document.getElementById('emptyCard');
-      var refreshBtn = document.getElementById('refreshBtn');
       var updatedEl = document.getElementById('updated');
 
       function headers() {
@@ -640,7 +589,6 @@
           statusEl.innerHTML = '<span>⚠️ No se pudo cargar la cartelera. Pulsa ↻ para volver a intentarlo.</span>';
           updatedEl.textContent = '';
         } finally {
-          refreshBtn.disabled = false;
         }
       }
 
@@ -663,7 +611,6 @@
       });
 
       setDate();
-      refreshBtn.addEventListener('click', loadCartelera);
       loadCartelera();
     }());
   </script>
