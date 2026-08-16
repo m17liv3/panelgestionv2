@@ -355,6 +355,133 @@
 }
 </style>
 
+
+<style id="renewal-calendar-fit-v28-8">
+/* Calendario de renovaciones: no queda debajo del menú inferior */
+@media (max-width:620px){
+  #renewalCalendarSheet{
+    top:0 !important;
+    left:0 !important;
+    right:0 !important;
+    bottom:72px !important;
+    width:100% !important;
+    height:auto !important;
+    max-height:none !important;
+    overflow:hidden !important;
+    border-radius:0 !important;
+  }
+
+  #renewalCalendarSheet .sheet-handle{
+    margin:5px auto 3px !important;
+  }
+
+  #renewalCalendarSheet .sheet-header{
+    min-height:48px !important;
+    padding:5px 10px !important;
+    flex-shrink:0 !important;
+  }
+
+  #renewalCalendarSheet .sheet-body.renewalCalendarBody{
+    height:calc(100% - 56px) !important;
+    min-height:0 !important;
+    overflow-y:auto !important;
+    overflow-x:hidden !important;
+    -webkit-overflow-scrolling:touch !important;
+    padding:8px 10px 22px !important;
+    scroll-padding-bottom:24px !important;
+  }
+
+  #renewalCalendarSheet .renewalCalendarIntro{
+    margin-bottom:8px !important;
+    padding:9px !important;
+    border-radius:13px !important;
+  }
+
+  #renewalCalendarSheet .renewalCalendarIntro span{
+    font-size:.70rem !important;
+  }
+
+  #renewalCalendarSheet .renewalCalendarIntro button{
+    padding:7px 8px !important;
+    font-size:.72rem !important;
+  }
+
+  #renewalCalendarSheet .renewalCalendarStats{
+    grid-template-columns:repeat(4,minmax(0,1fr)) !important;
+    gap:5px !important;
+    margin-bottom:8px !important;
+  }
+
+  #renewalCalendarSheet .renewalCalendarStats button{
+    padding:7px 4px !important;
+    border-radius:12px !important;
+  }
+
+  #renewalCalendarSheet .renewalCalendarStats span{
+    font-size:.58rem !important;
+  }
+
+  #renewalCalendarSheet .renewalCalendarStats strong{
+    font-size:.95rem !important;
+    margin-top:2px !important;
+  }
+
+  #renewalCalendarSheet .renewalCalendarFilters{
+    gap:5px !important;
+    margin-bottom:8px !important;
+    padding-bottom:4px !important;
+  }
+
+  #renewalCalendarSheet .renewalCalendarFilters button{
+    padding:6px 9px !important;
+    font-size:.68rem !important;
+  }
+
+  #renewalCalendarSheet .renewalCalendarContent{
+    gap:10px !important;
+    padding-bottom:8px !important;
+  }
+
+  #renewalCalendarSheet .renewalCalendarGroup{
+    gap:7px !important;
+  }
+
+  #renewalCalendarSheet .renewalCalendarItem{
+    grid-template-columns:62px minmax(0,1fr) !important;
+    gap:8px !important;
+    padding:9px !important;
+    border-radius:14px !important;
+  }
+
+  #renewalCalendarSheet .renewalCalendarDate{
+    min-height:58px !important;
+    border-radius:12px !important;
+  }
+
+  #renewalCalendarSheet .renewalCalendarDate strong{
+    font-size:.92rem !important;
+  }
+
+  #renewalCalendarSheet .renewalCalendarInfo strong{
+    font-size:.82rem !important;
+    line-height:1.18 !important;
+  }
+
+  #renewalCalendarSheet .renewalCalendarInfo > span{
+    font-size:.68rem !important;
+  }
+
+  #renewalCalendarSheet .renewalCalendarActions{
+    gap:5px !important;
+  }
+
+  #renewalCalendarSheet .renewalCalendarActions button{
+    padding:7px 5px !important;
+    font-size:.68rem !important;
+  }
+}
+</style>
+
 </head>
 <body class="auth-locked">
 <!-- clientes-expandibles-home-clean-v10-20260726 -->
@@ -563,7 +690,6 @@
     <div class="menuItem" onclick="openRaffles()"><span class="ico2">&#127873;</span> Sorteos clientes</div>
     <div class="menuItem" onclick="openFixedAppImage()"><span class="ico2">&#128444;</span> Links fijos APP</div>
     <div class="menuItem" onclick="openCartelera()"><span class="ico2">&#128249;</span> Cartelera del dia</div>
-    <div class="menuItem" onclick="openPromps()"><span class="ico2">&#9997;</span> Promps</div>
     <div class="menuItem" onclick="openMovieTemplates()"><span class="ico2">&#127916;</span> Plantillas Peliculas</div>
     <div class="menuItem" onclick="openSeriesTemplates()"><span class="ico2">&#127909;</span> Plantillas Series</div>
     <div class="menuItem" id="pwaInstallMenuItem" onclick="installPWA()"><span class="ico2">&#128241;</span> Instalar como app</div>
@@ -604,881 +730,6 @@
   </div>
 </div>
 
-
-
-<!-- PROMPS SHEET -->
-<div class="sheet-overlay" id="prompsOverlay" onclick="closeSheet('prompsSheet','prompsOverlay')"></div>
-<div class="sheet" id="prompsSheet" style="max-height:92vh;overflow-y:auto;">
-  <div class="sheet-handle"></div>
-  <div class="sheet-header">
-    <h3>&#9997; Promps</h3>
-    <button class="sheet-close" onclick="closeSheet('prompsSheet','prompsOverlay')">x</button>
-  </div>
-  <div class="sheet-body" style="padding-bottom:30px;">
-<div class="dailyPromptBox">
-      <div class="dailyPromptTop">
-        <div>
-          <div class="dailyPromptKicker">&#9889; Prompt para ChatGPT</div>
-          <strong>Crear cartelera diaria premium</strong>
-          <span>Pega solo los eventos. La fecha del día se añade automáticamente al prompt.</span>
-        </div>
-      </div>
-
-      <div class="dailyPromptDateBox">
-        <span>Fecha automática</span>
-        <strong id="dailyPromptDatePreview">Cargando fecha...</strong>
-      </div>
-
-      <label class="dailyPromptLabel">Eventos del día, sin fecha</label>
-      <textarea id="dailyPromptEvents" class="dailyPromptTextarea" placeholder="Pega aquí solo los eventos del día. Ejemplo:
-
-⚽ FÚTBOL INTERNACIONAL
-⏰ 13:35 – Superliga china: Beijing Guoan 🆚 Shandong Taishan
-📺 GOL
-🗂 DEPORTES ESPAÑA
-
-⏰ 19:00 – Mundial 2026: Canadá 🆚 Marruecos
-📺 DAZN Mundial
-🗂 MUNDIAL 2026 / UEFA TV"></textarea>
-
-      <div class="dailyPromptActions">
-        <button type="button" onclick="dailyPromptUseCartText()">Usar texto de cartelera</button>
-        <button type="button" class="primary" onclick="dailyPromptBuild()">Generar prompt</button>
-        <button type="button" class="success" onclick="dailyPromptCopy()">Copiar prompt</button>
-        <button type="button" class="danger" onclick="dailyPromptClear()">Borrar prompt</button>
-      </div>
-
-      <label class="dailyPromptLabel">Prompt generado</label>
-      <textarea id="dailyGeneratedPrompt" class="dailyGeneratedPrompt" readonly placeholder="Aquí aparecerá el prompt listo para pegar en ChatGPT."></textarea>
-
-      <div class="dailyPromptFinalUpload">
-        <div>
-          <strong>Subir imagen final de ChatGPT</strong>
-          <span>Cuando descargues la imagen de ChatGPT, súbela aquí para sustituir HORARIOS MUNDIAL.</span>
-        </div>
-        <input type="file" id="dailyFinalImageFile" accept="image/*" onchange="dailyPromptPreviewFinalImage(event)">
-        <button type="button" class="success" onclick="dailyPromptUploadFinalImage()">Subir imagen final a HORARIOS MUNDIAL</button>
-      </div>
-
-      <div id="dailyPromptFinalPreview" class="dailyPromptFinalPreview" style="display:none">
-        <img id="dailyPromptFinalPreviewImg" alt="Vista previa imagen final">
-      </div>
-
-      <div id="dailyPromptStatus" class="dailyPromptStatus">Pega los eventos y pulsa “Generar prompt”.</div>
-    </div>
-
-
-
-    <div class="eventPromptBox">
-      <div class="dailyPromptTop">
-        <div>
-          <div class="dailyPromptKicker">&#9917; Prompt evento individual</div>
-          <strong>Crear cartela premium de un evento</strong>
-          <span>Pega el texto completo del partido o evento con hora, canal y carpeta. La fecha se añade automáticamente.</span>
-        </div>
-      </div>
-
-      <div class="dailyPromptDateBox">
-        <span>Fecha automática</span>
-        <strong id="eventPromptDatePreview">Cargando fecha...</strong>
-      </div>
-
-      <label class="dailyPromptLabel">Evento o partido, sin fecha</label>
-      <textarea id="eventPromptEvents" class="dailyPromptEvents" placeholder="Ej:
-⏰ 21:00 – Mundial 2026: España 🆚 Portugal
-📺 LA 1 / DAZN Mundial
-🗂 TDT / DEPORTES ESPAÑA / MUNDIAL 2026 / UEFA TV"></textarea>
-
-      <div class="dailyPromptActions">
-        <button type="button" class="primary" onclick="eventPromptBuild()">Generar prompt</button>
-        <button type="button" class="success" onclick="eventPromptCopy()">Copiar prompt</button>
-        <button type="button" class="danger" onclick="eventPromptClear()">Borrar prompt</button>
-      </div>
-
-      <label class="dailyPromptLabel">Prompt generado</label>
-      <textarea id="eventPromptGenerated" class="dailyGeneratedPrompt" readonly placeholder="Aquí aparecerá el prompt del evento individual."></textarea>
-
-      <div class="dailyPromptFinalUpload">
-        <div>
-          <strong>Adjuntar imagen final del evento</strong>
-          <span>Cuando descargues la imagen de ChatGPT, súbela aquí para publicarla como EVENTO DEL DÍA.</span>
-        </div>
-        <input type="file" id="eventFinalImageFile" accept="image/*" onchange="eventPromptPreviewFinalImage(event)">
-        <button type="button" class="success" onclick="eventPromptUploadFinalImage()">Subir imagen final a EVENTO DEL DÍA</button>
-      </div>
-
-      <div id="eventPromptFinalPreview" class="dailyPromptFinalPreview" style="display:none">
-        <img id="eventPromptFinalPreviewImg" alt="Vista previa imagen final del evento">
-      </div>
-
-      <div id="eventPromptStatus" class="dailyPromptStatus">Pega el evento y pulsa “Generar prompt”.</div>
-    </div>
-  </div>
-</div>
-
-    <!-- CLIENT MORE ACTIONS SHEET -->
-<div class="sheet-overlay" id="clientMoreOverlay" onclick="closeSheet('clientMoreSheet','clientMoreOverlay')"></div>
-<div class="sheet compactSheet" id="clientMoreSheet">
-  <div class="sheet-handle"></div>
-  <div class="sheet-header">
-    <h3 id="clientMoreTitle">Opciones cliente</h3>
-    <button class="sheet-close" onclick="closeSheet('clientMoreSheet','clientMoreOverlay')">x</button>
-  </div>
-  <div class="sheet-body">
-    <div class="premiumOptionList">
-      <button type="button" class="danger clientMoreDeleteBtn" data-client-more-delete="true" onclick="clientMoreDelete()"><span>&#128465;</span><strong>Eliminar cliente</strong><small>Se pedirá confirmación antes de borrarlo</small></button>
-    </div>
-  </div>
-</div>
-
-<!-- CONFIRM PREMIUM SHEET -->
-<div class="sheet-overlay" id="confirmOverlay" onclick="closePrettyConfirm()"></div>
-<div class="sheet compactSheet confirmPremiumSheet" id="confirmSheet">
-  <div class="sheet-handle"></div>
-  <div class="sheet-header">
-    <h3 id="confirmTitle">Confirmar acción</h3>
-    <button class="sheet-close" onclick="closePrettyConfirm()">x</button>
-  </div>
-  <div class="sheet-body">
-    <p class="confirmMessage" id="confirmMessage">¿Quieres continuar?</p>
-    <div class="confirmButtons">
-      <button class="btnFull gray" onclick="closePrettyConfirm()">Cancelar</button>
-      <button class="btnFull primary" id="confirmOkBtn" onclick="runPrettyConfirm()">Confirmar</button>
-    </div>
-  </div>
-</div>
-
-
-<!-- HOME STATUS LIST SHEET -->
-<div class="sheet-overlay" id="homeStatusListOverlay" onclick="closeSheet('homeStatusListSheet','homeStatusListOverlay')"></div>
-<div class="sheet homeStatusListSheet" id="homeStatusListSheet">
-  <div class="sheet-handle"></div>
-  <div class="sheet-header">
-    <h3 id="homeStatusListTitle">Clientes</h3>
-    <button class="sheet-close" onclick="closeSheet('homeStatusListSheet','homeStatusListOverlay')">x</button>
-  </div>
-  <div class="sheet-body homeStatusListBody">
-    <div class="homeStatusListIntro" id="homeStatusListIntro"></div>
-    <div class="homeStatusListSearch">
-      <span>&#128269;</span>
-      <input type="search" id="homeStatusListSearch" placeholder="Buscar dentro de esta lista..." oninput="renderHomeStatusList()"/>
-      <button type="button" onclick="clearHomeStatusListSearch()">x</button>
-    </div>
-    <div id="homeStatusListContent" class="homeStatusListContent"></div>
-  </div>
-</div>
-
-
-<!-- CLIENT BROWSER SHEET -->
-<div class="sheet-overlay" id="clientBrowserOverlay" onclick="closeSheet('clientBrowserSheet','clientBrowserOverlay')"></div>
-<div class="sheet clientBrowserSheet" id="clientBrowserSheet">
-  <div class="sheet-handle"></div>
-  <div class="sheet-header clientBrowserHeader">
-    <h3>Clientes</h3>
-    <button class="sheet-close" onclick="closeSheet('clientBrowserSheet','clientBrowserOverlay')">x</button>
-  </div>
-  <div class="sheet-body clientBrowserBody">
-    <div class="clientBrowserTop">
-      <div>
-        <strong>Vista deslizante</strong>
-        <span>Busca un cliente o desliza a izquierda/derecha.</span>
-      </div>
-      <div class="clientBrowserCounter" id="clientBrowserCounter">0 / 0</div>
-    </div>
-
-    <div class="clientBrowserSearchBox">
-      <span>&#128269;</span>
-      <input type="search" id="clientBrowserSearch" placeholder="Buscar cliente, usuario, teléfono o app..." oninput="clientBrowserSearchChanged()"/>
-      <button type="button" onclick="clientBrowserClearSearch()" id="clientBrowserSearchClear">x</button>
-    </div>
-
-    <div class="clientBrowserStage" id="clientBrowserStage"></div>
-    <div class="clientBrowserControls">
-      <button onclick="clientBrowserPrev()">&#8592; Anterior</button>
-      <button onclick="clientBrowserNext()">Siguiente &#8594;</button>
-    </div>
-  </div>
-</div>
-
-
-<!-- CLIENT SHEET -->
-<div class="sheet-overlay" id="clientOverlay" onclick="closeSheet('clientSheet','clientOverlay')"></div>
-<div class="sheet" id="clientSheet">
-  <div class="sheet-handle"></div>
-  <div class="sheet-header">
-    <h3 id="clientSheetTitle">Nuevo Cliente</h3>
-    <button class="sheet-close" onclick="closeSheet('clientSheet','clientOverlay')">x</button>
-  </div>
-  <div class="sheet-body">
-    <input type="hidden" id="editId"/>
-    <div class="formGroup">
-      <label>Nombre / Apodo <span class="required-star">*</span></label>
-      <input type="text" id="fName" placeholder="Ej: Juan Garcia"/>
-    </div>
-    <div class="formGroup">
-      <label>Teléfono / WhatsApp</label>
-      <input type="tel" id="fPhone" placeholder="Ej: 600123123"/>
-    </div>
-    <div class="formRow2">
-      <div class="formGroup">
-        <label>Usuario <span class="required-star">*</span></label>
-        <input type="text" id="fUser" placeholder="usuario"/>
-      </div>
-      <div class="formGroup">
-        <label>Contrasena <span class="required-star">*</span></label>
-        <input type="text" id="fPass" placeholder="contrasena"/>
-      </div>
-    </div>
-    <div class="formRow2">
-      <div class="formGroup">
-        <label>Servicio <span class="required-star">*</span></label>
-        <select id="fService">
-          <option value="TODO">TODO</option>
-          <option value="ESPANA">ESPA&Ntilde;A</option>
-        </select>
-      </div>
-      <div class="formGroup">
-        <label>Expiracion <span class="required-star">*</span></label>
-        <input type="date" id="fExpiry"/>
-      </div>
-    </div>
-    <div class="formGroup">
-      <label>Apps instaladas <span class="required-star">*</span> (primera = principal)</label>
-      <div class="appsGrid" id="appsGrid"></div>
-    </div>
-    <div class="appNote" id="appNote"></div>
-    <div id="macCodeBox"></div>
-    <div id="otraAppBox" style="display:none">
-      <div class="formGroup">
-        <label>Nombre de la app <span class="required-star">*</span></label>
-        <input type="text" id="fOtraApp" placeholder="Nombre"/>
-      </div>
-      <div class="formRow2">
-        <div class="formGroup">
-          <label>Tiene MAC?</label>
-          <select id="fOtraHasMac" onchange="renderOtraExtras()"><option value="no">No</option><option value="si">Si</option></select>
-        </div>
-        <div class="formGroup">
-          <label>Tiene Codigo?</label>
-          <select id="fOtraHasCode" onchange="renderOtraExtras()"><option value="no">No</option><option value="si">Si</option></select>
-        </div>
-      </div>
-      <div id="otraExtrasBox"></div>
-    </div>
-<div class="formGroup">
-      <label>Notas</label>
-      <textarea id="fNotes" placeholder="Informacion adicional..."></textarea>
-    </div>
-
-    <div class="renewPaymentBox" id="initialPaymentBox">
-      <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#7AA3C8;margin-bottom:10px;">&#128176; Pago al crear cliente</div>
-      <div class="formGroup">
-        <label>Importe pagado / pendiente</label>
-        <input type="text" id="fInitialAmount" inputmode="decimal" placeholder="Ej: 25 o 25,00"/>
-      </div>
-      <div class="formGroup">
-        <label>Metodo de pago</label>
-        <select id="fInitialPaymentMethod">
-          <option value="Bizum">Bizum</option>
-          <option value="Efectivo">Efectivo</option>
-          <option value="Transferencia">Transferencia</option>
-          <option value="PayPal">PayPal</option>
-          <option value="Otro">Otro</option>
-        </select>
-      </div>
-      <div class="formGroup">
-        <label>Notas del pago</label>
-        <input type="text" id="fInitialPaymentNotes" placeholder="Opcional"/>
-      </div>
-      <p class="movieTplNote" style="margin-top:0;">Si rellenas el importe y guardas, se registra como pagado. Si pulsa “Paga mas tarde”, aparece en Pendientes de pago.</p>
-    </div>
-
-    <div class="formError" id="formError"></div>
-    <button class="btnFull primary" onclick="saveClient(false)">Guardar</button>
-    <button class="btnFull warning" id="saveClientPendingBtn" onclick="saveClient(true)">&#9203; Paga mas tarde</button>
-    <button class="btnFull gray" onclick="closeSheet('clientSheet','clientOverlay')" style="margin-top:8px">Cancelar</button>
-  </div>
-</div>
-
-<!-- RENEW SHEET -->
-<div class="sheet-overlay" id="renewOverlay" onclick="closeSheet('renewSheet','renewOverlay')"></div>
-<div class="sheet" id="renewSheet">
-  <div class="sheet-handle"></div>
-  <div class="sheet-header">
-    <h3>Renovar Suscripcion</h3>
-    <button class="sheet-close" onclick="closeSheet('renewSheet','renewOverlay')">x</button>
-  </div>
-  <div class="sheet-body">
-    <p id="renewInfo" style="color:var(--muted);font-size:.88rem;margin-bottom:16px"></p>
-    <div class="renewSelector">
-      <label>Meses a renovar</label>
-      <div class="renewMonthsRow">
-        <button onclick="changeRenewMonths(-1)">&#8722;</button>
-        <div class="renewMonthsVal" id="renewMonthsVal">1</div>
-        <button onclick="changeRenewMonths(1)">+</button>
-        <div class="renewMonthsHint" id="renewMonthsHint"></div>
-      </div>
-      <div class="renewQuickMonths">
-        <button type="button" onclick="setRenewMonths(1)">1 mes</button>
-        <button type="button" onclick="setRenewMonths(3)">3 meses</button>
-        <button type="button" onclick="setRenewMonths(6)">6 meses</button>
-        <button type="button" onclick="setRenewMonths(12)">12 meses</button>
-      </div>
-    </div>
-    <div class="renewPaymentBox">
-      <div class="formGroup">
-        <label>Importe</label>
-        <input type="text" id="renewAmount" inputmode="decimal" placeholder="Ej: 25, 10,50 o 0 si es gratis"/>
-      </div>
-      <div class="formGroup">
-        <label>Metodo de pago</label>
-        <select id="renewPaymentMethod">
-          <option value="Bizum">Bizum</option>
-          <option value="Efectivo">Efectivo</option>
-          <option value="Transferencia">Transferencia</option>
-          <option value="PayPal">PayPal</option>
-          <option value="Otro">Otro</option>
-        </select>
-      </div>
-      <div class="formGroup">
-        <label>Notas del pago</label>
-        <input type="text" id="renewPaymentNotes" placeholder="Opcional"/>
-      </div>
-      <div class="formError" id="renewPaymentError"></div>
-    </div>
-    <button class="btnFull primary" id="renewConfirmBtn" onclick="doRenew(false)">&#8635; Confirmar Renovacion</button>
-    <button class="btnFull warning" id="renewPendingBtn" onclick="doRenew(true)">&#9203; Paga mas tarde</button>
-    <button class="btnFull gray" onclick="closeSheet('renewSheet','renewOverlay')" style="margin-top:8px">Cancelar</button>
-  </div>
-</div>
-
-<!-- DELETE SHEET -->
-<div class="sheet-overlay" id="deleteOverlay" onclick="closeSheet('deleteSheet','deleteOverlay')"></div>
-<div class="sheet" id="deleteSheet">
-  <div class="sheet-handle"></div>
-  <div class="sheet-header">
-    <h3 style="color:var(--red)">Eliminar Cliente</h3>
-    <button class="sheet-close" onclick="closeSheet('deleteSheet','deleteOverlay')">x</button>
-  </div>
-  <div class="sheet-body">
-    <p style="color:var(--muted);font-size:.9rem;margin-bottom:20px">Esta accion no se puede deshacer.</p>
-    <button class="btnFull danger" onclick="confirmDelete()">Si, eliminar</button>
-    <button class="btnFull gray" onclick="closeSheet('deleteSheet','deleteOverlay')" style="margin-top:8px">Cancelar</button>
-  </div>
-</div>
-
-<!-- DELETE ALL CLIENTS SHEET -->
-<div class="sheet-overlay" id="deleteAllOverlay" onclick="closeSheet('deleteAllSheet','deleteAllOverlay')"></div>
-<div class="sheet" id="deleteAllSheet">
-  <div class="sheet-handle"></div>
-  <div class="sheet-header">
-    <h3 style="color:var(--red)">Borrar todos los clientes</h3>
-    <button class="sheet-close" onclick="closeSheet('deleteAllSheet','deleteAllOverlay')">x</button>
-  </div>
-  <div class="sheet-body">
-    <p style="color:var(--muted);font-size:.9rem;margin-bottom:12px">Esta acción eliminará todos los clientes guardados en tu cuenta. No se puede deshacer.</p>
-    <p style="color:var(--orange);font-size:.82rem;margin-bottom:16px">Recomendado: exporta un Excel antes de borrar si quieres conservar una copia.</p>
-    <div class="formGroup">
-      <label>Contraseña de acceso <span class="required-star">*</span></label>
-      <input type="password" id="deleteAllPass" placeholder="Escribe tu contraseña para confirmar" autocomplete="current-password" oninput="clearDeleteAllError()"/>
-    </div>
-    <div class="formError" id="deleteAllError"></div>
-    <button class="btnFull danger" id="deleteAllConfirmBtn" onclick="confirmDeleteAllClients()">Borrar todos los clientes</button>
-    <button class="btnFull gray" onclick="closeSheet('deleteAllSheet','deleteAllOverlay')" style="margin-top:8px">Cancelar</button>
-  </div>
-</div>
-
-<!-- VIEW SHEET -->
-<div class="sheet-overlay" id="viewOverlay" onclick="closeSheet('viewSheet','viewOverlay')"></div>
-<div class="sheet" id="viewSheet">
-  <div class="sheet-handle"></div>
-  <div class="sheet-header">
-    <h3 id="viewSheetTitle"></h3>
-    <button class="sheet-close" onclick="closeSheet('viewSheet','viewOverlay')">x</button>
-  </div>
-  <div class="sheet-body" id="viewSheetBody"></div>
-</div>
-
-<!-- MESSAGE SHEET -->
-<div class="sheet-overlay" id="messageOverlay" onclick="closeSheet('messageSheet','messageOverlay')"></div>
-<div class="sheet" id="messageSheet">
-  <div class="sheet-handle"></div>
-  <div class="sheet-header">
-    <h3 id="messageSheetTitle">Mensajes rapidos</h3>
-    <button class="sheet-close" onclick="closeSheet('messageSheet','messageOverlay')">x</button>
-  </div>
-  <div class="sheet-body">
-    <p id="messageInfo" style="color:var(--muted);font-size:.88rem;margin-bottom:14px"></p>
-    <div class="msgActionsGrid">
-      <button class="btnFull gray" onclick="copyClientMessage('access', this)">&#128272; Datos acceso</button>
-      <button class="btnFull gray" onclick="copyClientMessage('expiry', this)">&#9200; Aviso caducidad</button>
-      <button class="btnFull gray" onclick="copyClientMessage('renewed', this)">&#9989; Renovacion OK</button>
-      <button class="btnFull gray" onclick="copyClientMessage('expired', this)">&#9888; Cliente caducado</button>
-    </div>
-    <button class="btnFull primary" id="openMessageTemplateEditorBtn" onclick="openMessageTemplateEditor()" style="margin-top:12px">&#9998; Editar plantillas de mensajes</button>
-    <button class="btnFull gray" onclick="closeSheet('messageSheet','messageOverlay')" style="margin-top:8px">Cerrar</button>
-  </div>
-</div>
-
-
-
-<!-- EDIT MESSAGE TEMPLATES SHEET -->
-<div class="sheet-overlay" id="messageTemplateOverlay" onclick="closeSheet('messageTemplateSheet','messageTemplateOverlay')"></div>
-<div class="sheet" id="messageTemplateSheet">
-  <div class="sheet-handle"></div>
-  <div class="sheet-header">
-    <h3>&#9998; Editar plantillas Msg</h3>
-    <button class="sheet-close" onclick="closeSheet('messageTemplateSheet','messageTemplateOverlay')">x</button>
-  </div>
-  <div class="sheet-body">
-    <div class="messageTemplateHelp">
-      Puedes cambiar los textos y se aplicarán a todos los clientes. Mantén las variables entre llaves para que la app ponga los datos de cada cliente.
-      <div class="messageTemplateVars">
-        {saludo} · {nombre} · {app} · {usuario} · {password} · {expiracion} · {servicio} · {fecha_hoy}
-      </div>
-    </div>
-
-    <div class="formGroup">
-      <label>Datos de acceso</label>
-      <textarea id="msgTplAccess" class="msgTemplateTextarea" rows="9"></textarea>
-    </div>
-
-    <div class="formGroup">
-      <label>Aviso de caducidad</label>
-      <textarea id="msgTplExpiry" class="msgTemplateTextarea" rows="8"></textarea>
-    </div>
-
-    <div class="formGroup">
-      <label>Renovación OK</label>
-      <textarea id="msgTplRenewed" class="msgTemplateTextarea" rows="7"></textarea>
-    </div>
-
-    <div class="formGroup">
-      <label>Cliente caducado</label>
-      <textarea id="msgTplExpired" class="msgTemplateTextarea" rows="7"></textarea>
-    </div>
-
-    <div class="formError" id="messageTemplateError"></div>
-    <button class="btnFull primary" id="messageTemplateSaveBtn" onclick="saveMessageTemplates(this)">&#128190; Guardar plantillas</button>
-    <button class="btnFull gray" onclick="resetMessageTemplatesToDefault()" style="margin-top:8px">&#8634; Restaurar textos originales</button>
-    <button class="btnFull gray" onclick="closeSheet('messageTemplateSheet','messageTemplateOverlay')" style="margin-top:8px">Cerrar</button>
-  </div>
-</div>
-
-<!-- BACKUP SHEET -->
-<div class="sheet-overlay" id="backupOverlay" onclick="closeSheet('backupSheet','backupOverlay')"></div>
-<div class="sheet" id="backupSheet">
-  <div class="sheet-handle"></div>
-  <div class="sheet-header">
-    <h3>&#128190; Backup inteligente</h3>
-    <button class="sheet-close" onclick="closeSheet('backupSheet','backupOverlay')">x</button>
-  </div>
-  <div class="sheet-body">
-    <div class="backupPanel">
-      <div class="backupPanelLabel">Ultima copia registrada</div>
-      <div class="backupPanelValue" id="backupLastText">-</div>
-      <div class="backupPanelStatus" id="backupStatusText">-</div>
-    </div>
-    <button class="btnFull primary" onclick="exportFullBackup()">&#128190; Exportar backup completo</button>
-    <button class="btnFull gray" onclick="exportExcel()">&#11015; Exportar solo clientes</button>
-    <p class="miniHelp">El backup completo incluye clientes y renovaciones/pagos. La fecha del ultimo backup se guarda en este dispositivo para avisarte si pasan varios dias sin copia.</p>
-    <button class="btnFull gray" onclick="closeSheet('backupSheet','backupOverlay')" style="margin-top:8px">Cerrar</button>
-  </div>
-</div>
-
-
-<!-- RENEWAL CALENDAR SHEET -->
-<div class="sheet-overlay" id="renewalCalendarOverlay" onclick="closeSheet('renewalCalendarSheet','renewalCalendarOverlay')"></div>
-<div class="sheet renewalCalendarSheet" id="renewalCalendarSheet">
-  <div class="sheet-handle"></div>
-  <div class="sheet-header">
-    <h3>&#128197; Calendario renovaciones</h3>
-    <button class="sheet-close" onclick="closeSheet('renewalCalendarSheet','renewalCalendarOverlay')">x</button>
-  </div>
-  <div class="sheet-body renewalCalendarBody">
-    <div class="renewalCalendarIntro">
-      <div>
-        <strong>Agenda de caducidades</strong>
-        <span>Visualiza los clientes por fecha de renovación y actúa rápido.</span>
-      </div>
-      <button type="button" onclick="renderRenewalCalendar()">&#8634; Actualizar</button>
-    </div>
-
-    <div class="renewalCalendarStats">
-      <button type="button" onclick="setRenewalCalendarMode('today')"><span>Hoy</span><strong id="renewCalToday">0</strong></button>
-      <button type="button" onclick="setRenewalCalendarMode('tomorrow')"><span>Mañana</span><strong id="renewCalTomorrow">0</strong></button>
-      <button type="button" onclick="setRenewalCalendarMode('week')"><span>7 días</span><strong id="renewCalWeek">0</strong></button>
-      <button type="button" onclick="setRenewalCalendarMode('month')"><span>30 días</span><strong id="renewCalMonth">0</strong></button>
-    </div>
-
-    <div class="renewalCalendarFilters">
-      <button type="button" data-renewal-cal-mode="today" onclick="setRenewalCalendarMode('today')">Hoy</button>
-      <button type="button" data-renewal-cal-mode="tomorrow" onclick="setRenewalCalendarMode('tomorrow')">Mañana</button>
-      <button type="button" data-renewal-cal-mode="week" onclick="setRenewalCalendarMode('week')">Esta semana</button>
-      <button type="button" data-renewal-cal-mode="next" onclick="setRenewalCalendarMode('next')">Próxima semana</button>
-      <button type="button" data-renewal-cal-mode="month" onclick="setRenewalCalendarMode('month')">Este mes</button>
-      <button type="button" data-renewal-cal-mode="expired" onclick="setRenewalCalendarMode('expired')">Expirados</button>
-      <button type="button" data-renewal-cal-mode="all" onclick="setRenewalCalendarMode('all')">Todo</button>
-    </div>
-
-    <div id="renewalCalendarContent" class="renewalCalendarContent">
-      <div class="emptyMini">Cargando calendario...</div>
-    </div>
-  </div>
-</div>
-
-<!-- PAYMENTS SHEET -->
-<div class="sheet-overlay" id="paymentsOverlay" onclick="closeSheet('paymentsSheet','paymentsOverlay')"></div>
-<div class="sheet" id="paymentsSheet">
-  <div class="sheet-handle"></div>
-  <div class="sheet-header">
-    <h3>&#128176; Ingresos / renovaciones</h3>
-    <button class="sheet-close" onclick="closeSheet('paymentsSheet','paymentsOverlay')">x</button>
-  </div>
-  <div class="sheet-body">
-    <div class="paymentsStatsGrid">
-      <div class="paymentsStat"><span>Este mes</span><strong id="payMonthTotal">0,00 €</strong></div>
-      <div class="paymentsStat"><span>Ultimos 30 dias</span><strong id="pay30Total">0,00 €</strong></div>
-      <div class="paymentsStat"><span>Total registrado</span><strong id="payAllTotal">0,00 €</strong></div>
-      <div class="paymentsStat"><span>Renovaciones mes</span><strong id="payMonthCount">0</strong></div>
-      <div class="paymentsStat"><span>Pendientes</span><strong id="payPendingCount">0</strong></div>
-      <div class="paymentsStat"><span>Total pendiente</span><strong id="payPendingTotal">0,00 €</strong></div>
-    </div>
-    <div class="raffleHistoryHeader">
-      <span>Historial de renovaciones</span>
-      <button onclick="loadRenewals(true)">&#8634; Recargar</button>
-    </div>
-    <div class="paymentsHistory" id="paymentsHistory">
-      <div class="emptyMini">Todavia no hay renovaciones registradas.</div>
-    </div>
-    <button class="btnFull gray" onclick="exportPaymentsExcel()">&#11015; Exportar ingresos a Excel</button>
-    <button class="btnFull gray" onclick="closeSheet('paymentsSheet','paymentsOverlay')" style="margin-top:8px">Cerrar</button>
-  </div>
-</div>
-
-
-
-
-<!-- FINANCE BALANCE SHEET -->
-<div class="sheet-overlay" id="financeOverlay" onclick="closeSheet('financeSheet','financeOverlay')"></div>
-<div class="sheet" id="financeSheet">
-  <div class="sheet-handle"></div>
-  <div class="sheet-header">
-    <h3>&#128202; Balance / finanzas</h3>
-    <button class="sheet-close" onclick="closeSheet('financeSheet','financeOverlay')">x</button>
-  </div>
-  <div class="sheet-body">
-    <div class="financeIntro">
-      Controla ingresos de clientes, ingresos externos y gastos del servicio.
-    </div>
-
-    <div class="financeFilters financeFilters3">
-      <div class="formGroup">
-        <label>Vista</label>
-        <select id="financeViewMode" onchange="renderFinanceDashboard()">
-          <option value="year">Año completo</option>
-          <option value="month">Mes seleccionado</option>
-        </select>
-      </div>
-      <div class="formGroup" id="financeMonthGroup">
-        <label>Mes</label>
-        <select id="financeMonth" onchange="renderFinanceDashboard()"></select>
-      </div>
-      <div class="formGroup">
-        <label>Año</label>
-        <select id="financeYear" onchange="renderFinanceDashboard()"></select>
-      </div>
-    </div>
-
-    <div class="paymentsStatsGrid financeStatsGrid">
-      <div class="paymentsStat"><span id="finClientIncomeLabel">Ingresos clientes año</span><strong id="finClientIncomeMonth">0,00 €</strong></div>
-      <div class="paymentsStat"><span id="finOtherIncomeLabel">Otros ingresos año</span><strong id="finOtherIncomeMonth">0,00 €</strong></div>
-      <div class="paymentsStat expense"><span id="finExpenseLabel">Gastos año</span><strong id="finExpenseMonth">0,00 €</strong></div>
-      <div class="paymentsStat profit"><span id="finProfitLabel">Beneficio año</span><strong id="finProfitMonth">0,00 €</strong></div>
-      <div class="paymentsStat"><span>Ingresos año</span><strong id="finIncomeYear">0,00 €</strong></div>
-      <div class="paymentsStat expense"><span>Gastos año</span><strong id="finExpenseYear">0,00 €</strong></div>
-      <div class="paymentsStat profit"><span>Beneficio año</span><strong id="finProfitYear">0,00 €</strong></div>
-      <div class="paymentsStat"><span id="finMovementCountLabel">Movimientos año</span><strong id="finMovementCountMonth">0</strong></div>
-    </div>
-
-    <div class="raffleHistoryHeader financeChartsHeader">
-      <span>&#128200; Gráficas del año</span>
-    </div>
-    <div class="financeCharts" id="financeCharts"></div>
-
-    <div class="financeQuickActions">
-      <button onclick="fillFinanceQuick('gastoProveedor')">&#128179; Gasto Panel K13 750€</button>
-      <button onclick="fillFinanceQuick('ingresoPeliculas')">&#127916; Ingreso Jordan Pelis / Series 120€</button>
-    </div>
-
-    <div class="financeFormBox">
-      <h4>Añadir ingreso / gasto</h4>
-      <div class="formRow2">
-        <div class="formGroup">
-          <label>Tipo</label>
-          <select id="financeType">
-            <option value="ingreso">Ingreso</option>
-            <option value="gasto">Gasto</option>
-          </select>
-        </div>
-        <div class="formGroup">
-          <label>Importe</label>
-          <input type="text" id="financeAmount" inputmode="decimal" placeholder="Ej: 750 o 120"/>
-        </div>
-      </div>
-
-      <div class="formGroup">
-        <label>Fecha</label>
-        <input type="date" id="financeDate"/>
-      </div>
-      <input type="hidden" id="financeCategory" value="Otro"/>
-
-      <div class="formGroup">
-        <label>Concepto</label>
-        <input type="text" id="financeConcept" placeholder="Ej: Recarga créditos proveedor"/>
-      </div>
-
-      <div class="formGroup">
-        <label>Notas</label>
-        <input type="text" id="financeNotes" placeholder="Opcional"/>
-      </div>
-
-      <div class="formError" id="financeError"></div>
-      <button class="btnFull primary" id="financeSaveBtn" onclick="saveFinanceMovement(this)">&#128190; Guardar movimiento</button>
-    </div>
-
-    <div class="raffleHistoryHeader financeMonthlyHeader">
-      <span>Resumen por meses</span>
-    </div>
-    <div class="financeMonthlySummary" id="financeMonthlySummary"></div>
-
-    <div class="raffleHistoryHeader">
-      <span id="financeHistoryTitle">Historial ingresos / gastos</span>
-      <button onclick="loadFinanceMovements(true)">&#8634; Recargar</button>
-    </div>
-
-    <div class="paymentsHistory financeHistory" id="financeHistory">
-      <div class="emptyMini">Todavía no hay movimientos registrados.</div>
-    </div>
-
-    <button class="btnFull gray" onclick="exportFinanceExcel()">&#11015; Exportar balance a Excel</button>
-    <button class="btnFull gray" onclick="closeSheet('financeSheet','financeOverlay')" style="margin-top:8px">Cerrar</button>
-  </div>
-</div>
-
-
-<!-- EDIT RENEWAL / PAYMENT SHEET -->
-<div class="sheet-overlay" id="editRenewalOverlay" onclick="closeSheet('editRenewalSheet','editRenewalOverlay')"></div>
-<div class="sheet" id="editRenewalSheet">
-  <div class="sheet-handle"></div>
-  <div class="sheet-header">
-    <h3>Editar ingreso / renovacion</h3>
-    <button class="sheet-close" onclick="closeSheet('editRenewalSheet','editRenewalOverlay')">x</button>
-  </div>
-  <div class="sheet-body">
-    <input type="hidden" id="editRenewalId"/>
-    <p id="editRenewalClient" style="color:var(--muted);font-size:.88rem;margin-bottom:14px"></p>
-    <div class="formRow2">
-      <div class="formGroup">
-        <label>Fecha anterior</label>
-        <input type="date" id="editRenewalPrevious"/>
-      </div>
-      <div class="formGroup">
-        <label>Fecha nueva</label>
-        <input type="date" id="editRenewalNew"/>
-      </div>
-    </div>
-    <div class="formRow2">
-      <div class="formGroup">
-        <label>Meses</label>
-        <input type="number" id="editRenewalMonths" min="0" max="24" step="1"/>
-      </div>
-      <div class="formGroup">
-        <label>Importe</label>
-        <input type="text" id="editRenewalAmount" inputmode="decimal" placeholder="Ej: 10 o 10,50"/>
-      </div>
-    </div>
-    <div class="formRow2">
-      <div class="formGroup">
-        <label>Metodo de pago</label>
-        <select id="editRenewalMethod">
-          <option value="Bizum">Bizum</option>
-          <option value="Efectivo">Efectivo</option>
-          <option value="Transferencia">Transferencia</option>
-          <option value="PayPal">PayPal</option>
-          <option value="Pendiente">Pendiente</option>
-          <option value="Otro">Otro</option>
-        </select>
-      </div>
-      <div class="formGroup">
-        <label>Estado</label>
-        <select id="editRenewalStatus">
-          <option value="pagado">Pagado</option>
-          <option value="pendiente">Pendiente de pago</option>
-        </select>
-      </div>
-    </div>
-    <div class="formGroup">
-      <label>Notas</label>
-      <input type="text" id="editRenewalNotes" placeholder="Opcional"/>
-    </div>
-    <div class="formError" id="editRenewalError"></div>
-    <button class="btnFull primary" id="editRenewalSaveBtn" onclick="saveEditedRenewal(this)">&#128190; Guardar cambios</button>
-    <button class="btnFull danger" id="editRenewalDeleteBtn" onclick="deleteCurrentEditedRenewal(this)" style="margin-top:8px">&#128465; Borrar este registro</button>
-    <button class="btnFull gray" onclick="closeSheet('editRenewalSheet','editRenewalOverlay')" style="margin-top:8px">Cancelar</button>
-  </div>
-</div>
-
-<!-- RAFFLES SHEET -->
-<div class="sheet-overlay" id="raffleOverlay" onclick="closeSheet('raffleSheet','raffleOverlay')"></div>
-<div class="sheet" id="raffleSheet">
-  <div class="sheet-handle"></div>
-  <div class="sheet-header">
-    <h3>&#127873; Sorteos clientes</h3>
-    <button class="sheet-close" onclick="closeSheet('raffleSheet','raffleOverlay')">x</button>
-  </div>
-  <div class="sheet-body">
-    <div class="raffleNote">
-      Herramienta interna para sortear un premio entre tus clientes. La participacion es gratuita y no requiere ningun pago adicional.
-    </div>
-
-    <div class="formGroup">
-      <label>Nombre del sorteo</label>
-      <input type="text" id="raffleName" placeholder="Ej: Sorteo mensual"/>
-    </div>
-
-    <div class="formGroup">
-      <label>Premio</label>
-      <input type="text" id="rafflePrize" placeholder="Ej: 1 mes gratis"/>
-    </div>
-
-    <div class="formGroup">
-      <label>Participantes</label>
-      <select id="raffleParticipantsType" onchange="updateRaffleParticipantCount()">
-        <option value="active">Clientes activos</option>
-        <option value="soon">Expiran pronto (15 dias)</option>
-        <option value="all">Todos los clientes</option>
-        <option value="expired">Clientes caducados</option>
-      </select>
-      <div class="raffleCount" id="raffleParticipantsCount">0 participantes</div>
-    </div>
-
-    <button class="btnFull primary" id="raffleRunBtn" onclick="runRaffle()">&#127922; Realizar sorteo</button>
-
-    <div class="raffleResult" id="raffleResult" style="display:none">
-      <div class="raffleResultLabel">Ganador</div>
-      <div class="raffleWinner" id="raffleWinnerName">-</div>
-      <div class="rafflePrizeText" id="rafflePrizeText"></div>
-      <div class="raffleResultActions">
-        <button class="btnFull gray" onclick="copyRaffleWinnerMessage(this)">&#128203; Copiar mensaje ganador</button>
-        <button class="btnFull gray" onclick="copyRafflePublicMessage(this)">&#128227; Copiar anuncio interno</button>
-      </div>
-    </div>
-
-    <div class="raffleHistoryHeader">
-      <span>Historial de sorteos</span>
-      <button onclick="loadRaffles(true)">&#8634; Recargar</button>
-    </div>
-    <div class="raffleHistory" id="raffleHistory">
-      <div class="emptyMini">Todavia no hay sorteos guardados.</div>
-    </div>
-
-    <button class="btnFull gray" onclick="closeSheet('raffleSheet','raffleOverlay')" style="margin-top:12px">Cerrar</button>
-  </div>
-</div>
-
-<!-- PANEL APP IBO: acceso directo externo -->
-
-
-
-<!-- MFA SECURITY SHEET -->
-<div class="sheet-overlay" id="mfaSecurityOverlay" onclick="closeSheet('mfaSecuritySheet','mfaSecurityOverlay')"></div>
-<div class="sheet" id="mfaSecuritySheet">
-  <div class="sheet-handle"></div>
-  <div class="sheet-header">
-    <h3>Seguridad Google Authenticator</h3>
-    <button class="sheet-close" onclick="closeSheet('mfaSecuritySheet','mfaSecurityOverlay')">x</button>
-  </div>
-  <div class="sheet-body" id="mfaSecurityBody">
-    <div class="mfaInfoBox">
-      <strong>Doble verificacion activa</strong>
-      <span>Desde aqui puedes revisar tus autenticadores y añadir otro dispositivo de respaldo.</span>
-    </div>
-    <button class="btnFull primary" onclick="startMfaEnrollmentFromSettings()">Añadir otro autenticador</button>
-    <div id="mfaSecurityList" class="mfaFactorList"></div>
-  </div>
-</div>
-
-<!-- LINKS FIJOS APP SHEET -->
-<div class="sheet-overlay" id="fixedImageOverlay" onclick="closeSheet('fixedImageSheet','fixedImageOverlay')"></div>
-<div class="sheet" id="fixedImageSheet" style="max-height:92vh;overflow-y:auto;">
-  <div class="sheet-handle"></div>
-  <div class="sheet-header">
-    <h3>&#128444; Links fijos APP</h3>
-    <button class="sheet-close" onclick="closeSheet('fixedImageSheet','fixedImageOverlay')">x</button>
-  </div>
-  <div class="sheet-body" style="padding-bottom:30px;">
-    <div style="background:rgba(0,212,255,0.07);border:1px solid rgba(0,212,255,0.25);border-radius:12px;padding:14px 16px;margin-bottom:18px;">
-      <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#7AA3C8;margin-bottom:8px;">&#128279; 7 enlaces fijos para tu app Android</div>
-      <div style="font-size:13px;color:#E8F4FF;line-height:1.55;">Sube cada imagen en su apartado. El enlace de cada bloque no cambia nunca, solo cambia la imagen que muestra.</div>
-      <div style="font-size:12px;color:#7AA3C8;line-height:1.5;margin-top:8px;">El primer enlace mantiene la ruta antigua y ahora se usa para <b>HORARIOS MUNDIAL</b>.</div>
-    </div>
-    <div id="fixedImageStatus" style="font-size:12px;color:#7AA3C8;line-height:1.5;margin-bottom:14px;">Cargando enlaces fijos...</div>
-    <div id="fixedImageSlotsWrap" class="fixedSlotsWrap"></div>
-  </div>
-</div>
-
-<!-- CARTELERA SHEET -->
-<div class="sheet-overlay" id="carteleraOverlay" onclick="closeSheet('carteleraSheet','carteleraOverlay')"></div>
-<div class="sheet" id="carteleraSheet" style="max-height:92vh;overflow-y:auto;">
-  <div class="sheet-handle"></div>
-  <div class="sheet-header cartSheetHeader">
-    <div class="cartHeaderLeft">
-      <h3>&#128249; Cartelera del dia</h3>
-      <div class="cartHeaderVisits">
-        <span><b id="cart-visits-today">0</b> hoy</span>
-        <span>·</span>
-        <span><b id="cart-visits-total">0</b> total</span>
-      </div>
-    </div>
-    <button class="sheet-close" onclick="closeSheet('carteleraSheet','carteleraOverlay')">x</button>
-  </div>
-  <div class="sheet-body" style="padding-bottom:30px;">
-    <div class="cartClientLinkCard" style="background:rgba(0,212,255,0.045);border:1px solid rgba(0,212,255,0.16);border-radius:12px;padding:12px 14px;margin-bottom:18px;">
-      <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#7AA3C8;margin-bottom:8px;">&#128279; Enlace para tus clientes</div>
-      <div id="clienteLinkBox" class="cartProtectedDisplay" unselectable="on" draggable="false" onselectstart="return false" ondragstart="return false" onclick="copyClienteLink()" title="Pulsa para copiar el enlace" style="font-size:13px;color:#00D4FF;word-break:break-all;padding:8px 12px;background:rgba(0,0,0,0.3);border-radius:8px;cursor:pointer;border:1px solid rgba(0,212,255,0.2);">Cargando...</div>
-      <button id="copyClienteLinkBtn" onclick="copyClienteLink()" style="margin-top:10px;width:100%;padding:10px;background:linear-gradient(135deg,#0099CC,#00D4FF);color:#001822;border:none;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;">&#128203; Copiar enlace de clientes</button>
-    </div>
-
-    <div class="cartSectionTitle" style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#7AA3C8;margin-bottom:10px;">&#127937; Evento del dia</div>
-    <div class="cartUploadRow" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
-      <input type="file" id="cart-img-file" accept="image/*" style="flex:1;min-width:0;background:rgba(255,255,255,0.04);border:1px solid rgba(0,212,255,0.15);border-radius:10px;color:#E8F4FF;font-size:13px;padding:8px 10px;cursor:pointer;">
-      <button onclick="cartUploadImage()" id="cart-upload-btn" style="padding:10px 16px;background:rgba(57,255,20,0.1);border:1px solid rgba(57,255,20,0.3);color:#39FF14;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer;white-space:nowrap;">&#8593; Subir</button>
-    </div>
-    <div id="cart-imgbb-result" style="display:none;margin-bottom:16px;">
-      <div style="font-size:12px;color:#7AA3C8;margin-bottom:6px;">Link de la imagen:</div>
-      <div id="cart-img-link" class="cartProtectedDisplay" unselectable="on" draggable="false" onselectstart="return false" ondragstart="return false" style="font-size:12px;color:#00D4FF;word-break:break-all;padding:8px 10px;background:rgba(0,0,0,0.3);border-radius:8px;border:1px solid rgba(0,212,255,0.2);"></div>
-      <img id="cart-preview-img" src="" alt="Preview" style="max-width:100%;max-height:180px;border-radius:8px;border:1px solid rgba(0,212,255,0.15);display:block;margin-top:10px;object-fit:contain;">
-      <button onclick="cartRemoveImage()" style="margin-top:8px;width:100%;padding:8px;background:rgba(255,71,87,0.1);border:1px solid rgba(255,71,87,0.3);color:#FF4757;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer;">&#128465; Quitar imagen del evento</button>
-    </div>
-    <div class="cartSectionTitle" style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#7AA3C8;margin-bottom:10px;">&#128221; Cartelera del dia</div>
-    <textarea id="cart-texto" placeholder="Pega aquí los eventos del día como haces normalmente..." style="width:100%;min-height:200px;background:rgba(255,255,255,0.04);border:1px solid rgba(0,212,255,0.15);border-radius:10px;color:#E8F4FF;font-family:inherit;font-size:14px;line-height:1.7;padding:12px 14px;resize:vertical;outline:none;" oninput="document.getElementById('cart-char-count').textContent=this.value.length+' caracteres';cartRenderDetectedEvents(this.value)"></textarea>
-    <div class="cartMetaRow" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:6px;">
-      <div id="cart-char-count" style="font-size:11px;color:#7AA3C8;">0 caracteres</div>
-      <div id="cart-detected-inline" style="display:none;align-items:center;gap:7px;font-size:11px;color:#8FA8BA;">
-        <span style="width:7px;height:7px;border-radius:50%;background:#39FF14;box-shadow:0 0 10px rgba(57,255,20,.45);"></span>
-        <span>Detección automática · <b id="cart-detected-count" style="color:#39FF14;">0 eventos</b></span>
-      </div>
-    </div>
-    <div class="cartActionRow" style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;">
-      <button onclick="cartSave()" id="cart-save-btn" style="flex:1;padding:12px;background:linear-gradient(135deg,#0099CC,#00D4FF);color:#001822;border:none;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;">&#128190; Guardar y publicar</button>
-      <button onclick="cartLoadExisting()" style="padding:12px 16px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:#E8F4FF;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer;">&#8634; Recargar</button>
-    </div>
-    <button id="cartClearBtn" onclick="cartClear()" style="margin-top:8px;width:100%;padding:10px;background:rgba(255,71,87,0.1);border:1px solid rgba(255,71,87,0.3);color:#FF4757;border-radius:8px;font-weight:600;font-size:14px;cursor:pointer;">&#128465; Borrar cartelera</button>
-
-
-  </div>
-</div>
 
 
 <!-- PLANTILLAS PELICULAS SHEET -->
@@ -1739,6 +990,6 @@
 <div id="toastMsg" style="position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(100px);background:#1e1e2a;border:1px solid rgba(0,229,255,0.3);color:#eeeef5;padding:12px 24px;border-radius:12px;font-size:14px;font-weight:600;z-index:9999;transition:transform 0.3s ease;pointer-events:none;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,0.5);">Mensaje</div>
   <script src="config.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script src="script.m17liv3-admin-v28-7-20260816.js" defer></script>
+  <script src="script.m17liv3-admin-v28-8-20260816.js" defer></script>
 </body>
 </html>
