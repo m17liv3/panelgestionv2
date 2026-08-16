@@ -318,7 +318,7 @@
   </main>
 
   <script src="config.js"></script>
-  <!-- Cartelera Premium V3.3 · sin barra superior -->
+  <!-- Cartelera Premium V3.3.1 · sin barra superior + fix carga -->
   <script>
     (function () {
       'use strict';
@@ -359,7 +359,6 @@
       }
 
       function setLoading(loading) {
-        refreshBtn.disabled = loading;
         if (loading) {
           statusEl.hidden = false;
           statusEl.innerHTML = '<span class="spinner" aria-hidden="true"></span><span>Cargando cartelera…</span>';
@@ -586,7 +585,7 @@
           incrementVisit(record);
         } catch (error) {
           statusEl.hidden = false;
-          statusEl.innerHTML = '<span>⚠️ No se pudo cargar la cartelera. Pulsa ↻ para volver a intentarlo.</span>';
+          statusEl.innerHTML = '<span>⚠️ No se pudo cargar la cartelera. Vuelve a abrir la página para intentarlo de nuevo.</span>';
           updatedEl.textContent = '';
         } finally {
         }
