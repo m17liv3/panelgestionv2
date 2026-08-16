@@ -287,7 +287,7 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
 </main>
 <script src="config.js"></script>
 <script>
- // M17LIV3 resultados V64.6.3 · fallback directo lista SportScore
+ // M17LIV3 resultados V64.6.4 · FotMob force refresh + normalización polaca
 (function(){
  const API_PROXY='https://qjbnjhojwhcndcfjcyrc.supabase.co/functions/v1/resultados-dia';
  const SHARED_RESULTS_CACHE='https://qjbnjhojwhcndcfjcyrc.supabase.co/functions/v1/resultados-cache';
@@ -370,7 +370,7 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
  }
  function markTennisDone(list,found,date){const wanted=tennisMatchesForGate(list);if(!wanted.length)return false;const resolved=foundTennisKeys(found);if(resolved.size<wanted.length)return false;const key=tennisDoneKey(list,date);if(!key)return false;try{const was=localStorage.getItem(key)==='1';localStorage.setItem(key,'1');return !was}catch{return false}}
  function formatDate(){return new Intl.DateTimeFormat('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(new Date()).replace(/^./,c=>c.toUpperCase())}
- function normalize(v){return String(v||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\b(fc|cf|afc|sc|ac|cd|ud|ue|sd|rc|club|deportivo|deportes|futbol|football|soccer|women|woman|femenino|femenina|team)\b/g,' ').replace(/\bbasilea\b/g,'basel').replace(/\bwisla cracovia\b/g,'wisla krakow').replace(/\bwisla krakovia\b/g,'wisla krakow').replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim()}
+ function normalize(v){return String(v||'').toLowerCase().replace(/ł/g,'l').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\b(fc|cf|afc|sc|ac|cd|ud|ue|sd|rc|club|deportivo|deportes|futbol|football|soccer|women|woman|femenino|femenina|team)\b/g,' ').replace(/\bbasilea\b/g,'basel').replace(/\bwisla cracovia\b/g,'wisla krakow').replace(/\bwisla krakovia\b/g,'wisla krakow').replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim()}
  function toks(v){return normalize(v).split(' ').filter(x=>x.length>1)}
  function sim(a,b){a=normalize(a);b=normalize(b);if(!a||!b)return 0;if(a===b)return 1;if(a.includes(b)||b.includes(a))return .92;const A=toks(a),B=toks(b);if(!A.length||!B.length)return 0;let hit=0;for(const x of A){if(B.some(y=>x===y||(x.length>=4&&y.length>=4&&(x.startsWith(y)||y.startsWith(x)))))hit++}return hit/Math.max(A.length,B.length)}
  function sportMap(s){const t=String(s||'').toLowerCase();if(/padel|pádel/.test(t))return 'Padel';if(/tenis|tennis|atp|wta/.test(t))return 'Tennis';if(/cicl|cycling/.test(t))return 'Cycling';if(/golf/.test(t))return 'Golf';if(/moto|motogp|motocicl|formula|f1/.test(t))return 'Motorsport';if(/nataci|swim/.test(t))return 'Swimming';if(/basket|baloncesto/.test(t))return 'Basketball';if(/base|beisbol|béisbol/.test(t))return 'Baseball';if(/hockey/.test(t))return 'Hockey';if(/hand|balonmano/.test(t))return 'Handball';if(/volley|voleibol/.test(t))return 'Volleyball';if(/nfl|futbol americano|fútbol americano/.test(t))return 'NFL';if(/rugby/.test(t))return 'Rugby';if(/foot|soccer|futbol|fútbol/.test(t))return 'Football';return 'Unknown'}
@@ -620,7 +620,7 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
  }
 
 
- const FAST_CACHE_PREFIX='m17liv3_results_fast_v64_6_3_';
+ const FAST_CACHE_PREFIX='m17liv3_results_fast_v64_6_4_';
  function fastCacheKey(date){return FAST_CACHE_PREFIX+(date||localDate())}
  function saveFastCache(date){
    try{
@@ -866,7 +866,7 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
 
  async function fetchResults(date,sports,force=false,options={}){
    if(!sports.length)return [];
-   const params=new URLSearchParams({date,sports:sports.join(','),v:'64.6.3'});
+   const params=new URLSearchParams({date,sports:sports.join(','),v:'64.6.4'});
    if(force)params.set('force','1');
    if(options.tennisDone)params.set('tennis_done','1');
    if(options.tennisCacheOnly)params.set('tennis_cache_only','1');
@@ -882,7 +882,7 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
  /* V51 · respaldo estricto de fútbol con SportScore.
     Solo se acepta un resultado cuando coinciden equipos, fecha local, hora y estado finalizado. */
  const SPORT_SCORE_SRC='m17liv3-client-v51';
- function ssNorm(v){return String(v||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\b(fc|cf|afc|sc|ac|cd|ud|ue|sd|rc|club|deportivo|deportes|futbol|football|soccer|women|femenino|femenina)\b/g,' ').replace(/\bbasilea\b/g,'basel').replace(/\bwisla cracovia\b/g,'wisla krakow').replace(/\bwisla krakovia\b/g,'wisla krakow').replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim()}
+ function ssNorm(v){return String(v||'').toLowerCase().replace(/ł/g,'l').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\b(fc|cf|afc|sc|ac|cd|ud|ue|sd|rc|club|deportivo|deportes|futbol|football|soccer|women|femenino|femenina)\b/g,' ').replace(/\bbasilea\b/g,'basel').replace(/\bwisla cracovia\b/g,'wisla krakow').replace(/\bwisla krakovia\b/g,'wisla krakow').replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim()}
  function ssSlug(v,drop=false){let s=ssNorm(v);if(drop)s=s.replace(/\b(de|del|la|el|los|las)\b/g,' ').replace(/\s+/g,' ').trim();return s.replace(/\s+/g,'-')}
  function ssTokens(v){return ssNorm(v).split(' ').filter(x=>x.length>=3)}
  function ssAliases(team){
@@ -1221,6 +1221,20 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
    }
    return out;
  }
+
+ function footballMissingNeedsFreshFetch(missing,targetDate){
+   if(targetDate!==localDate())return false;
+   const now=madridNow();
+   return (missing||[]).some(o=>{
+     if(sportMap(o?.sport)!=='Football')return false;
+     const start=timeMins(o?.time);
+     if(start==null)return false;
+     // Solo forzamos FotMob cuando han pasado al menos 110 min desde el inicio.
+     // Evita consultas forzadas para partidos que todavía están en juego.
+     return now.mins >= start + 110;
+   });
+ }
+
  async function load(force=false){
    $('#dateText').textContent=formatDate();
    if(!matches.length)setLiveStatus('Cargando resultados','comprobando novedades…',true);else setLiveStatus('Resultados mostrados','comprobando nuevos resultados…',true);
@@ -1318,6 +1332,32 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
      render();
      saveFastCache(targetDate);
      setLiveStatus('Resultados mostrados','comprobando nuevos resultados…',true);$('#updatedText').textContent='';
+
+     /*
+       V64.6.4 · REFRESCO FRESCO DE FÚTBOL
+       El endpoint resultados-dia ya puede tener el resultado en FotMob aunque
+       la primera respuesta de la página proceda de una caché anterior.
+       Si queda algún partido de fútbol pendiente y han pasado >=110 min desde
+       su inicio, hacemos UNA lectura con force=1, fusionamos y volvemos a cruzar.
+     */
+     if(hasFootball && footballMissingNeedsFreshFetch(result.missing,targetDate)){
+       try{
+         const freshFootball=await fetchResults(targetDate,['Football'],true);
+         if(freshFootball.length){
+           apiEvents=dedupeEvents([
+             ...apiEvents.filter(e=>sportMap(e?.sport)!=='Football'),
+             ...freshFootball
+           ]);
+
+           const beforeFreshFootball=currentResultKeys();
+           result=matchEvents(offered,apiEvents);
+           matches=result.found;
+           detectNewResults(beforeFreshFootball);
+           render();
+           saveFastCache(targetDate);
+         }
+       }catch{}
+     }
 
      /*
        V58 · REFRESCO DE TENIS EN SEGUNDO PLANO
