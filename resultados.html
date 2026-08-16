@@ -287,7 +287,7 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
 </main>
 <script src="config.js"></script>
 <script>
- // M17LIV3 resultados V64.6.4 · FotMob force refresh + normalización polaca
+ // M17LIV3 resultados V64.6.5 · persistencia acumulativa tras refrescos parciales
 (function(){
  const API_PROXY='https://qjbnjhojwhcndcfjcyrc.supabase.co/functions/v1/resultados-dia';
  const SHARED_RESULTS_CACHE='https://qjbnjhojwhcndcfjcyrc.supabase.co/functions/v1/resultados-cache';
@@ -1344,8 +1344,14 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
        try{
          const freshFootball=await fetchResults(targetDate,['Football'],true);
          if(freshFootball.length){
+           /*
+             V64.6.5 · NO sustituir el fútbol ya confirmado.
+             La lectura forzada de FotMob puede ser parcial. Si eliminamos antes
+             todos los eventos de fútbol, los resultados guardados desaparecen
+             al recargar. Fusionamos la respuesta fresca con lo ya conocido.
+           */
            apiEvents=dedupeEvents([
-             ...apiEvents.filter(e=>sportMap(e?.sport)!=='Football'),
+             ...apiEvents,
              ...freshFootball
            ]);
 
@@ -1375,9 +1381,11 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
              {tennisDone:false}
            );
 
-           apiEvents=apiEvents.filter(e=>sportMap(e?.sport)!=='Tennis');
-           apiEvents.push(...refreshedTennis);
-           apiEvents=dedupeEvents(apiEvents);
+           /* La actualización de tenis también puede ser parcial: acumulamos. */
+           apiEvents=dedupeEvents([
+             ...apiEvents,
+             ...refreshedTennis
+           ]);
 
            const beforeTennisUpdate=currentResultKeys();
            result=matchEvents(offered,apiEvents);
