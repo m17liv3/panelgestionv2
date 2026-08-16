@@ -1,4 +1,4 @@
-// google-authenticator-mfa-v1.3.1-7-links-fijos-fix
+// M17LIV3 ADMIN V28.8.2 · cartelera diaria vacía al cambiar de fecha
 var CONFIG = window.M17_CONFIG || {};
 var ADMIN_USER = CONFIG.adminUser || 'admin';
 var ADMIN_PASS_HASH = CONFIG.adminPassHash || '';
@@ -5863,11 +5863,25 @@ async function cartLoadExisting() {
     if (!res.ok) return;
     var data = await res.json();
     var record = data.record || {};
-    var texto = record.texto || '';
+    var madridParts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Europe/Madrid',
+      year: 'numeric', month: '2-digit', day: '2-digit'
+    }).formatToParts(new Date());
+    var madridGet = function(type) {
+      var part = madridParts.find(function(item){ return item.type === type; });
+      return part ? part.value : '';
+    };
+    var madridToday = madridGet('year') + '-' + madridGet('month') + '-' + madridGet('day');
+    var publicationIsToday = String(record.eventos_fecha || '') === madridToday;
+
+    /* V28.8.2: al abrir el panel después de medianoche no recuperamos
+       el texto ni la imagen de la cartelera anterior. Los datos continúan
+       guardados como respaldo hasta que se publique la programación nueva. */
+    var texto = publicationIsToday ? (record.texto || '') : '';
     document.getElementById('cart-texto').value = texto;
     document.getElementById('cart-char-count').textContent = texto.length + ' caracteres';
     cartRenderDetectedEvents(texto);
-    var imgUrl = record.imagen_dia || '';
+    var imgUrl = publicationIsToday ? (record.imagen_dia || '') : '';
     if (imgUrl) {
       document.getElementById('cart-img-link').textContent = imgUrl;
       document.getElementById('cart-imgbb-result').style.display = 'block';
@@ -5875,7 +5889,7 @@ async function cartLoadExisting() {
     } else {
       document.getElementById('cart-imgbb-result').style.display = 'none';
     }
-    var today = new Date().toISOString().slice(0,10);
+    var today = madridToday;
     var visits = record.visits || {};
     document.getElementById('cart-visits-today').textContent = visits[today] || 0;
     var total = Object.values(visits).reduce(function(a,b){ return a+b; }, 0);
