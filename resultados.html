@@ -275,7 +275,7 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
 </main>
 <script src="config.js"></script>
 <script>
- // M17LIV3 resultados V64.3 · exclusión robusta de fútbol sala
+ // M17LIV3 resultados V64.4 · filtro estricto deportes con API
 (function(){
  const API_PROXY='https://qjbnjhojwhcndcfjcyrc.supabase.co/functions/v1/resultados-dia';
  const cfg=window.M17_CONFIG||{};
@@ -641,11 +641,6 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
 
 
  function isSupportedResultsSport(offeredItem){
-   /*
-     Importante: sport suele venir como "Fútbol" aunque el evento sea
-     "Fútbol Sala". Por eso comprobamos TODOS los campos descriptivos
-     concatenados, no solo el primer valor disponible.
-   */
    const raw=normalize([
      offeredItem?.sport,
      offeredItem?.category,
@@ -655,10 +650,25 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
      offeredItem?.away
    ].filter(Boolean).join(' '));
 
-   // Excluir expresamente fútbol sala / futsal.
-   if(/\bfutsal\b|\bfutbol sala\b/.test(raw))return false;
+   // Exclusiones explícitas de deportes que no tienen seguimiento real.
+   if(
+     /\bfutsal\b|\bfutbol sala\b|\bgimnasia\b|\britmica\b|\britmica\b|\bartística\b|\bartistica\b|\batletismo\b|\bnatacion\b|\bnatación\b|\bciclismo\b|\bgolf\b|\bsnooker\b|\bpadel\b|\bpádel\b|\bbalonmano\b|\bvoleibol\b|\brugby\b|\bhockey\b|\bmotor\b|\bmoto\b|\bf1\b/.test(raw)
+   ) return false;
 
    const mapped=sportMap(offeredItem?.sport||'');
+
+   /*
+     Para resultados solo aceptamos enfrentamientos reales A vs B.
+     Esto evita que un snapshot antiguo mal clasificado como "Football"
+     meta pruebas de gimnasia u otros eventos sin rivales.
+   */
+   const hasSides=Boolean(
+     String(offeredItem?.home||'').trim() &&
+     String(offeredItem?.away||'').trim()
+   );
+
+   if(!hasSides)return false;
+
    return ['Football','Tennis','Basketball'].includes(mapped);
  }
 
