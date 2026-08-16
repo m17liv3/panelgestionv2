@@ -1,7 +1,7 @@
-const CACHE_NAME = 'm17liv3-v28-8-20260816';
+const CACHE_NAME = 'm17liv3-v28-8-1-20260816';
 const ASSETS = [
   './','./index.html','./cliente.html','./cartelera.html','./resultados.html','./config.js','./manifest.webmanifest',
-  './styles.m17liv3-neon-pro-v20-20260802.css','./script.m17liv3-admin-v28-8-20260816.js',
+  './styles.m17liv3-neon-pro-v20-20260802.css','./script.m17liv3-admin-v28-8-1-20260816.js',
   './assets/logo.png','./assets/icons/icon-192.png','./assets/icons/icon-512.png'
 ];
 
@@ -30,7 +30,7 @@ self.addEventListener('fetch', event => {
   const fresh =
     path.endsWith('/index.html') ||
     path.endsWith('/') ||
-    path.endsWith('/script.m17liv3-admin-v28-8-20260816.js') ||
+    path.endsWith('/script.m17liv3-admin-v28-8-1-20260816.js') ||
     path.endsWith('/styles.m17liv3-neon-pro-v20-20260802.css') ||
     path.endsWith('/cartelera.html') ||
     path.endsWith('/resultados.html') ||
