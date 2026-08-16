@@ -287,7 +287,7 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
 </main>
 <script src="config.js"></script>
 <script>
- // M17LIV3 resultados V64.6.5 · persistencia acumulativa tras refrescos parciales
+ // M17LIV3 resultados V64.6.6 · cambio diario sin destello de resultados anteriores
 (function(){
  const API_PROXY='https://qjbnjhojwhcndcfjcyrc.supabase.co/functions/v1/resultados-dia';
  const SHARED_RESULTS_CACHE='https://qjbnjhojwhcndcfjcyrc.supabase.co/functions/v1/resultados-cache';
@@ -298,6 +298,7 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
  const SUPPORTED=new Set(['Football','Tennis','Basketball']);
  const ICONS={Football:'⚽',Tennis:'🎾',Basketball:'🏀',Baseball:'⚾',Hockey:'🏒',Handball:'🤾',Volleyball:'🏐',NFL:'🏈',Rugby:'🏉',Padel:'🎾',Cycling:'🚴',Golf:'⛳',Motorsport:'🏍️',Swimming:'🏊',Unknown:'•'};
  let matches=[],offered=[];
+ let activeResultsDate='';
  const $=s=>document.querySelector(s);
  const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
  function localDate(offsetDays=0){const d=new Date();d.setDate(d.getDate()+offsetDays);const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`}
@@ -620,7 +621,8 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
  }
 
 
- const FAST_CACHE_PREFIX='m17liv3_results_fast_v64_6_4_';
+ /* V64.6.6: espacio de caché nuevo para evitar datos del día anterior. */
+ const FAST_CACHE_PREFIX='m17liv3_results_fast_v64_6_6_';
  function fastCacheKey(date){return FAST_CACHE_PREFIX+(date||localDate())}
  function saveFastCache(date){
    try{
@@ -1244,6 +1246,7 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
      offered=(published.events||[]).map(cleanOfferedEvent);
      $('#countDay').textContent=offered.length;
      const targetDate=published.date||localDate();
+     activeResultsDate=targetDate;
      const sharedFinalsPromise=fetchSharedFinals(targetDate);
 
      const offeredSports=[...new Set(offered.map(o=>sportMap(o.sport)).filter(s=>SUPPORTED.has(s)))];
@@ -1482,14 +1485,15 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
 
  window.addEventListener('pagehide',()=>{
    try{
-     mergeIntoFinalLedger(localDate(),matches);
-     saveFastCache(localDate());
+     const date=activeResultsDate||localDate();
+     mergeIntoFinalLedger(date,matches);
+     saveFastCache(date);
    }catch{}
  });
 
  document.addEventListener('visibilitychange',()=>{
    if(document.visibilityState==='hidden'){
-     try{mergeIntoFinalLedger(localDate(),matches)}catch{}
+     try{mergeIntoFinalLedger(activeResultsDate||localDate(),matches)}catch{}
    }
  });
 
