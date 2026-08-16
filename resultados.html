@@ -287,7 +287,7 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
 </main>
 <script src="config.js"></script>
 <script>
- // M17LIV3 resultados V64.6.2 · parser SportScore robusto
+ // M17LIV3 resultados V64.6.3 · fallback directo lista SportScore
 (function(){
  const API_PROXY='https://qjbnjhojwhcndcfjcyrc.supabase.co/functions/v1/resultados-dia';
  const SHARED_RESULTS_CACHE='https://qjbnjhojwhcndcfjcyrc.supabase.co/functions/v1/resultados-cache';
@@ -620,7 +620,7 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
  }
 
 
- const FAST_CACHE_PREFIX='m17liv3_results_fast_v64_6_2_';
+ const FAST_CACHE_PREFIX='m17liv3_results_fast_v64_6_3_';
  function fastCacheKey(date){return FAST_CACHE_PREFIX+(date||localDate())}
  function saveFastCache(date){
    try{
@@ -866,7 +866,7 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
 
  async function fetchResults(date,sports,force=false,options={}){
    if(!sports.length)return [];
-   const params=new URLSearchParams({date,sports:sports.join(','),v:'64.6.2'});
+   const params=new URLSearchParams({date,sports:sports.join(','),v:'64.6.3'});
    if(force)params.set('force','1');
    if(options.tennisDone)params.set('tennis_done','1');
    if(options.tennisCacheOnly)params.set('tennis_cache_only','1');
@@ -1019,6 +1019,48 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
    orientation=direct>=swap?'direct':'swapped'
  }return {status,score,sides,orientation,bestTemporal:bt,rank:(score?100:0)+(ssFinished(status)?120:0)+(bt?.same?350:0)+(bt?.diff!=null?Math.max(0,120-bt.diff):0)}}
  function ssSelect(data,ev,targetDate){let best=null;for(const c of ssTeamObjects(data,ev.home,ev.away)){const a=ssAnalyze(c.obj,ev,targetDate);if(!best||a.rank>best.rank)best={...a,obj:c.obj}}return best}
+
+ function ssSideMatches(name,team){
+   const n=ssNorm(name);
+   return ssAliases(team).some(a=>n===a||n.includes(a)||a.includes(n));
+ }
+
+ function ssSelectRecentFinal(data,ev){
+   let best=null;
+
+   for(const c of ssTeamObjects(data,ev.home,ev.away)){
+     const obj=c.obj;
+     const status=ssFindStatus(obj);
+     const score=ssFindScore(obj);
+     const sides=ssFindSides(obj);
+
+     if(!score||!ssFinished(status)||!sides)continue;
+
+     const normal=
+       ssSideMatches(sides.home,ev.home) &&
+       ssSideMatches(sides.away,ev.away);
+
+     const swapped=
+       ssSideMatches(sides.home,ev.away) &&
+       ssSideMatches(sides.away,ev.home);
+
+     if(!normal&&!swapped)continue;
+
+     // El objeto más pequeño suele ser el objeto del partido y no un contenedor.
+     const candidate={
+       score,
+       status,
+       sides,
+       orientation:swapped?'swapped':'normal',
+       size:c.size
+     };
+
+     if(!best||candidate.size<best.size)best=candidate;
+   }
+
+   return best;
+ }
+
  function ssVariants(team,sport='football'){
    const n=ssNorm(team);
    /*
@@ -1052,6 +1094,32 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
    const ssSport=mapped==='Basketball'?'basketball':'football';
    const cand=[];
    if(recent&&ssHasTeams(recent,ev.home,ev.away)){
+     /*
+       V64.6.3:
+       /matches es una lista de partidos actuales. Si encontramos un objeto
+       pequeño con LOS DOS equipos exactos + estado final + marcador, lo
+       aceptamos directamente sin depender de que SportScore exponga un
+       timestamp interno interpretable.
+     */
+     const direct=ssSelectRecentFinal(recent,ev);
+     if(direct){
+       let h=direct.score.home,a=direct.score.away;
+       if(direct.orientation==='swapped')[h,a]=[a,h];
+       return {
+         source:'SportScore',
+         sport:mapped,
+         event_id:`ss-recent-${ssSport}-${normalize(ev.home)}-${normalize(ev.away)}-${targetDate}`,
+         event_date:`${targetDate}T${ev.time||'00:00'}:00`,
+         status:'FINISHED',
+         home:ev.home,
+         away:ev.away,
+         score_home:h,
+         score_away:a,
+         finished:true,
+         competition:ev.title||''
+       };
+     }
+
      const d=ssSelect(recent,ev,targetDate);
      if(d)cand.push({diag:d,kind:'recent'});
    }
