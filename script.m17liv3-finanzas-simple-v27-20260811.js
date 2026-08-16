@@ -5823,37 +5823,22 @@ function cartParseDailyEvents(text) {
 }
 
 function cartRenderDetectedEvents(text) {
-  var box = document.getElementById('cart-detected-events');
+  var inline = document.getElementById('cart-detected-inline');
   var count = document.getElementById('cart-detected-count');
-  var list = document.getElementById('cart-detected-list');
-  if (!box || !count || !list) return;
+  if (!inline || !count) return;
+
+  var raw = String(text || '').trim();
+  if (!raw) {
+    inline.style.display = 'none';
+    count.textContent = '0 eventos';
+    return;
+  }
+
   var parsed = cartParseDailyEvents(text);
-  var matches = parsed.events.filter(function(e){ return e.type === 'match'; }).length;
-  count.textContent = parsed.events.length + (parsed.events.length === 1 ? ' evento detectado' : ' eventos detectados');
-  if (!String(text || '').trim()) {
-    box.style.display = 'none';
-    list.innerHTML = '';
-    return;
-  }
-  box.style.display = 'block';
-  if (!parsed.events.length) {
-    list.innerHTML = '<div style="color:#FFB35C;font-size:12px;line-height:1.5;">No he detectado eventos todavía. Comprueba que cada evento empiece por su hora.</div>';
-    return;
-  }
-  var summary = '<div style="padding:0 0 8px;color:#7AA3C8;font-size:11px;line-height:1.45;">' +
-    matches + ' enfrentamientos directos reconocidos · ' + (parsed.events.length - matches) + ' eventos de sesión/etapa/jornada</div>';
-  list.innerHTML = summary + parsed.events.slice(0,50).map(function(e){
-    var icon = cartSportIcon(e.sport);
-    var body = e.type === 'match'
-      ? '<b>' + cartEscapeHtml(e.home) + '</b> <span style="color:#6E8AA4;">vs</span> <b>' + cartEscapeHtml(e.away) + '</b>'
-      : '<b>' + cartEscapeHtml(e.title) + '</b>';
-    return '<div style="display:flex;gap:8px;align-items:flex-start;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:12px;color:#DCEBFA;">' +
-      '<span style="width:20px;flex:0 0 20px;">' + icon + '</span>' +
-      '<span style="min-width:0;flex:1;">' + body +
-      '<span style="color:#00D4FF;margin-left:7px;">' + cartEscapeHtml(e.time) + '</span></span></div>';
-  }).join('') + (parsed.events.length > 50 ? '<div style="padding-top:8px;color:#7AA3C8;font-size:11px;">+' + (parsed.events.length-50) + ' eventos más</div>' : '');
+  count.textContent = parsed.events.length + (parsed.events.length === 1 ? ' evento' : ' eventos');
+  inline.style.display = 'inline-flex';
 }
-// ========== FIN DETECCION AUTOMATICA DE EVENTOS V26 ==========
+// ========== FIN DETECCION AUTOMATICA DE EVENTOS V28 MINIMAL ==========
 
 function openCartelera() {
   closeSheet('menuSheet','menuOverlay');
@@ -5897,14 +5882,7 @@ async function cartLoadExisting() {
     var total = Object.values(visits).reduce(function(a,b){ return a+b; }, 0);
     document.getElementById('cart-visits-total').textContent = total;
 
-    // Preview clientes
-    document.getElementById('cart-prev-texto').textContent = texto || 'Sin publicar todavia';
-    if (imgUrl) {
-      document.getElementById('cart-prev-img').src = imgUrl;
-      document.getElementById('cart-prev-evento').style.display = 'block';
-    } else {
-      document.getElementById('cart-prev-evento').style.display = 'none';
-    }
+
   } catch(e) {}
 }
 

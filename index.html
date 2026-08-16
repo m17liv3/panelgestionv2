@@ -1098,7 +1098,7 @@
     <button class="sheet-close" onclick="closeSheet('carteleraSheet','carteleraOverlay')">x</button>
   </div>
   <div class="sheet-body" style="padding-bottom:30px;">
-    <div style="background:rgba(57,255,20,0.07);border:1px solid rgba(57,255,20,0.25);border-radius:12px;padding:14px 16px;margin-bottom:20px;">
+    <div style="background:rgba(0,212,255,0.045);border:1px solid rgba(0,212,255,0.16);border-radius:12px;padding:12px 14px;margin-bottom:18px;">
       <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#7AA3C8;margin-bottom:8px;">&#128279; Enlace para tus clientes</div>
       <div id="clienteLinkBox" class="cartProtectedDisplay" unselectable="on" draggable="false" onselectstart="return false" ondragstart="return false" onclick="copyClienteLink()" title="Pulsa para copiar el enlace" style="font-size:13px;color:#00D4FF;word-break:break-all;padding:8px 12px;background:rgba(0,0,0,0.3);border-radius:8px;cursor:pointer;border:1px solid rgba(0,212,255,0.2);">Cargando...</div>
       <button onclick="copyClienteLink()" style="margin-top:10px;width:100%;padding:10px;background:linear-gradient(135deg,#0099CC,#00D4FF);color:#001822;border:none;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;">&#128203; Copiar enlace de clientes</button>
@@ -1117,14 +1117,12 @@
     </div>
     <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#7AA3C8;margin-bottom:10px;">&#128221; Cartelera del dia</div>
     <textarea id="cart-texto" placeholder="Pega aquí los eventos del día como haces normalmente..." style="width:100%;min-height:200px;background:rgba(255,255,255,0.04);border:1px solid rgba(0,212,255,0.15);border-radius:10px;color:#E8F4FF;font-family:inherit;font-size:14px;line-height:1.7;padding:12px 14px;resize:vertical;outline:none;" oninput="document.getElementById('cart-char-count').textContent=this.value.length+' caracteres';cartRenderDetectedEvents(this.value)"></textarea>
-    <div id="cart-char-count" style="font-size:11px;color:#7AA3C8;text-align:right;margin-top:4px;">0 caracteres</div>
-    <div id="cart-detected-events" style="display:none;margin-top:12px;background:linear-gradient(145deg,rgba(0,212,255,.055),rgba(57,255,20,.035));border:1px solid rgba(0,212,255,.16);border-radius:12px;padding:12px 14px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:5px;">
-        <div style="font-size:10px;letter-spacing:1.8px;text-transform:uppercase;color:#7AA3C8;">Detección automática</div>
-        <div id="cart-detected-count" style="font-size:12px;font-weight:800;color:#39FF14;">0 eventos detectados</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:6px;">
+      <div id="cart-char-count" style="font-size:11px;color:#7AA3C8;">0 caracteres</div>
+      <div id="cart-detected-inline" style="display:none;align-items:center;gap:7px;font-size:11px;color:#8FA8BA;">
+        <span style="width:7px;height:7px;border-radius:50%;background:#39FF14;box-shadow:0 0 10px rgba(57,255,20,.45);"></span>
+        <span>Detección automática · <b id="cart-detected-count" style="color:#39FF14;">0 eventos</b></span>
       </div>
-      <div style="font-size:11px;color:#6F879D;line-height:1.45;margin-bottom:6px;">Se guardarán internamente al publicar para localizar después sus resultados. Tú sigues pegando el texto de siempre.</div>
-      <div id="cart-detected-list" style="max-height:230px;overflow:auto;"></div>
     </div>
     <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;">
       <button onclick="cartSave()" id="cart-save-btn" style="flex:1;padding:12px;background:linear-gradient(135deg,#0099CC,#00D4FF);color:#001822;border:none;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;">&#128190; Guardar y publicar</button>
@@ -1132,17 +1130,6 @@
     </div>
     <button onclick="cartClear()" style="margin-top:8px;width:100%;padding:10px;background:rgba(255,71,87,0.1);border:1px solid rgba(255,71,87,0.3);color:#FF4757;border-radius:8px;font-weight:600;font-size:14px;cursor:pointer;">&#128465; Borrar cartelera</button>
 
-    <div style="margin-top:24px;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#7AA3C8;margin-bottom:12px;">&#128064; Lo que ven tus clientes ahora</div>
-    <div style="background:rgba(14,29,53,0.8);border:1px solid rgba(0,212,255,0.15);border-radius:12px;overflow:hidden;">
-      <div id="cart-prev-evento" style="display:none;">
-        <div style="background:linear-gradient(135deg,rgba(0,212,255,0.1),rgba(57,255,20,0.07));padding:8px 14px;font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#00D4FF;border-bottom:1px solid rgba(0,212,255,0.15);">&#11088; Evento exclusivo del dia &#11088;</div>
-        <img id="cart-prev-img" src="" alt="Evento" style="width:100%;max-height:200px;object-fit:contain;display:block;background:#000;">
-      </div>
-      <div style="padding:16px;">
-        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#7AA3C8;margin-bottom:8px;">Cartelera:</div>
-        <div id="cart-prev-texto" style="font-size:14px;line-height:1.7;color:#E8F4FF;white-space:pre-wrap;word-break:break-word;min-height:40px;">Sin publicar todavia</div>
-      </div>
-    </div>
     <div style="margin-top:24px;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#7AA3C8;margin-bottom:12px;">&#128202; Visitas a la cartelera</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
       <div style="background:rgba(0,0,0,0.25);border:1px solid rgba(0,212,255,0.12);border-radius:12px;padding:16px;text-align:center;">
