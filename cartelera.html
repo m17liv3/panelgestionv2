@@ -107,17 +107,16 @@
       letter-spacing:.18em;
       text-transform:uppercase;
     }
-    h1 {
-      margin:6px 0 4px;
-      font-size:clamp(1.7rem,6vw,2.6rem);
-      line-height:1.06;
-      letter-spacing:-.035em;
-    }
     .dateLine {
-      color:var(--muted);
-      font-size:.9rem;
+      margin-top:6px;
+      color:var(--text);
+      font-size:1.02rem;
       text-transform:capitalize;
     }
+    .heroTitleRow{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-top:6px}
+    .heroCount{font-size:clamp(2.8rem,9vw,4rem);line-height:1;font-weight:1000;letter-spacing:-.05em;color:var(--cyan)}
+    .heroLabel{font-size:clamp(2rem,6vw,3.35rem);line-height:1.02;font-weight:950;letter-spacing:-.05em;color:var(--text)}
+
     .status {
       display:flex;
       align-items:center;
@@ -338,8 +337,8 @@
     </header>
 
     <section class="intro">
-      <div class="eyebrow">Programación actualizada</div>
-      <h1>Cartelera del día</h1>
+      <div class="eyebrow">Programación premium</div>
+      <div class="heroTitleRow"><span id="eventCount" class="heroCount">0</span><span class="heroLabel">eventos de hoy</span></div>
       <div id="dateLine" class="dateLine"></div>
     </section>
 
@@ -531,6 +530,8 @@
       function renderCarteleraTable(text) {
         var host = document.getElementById('scheduleTableHost');
         var events = parseCarteleraTable(text);
+        var countEl = document.getElementById('eventCount');
+        if (countEl) countEl.textContent = String(events.length);
 
         if (!events.length) {
           host.innerHTML = '';
@@ -578,7 +579,10 @@
         statusEl.hidden = true;
         eventCard.hidden = !imageUrl;
         scheduleCard.hidden = !text;
-        if (!text) document.getElementById('scheduleTableHost').innerHTML = '';
+        if (!text) {
+          document.getElementById('scheduleTableHost').innerHTML = '';
+          var countEl = document.getElementById('eventCount'); if (countEl) countEl.textContent = '0';
+        }
         emptyCard.hidden = !!(imageUrl || text);
 
         if (imageUrl) {
