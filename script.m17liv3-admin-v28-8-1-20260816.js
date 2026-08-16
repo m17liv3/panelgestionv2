@@ -5863,19 +5863,24 @@ async function cartLoadExisting() {
     if (!res.ok) return;
     var data = await res.json();
     var record = data.record || {};
-    var texto = record.texto || '';
+    var today = new Intl.DateTimeFormat('sv-SE', {
+      timeZone: 'Europe/Madrid',
+      year: 'numeric', month: '2-digit', day: '2-digit'
+    }).format(new Date());
+    var publicationIsToday = String(record.eventos_fecha || '') === today;
+    var texto = publicationIsToday ? (record.texto || '') : '';
     document.getElementById('cart-texto').value = texto;
     document.getElementById('cart-char-count').textContent = texto.length + ' caracteres';
     cartRenderDetectedEvents(texto);
-    var imgUrl = record.imagen_dia || '';
+    var imgUrl = publicationIsToday ? (record.imagen_dia || '') : '';
     if (imgUrl) {
       document.getElementById('cart-img-link').textContent = imgUrl;
       document.getElementById('cart-imgbb-result').style.display = 'block';
       document.getElementById('cart-preview-img').src = imgUrl;
     } else {
       document.getElementById('cart-imgbb-result').style.display = 'none';
+      document.getElementById('cart-preview-img').removeAttribute('src');
     }
-    var today = new Date().toISOString().slice(0,10);
     var visits = record.visits || {};
     document.getElementById('cart-visits-today').textContent = visits[today] || 0;
     var total = Object.values(visits).reduce(function(a,b){ return a+b; }, 0);
