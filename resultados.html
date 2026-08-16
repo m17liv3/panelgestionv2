@@ -287,7 +287,7 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
 </main>
 <script src="config.js"></script>
 <script>
- // M17LIV3 resultados V64.6.1 · fix Wisla Cracovia/Krakow
+ // M17LIV3 resultados V64.6.2 · parser SportScore robusto
 (function(){
  const API_PROXY='https://qjbnjhojwhcndcfjcyrc.supabase.co/functions/v1/resultados-dia';
  const SHARED_RESULTS_CACHE='https://qjbnjhojwhcndcfjcyrc.supabase.co/functions/v1/resultados-cache';
@@ -620,7 +620,7 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
  }
 
 
- const FAST_CACHE_PREFIX='m17liv3_results_fast_v64_6_';
+ const FAST_CACHE_PREFIX='m17liv3_results_fast_v64_6_2_';
  function fastCacheKey(date){return FAST_CACHE_PREFIX+(date||localDate())}
  function saveFastCache(date){
    try{
@@ -866,7 +866,7 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
 
  async function fetchResults(date,sports,force=false,options={}){
    if(!sports.length)return [];
-   const params=new URLSearchParams({date,sports:sports.join(','),v:'64.6.1'});
+   const params=new URLSearchParams({date,sports:sports.join(','),v:'64.6.2'});
    if(force)params.set('force','1');
    if(options.tennisDone)params.set('tennis_done','1');
    if(options.tennisCacheOnly)params.set('tennis_cache_only','1');
@@ -901,9 +901,108 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
  }
  function ssHasTeams(data,a,b){let s='';try{s=ssNorm(JSON.stringify(data||{}))}catch{}const A=ssAliases(a),B=ssAliases(b);return A.some(x=>s.includes(x))&&B.some(x=>s.includes(x))}
  async function ssGet(url){const r=await fetch(url,{cache:'no-store'});let data={};try{data=await r.json()}catch{}return {ok:r.ok,status:r.status,data,url}}
- function ssFindScore(obj){let best=null;function walk(x,d=0){if(!x||d>8||best)return;if(Array.isArray(x)){for(const y of x)walk(y,d+1);return}if(typeof x!=='object')return;const pairs=[['home_score','away_score'],['score_home','score_away'],['homeScore','awayScore'],['home_score_display','away_score_display']];for(const [hk,ak] of pairs){if(hk in x&&ak in x){const h=x[hk],a=x[ak];if((typeof h==='number'||/^\d+$/.test(String(h)))&&(typeof a==='number'||/^\d+$/.test(String(a)))){best={home:Number(h),away:Number(a)};return}}}if(typeof x.score==='string'&&/^\s*\d+\s*[-:]\s*\d+\s*$/.test(x.score)){const m=x.score.match(/(\d+)\s*[-:]\s*(\d+)/);best={home:Number(m[1]),away:Number(m[2])};return}for(const k of Object.keys(x))walk(x[k],d+1)}walk(obj);return best}
- function ssFindStatus(obj){let out='';function walk(x,d=0){if(!x||d>7||out)return;if(Array.isArray(x)){for(const y of x)walk(y,d+1);return}if(typeof x!=='object')return;for(const k of Object.keys(x)){if(/^(status|state|match_status|status_text|event_status)$/i.test(k)&&typeof x[k]==='string'){out=x[k];return}}for(const k of Object.keys(x))walk(x[k],d+1)}walk(obj);return out}
- function ssFinished(v){return /finished|final|ended|complete|completed|\bft\b|after extra time|aet|penalties/i.test(String(v||''))}
+ function ssScoreNumber(v){
+   if(typeof v==='number'&&Number.isFinite(v))return v;
+   if(typeof v==='string'&&/^\s*\d+\s*$/.test(v))return Number(v.trim());
+   if(v&&typeof v==='object'){
+     for(const k of ['current','display','value','score','total','normaltime','normalTime','fulltime','fullTime']){
+       const n=ssScoreNumber(v[k]);
+       if(n!=null)return n;
+     }
+   }
+   return null;
+ }
+ function ssFindScore(obj){
+   let best=null;
+   function tryPair(h,a){
+     const H=ssScoreNumber(h),A=ssScoreNumber(a);
+     if(H!=null&&A!=null){best={home:H,away:A};return true}
+     return false;
+   }
+   function walk(x,d=0){
+     if(!x||d>9||best)return;
+     if(Array.isArray(x)){for(const y of x)walk(y,d+1);return}
+     if(typeof x!=='object')return;
+
+     const pairs=[
+       ['home_score','away_score'],
+       ['score_home','score_away'],
+       ['homeScore','awayScore'],
+       ['home_score_display','away_score_display'],
+       ['homeGoals','awayGoals'],
+       ['goalsHome','goalsAway']
+     ];
+     for(const [hk,ak] of pairs){
+       if(hk in x&&ak in x&&tryPair(x[hk],x[ak]))return;
+     }
+
+     // Formatos tipo score:{home:2,away:1} / result:{home:2,away:1}
+     for(const k of ['score','scores','result','finalScore','fullTime']){
+       const y=x[k];
+       if(y&&typeof y==='object'){
+         if(tryPair(y.home,y.away))return;
+         if(tryPair(y.homeScore,y.awayScore))return;
+       }
+     }
+
+     // Formatos donde home/away son objetos y guardan su propio marcador.
+     if(x.home&&x.away&&typeof x.home==='object'&&typeof x.away==='object'){
+       if(tryPair(x.home.score,x.away.score))return;
+       if(tryPair(x.home.goals,x.away.goals))return;
+       if(tryPair(x.home.current,x.away.current))return;
+     }
+     if(x.homeTeam&&x.awayTeam&&typeof x.homeTeam==='object'&&typeof x.awayTeam==='object'){
+       if(tryPair(x.homeTeam.score,x.awayTeam.score))return;
+       if(tryPair(x.homeTeam.goals,x.awayTeam.goals))return;
+     }
+
+     if(typeof x.score==='string'&&/^\s*\d+\s*[-:]\s*\d+\s*$/.test(x.score)){
+       const m=x.score.match(/(\d+)\s*[-:]\s*(\d+)/);
+       best={home:Number(m[1]),away:Number(m[2])};
+       return;
+     }
+
+     for(const k of Object.keys(x))walk(x[k],d+1);
+   }
+   walk(obj);
+   return best;
+ }
+ function ssFindStatus(obj){
+   let out='';
+   function statusText(v){
+     if(typeof v==='string')return v;
+     if(v&&typeof v==='object'){
+       for(const k of ['type','name','description','short','code','text','state']){
+         if(typeof v[k]==='string')return v[k];
+       }
+     }
+     return '';
+   }
+   function walk(x,d=0){
+     if(!x||d>9||out)return;
+     if(Array.isArray(x)){for(const y of x)walk(y,d+1);return}
+     if(typeof x!=='object')return;
+
+     for(const k of Object.keys(x)){
+       if(/^(status|state|match_status|matchStatus|status_text|statusText|event_status|eventStatus|period)$/i.test(k)){
+         const s=statusText(x[k]);
+         if(s){out=s;return}
+       }
+     }
+
+     // Algunos feeds exponen directamente "FT" en una clave genérica.
+     for(const [k,v] of Object.entries(x)){
+       if(typeof v==='string'&&/^(FT|AET|PEN|FINISHED|FINAL|ENDED|COMPLETED)$/i.test(v.trim())){
+         out=v;return;
+       }
+     }
+
+     for(const k of Object.keys(x))walk(x[k],d+1);
+   }
+   walk(obj);
+   return out;
+ }
+ function ssFinished(v){return /finished|final|ended|complete|completed|\bft\b|full time|after extra time|aet|penalties|\bpen\b|koniec|terminado|finalizado/i.test(String(v||''))}
  function ssMadridYmd(d){try{return new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Madrid',year:'numeric',month:'2-digit',day:'2-digit'}).format(d)}catch{return ''}}
  function ssMadridHm(d){try{return new Intl.DateTimeFormat('es-ES',{timeZone:'Europe/Madrid',hour:'2-digit',minute:'2-digit',hour12:false}).format(d)}catch{return ''}}
  function ssParseDate(v){if(v==null)return null;if(typeof v==='number'){if(v<1e9)return null;let n=v;if(n<1e12)n*=1000;const d=new Date(n);return isNaN(+d)?null:d}const t=String(v).trim();if(!t)return null;if(/^\d{10,13}$/.test(t)){let n=Number(t);if(n<1e12)n*=1000;const d=new Date(n);return isNaN(+d)?null:d}if(!(/\d{4}[-/]\d{1,2}[-/]\d{1,2}/.test(t)||/\d{1,2}[-/]\d{1,2}[-/]\d{4}/.test(t)||/T\d{2}:\d{2}/.test(t)))return null;const d=new Date(t);return isNaN(+d)?null:d}
@@ -978,7 +1077,7 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
      durante la prueba vimos que pueden contener marcadores de otros encuentros.
    */
    if(ssSport==='football'&&!cand.some(x=>ssValidate(x.diag,ev,targetDate))){
-     for(const t of [...new Set([...A,...B])].slice(0,3)){
+     for(const t of [...new Set([...A,...B])].slice(0,6)){
        const r=await ssGet(`https://sportscore.com/api/widget/team/?sport=${ssSport}&slug=${encodeURIComponent(t)}&limit=20&src=${SPORT_SCORE_SRC}`);
        if(r.ok&&ssHasTeams(r.data,ev.home,ev.away)){
          const d=ssSelect(r.data,ev,targetDate);
