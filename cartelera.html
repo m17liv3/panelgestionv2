@@ -211,11 +211,11 @@
     .eventStatus.live .statusDot{
       background:#62ff6e;animation:m17LivePulse .85s infinite
     }
-    .eventStatus.started{
-      color:#a9becb;background:rgba(159,179,191,.055);
+    .eventStatus.finished{
+      color:#9fb3bf;background:rgba(159,179,191,.055);
       border-color:rgba(159,179,191,.12)
     }
-    .eventStatus.started .statusDot{background:#718691}
+    .eventStatus.finished .statusDot{background:#718691}
     @keyframes m17StatusPulse{
       0%{box-shadow:0 0 0 0 rgba(0,216,255,.38);transform:scale(.95)}
       60%{box-shadow:0 0 0 8px rgba(0,216,255,0);transform:scale(1.08)}
@@ -318,7 +318,7 @@
   </main>
 
   <script src="config.js"></script>
-  <!-- Cartelera Premium V3.3.2 · estados sin falso finalizado -->
+  <!-- Cartelera Premium V3.3.3 · duración estimada por deporte -->
   <script>
     (function () {
       'use strict';
@@ -458,7 +458,37 @@
         return 'Empieza en ' + h + ' h ' + m + ' min';
       }
 
-      function eventStatusFor(timeText) {
+      function estimatedDurationMinutes(sportText, titleText) {
+        var sport = String(sportText || '').toUpperCase();
+        var title = String(titleText || '').toUpperCase();
+
+        if (/FÚTBOL SALA|FUTBOL SALA|FUTSAL/.test(sport)) return 105;
+        if (/FÚTBOL|FUTBOL/.test(sport)) return 120;
+        if (/BALONCESTO|BASKET/.test(sport)) return 135;
+        if (/BALONMANO|HANDBALL/.test(sport)) return 90;
+        if (/VOLEIBOL|VOLLEY/.test(sport)) return 120;
+        if (/RUGBY/.test(sport)) return 120;
+        if (/HOCKEY/.test(sport)) return 135;
+        if (/TENIS|TENNIS/.test(sport)) return 150;
+
+        if (/F1|FÓRMULA|FORMULA|MOTOGP|MOTOCICLISMO|INDYCAR|MOTOR/.test(sport)) {
+          if (/CLASIFIC|QUALIFY|QUALIFYING/.test(title)) return 90;
+          if (/ENTRENAMIENTO|PRÁCTICA|PRACTICA|FREE PRACTICE|FP[123]/.test(title)) return 75;
+          if (/SPRINT/.test(title)) return 75;
+          return 120;
+        }
+
+        if (/SNOOKER/.test(sport)) return 180;
+        if (/NATACIÓN|NATACION|ATLETISMO/.test(sport)) return 120;
+        if (/CICLISMO/.test(sport)) return 240;
+        if (/GOLF/.test(sport)) return 300;
+        if (/HÍPICA|HIPICA/.test(sport)) return 120;
+        if (/PÁDEL|PADEL/.test(sport)) return 120;
+
+        return 120;
+      }
+
+      function eventStatusFor(timeText, sportText, titleText) {
         var now = new Date();
         var start = eventDateTimeToday(timeText);
         var diff = start.getTime() - now.getTime();
@@ -469,10 +499,15 @@
         if (diff > 0) {
           return {kind:'soon', text:humanCountdown(diff)};
         }
-        if (diff >= -20 * 60 * 1000) {
+
+        var durationMs = estimatedDurationMinutes(sportText, titleText) * 60 * 1000;
+        var elapsed = now.getTime() - start.getTime();
+
+        if (elapsed < durationMs) {
           return {kind:'live', text:'En curso'};
         }
-        return {kind:'started', text:'Evento iniciado'};
+
+        return {kind:'finished', text:'Finalizado'};
       }
 
       function renderCarteleraTable(text) {
@@ -500,7 +535,7 @@
             '<small>' + items.length + ' ' + (items.length === 1 ? 'evento' : 'eventos') + '</small></td></tr>';
 
           items.forEach(function(ev){
-            var status = eventStatusFor(ev.time);
+            var status = eventStatusFor(ev.time, sport, ev.title);
             body += '<tr>' +
               '<td class="timeCell">' + escapeHtml(ev.time) + '</td>' +
               '<td class="eventCell">' + escapeHtml(ev.title) + '</td>' +
