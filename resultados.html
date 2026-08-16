@@ -138,6 +138,37 @@ body::before{
   border:1px solid rgba(96,255,102,.20);
   font-size:.64rem;font-weight:900;letter-spacing:.035em;text-transform:uppercase;white-space:nowrap
 }
+.statusPill.pending{
+  color:#dffcff;background:rgba(0,216,255,.055);
+  border-color:rgba(0,216,255,.18)
+}
+.statusPill.pending .statusDot{
+  background:var(--cyan);
+  animation:syncPulse 1.55s infinite
+}
+.statusPill.soon{
+  color:#efffd0;background:rgba(108,255,67,.075);
+  border-color:rgba(108,255,67,.22)
+}
+.statusPill.soon .statusDot{
+  background:var(--green);
+  animation:syncPulse 1.05s infinite
+}
+.statusPill.live{
+  color:#d6ffd1;background:rgba(96,255,102,.09);
+  border-color:rgba(96,255,102,.28)
+}
+.statusPill.live .statusDot{
+  background:#62ff6e;
+  animation:syncPulse .9s infinite
+}
+.statusPill.finished{
+  color:#d6ffd1;background:rgba(96,255,102,.07);
+  border-color:rgba(96,255,102,.20)
+}
+.statusPill.finished .statusDot{background:#62ff6e}
+.scoreCell.pendingScore{color:#718a9b}
+
 .statusDot{width:7px;height:7px;border-radius:50%;background:#62ff6e}
 .groupRow td{
   padding:10px 14px;color:#e9fbff;font-size:.82rem;font-weight:950;letter-spacing:.05em;
@@ -196,7 +227,7 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
     <div class="eyebrow">Programación premium</div>
     <div class="heroTitleRow">
       <span id="heroResultCount" class="heroCount">0</span>
-      <span class="heroLabel">resultados de hoy</span>
+      <span class="heroLabel">eventos de hoy</span>
     </div>
     <div id="dateText" class="dateLine"></div>
   </section>
@@ -235,7 +266,7 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
 </main>
 <script src="config.js"></script>
 <script>
- // M17LIV3 resultados V63 · diseño unificado con cartelera V3.3.1
+ // M17LIV3 resultados V64 · todos los eventos + estado + resultado final
 (function(){
  const API_PROXY='https://qjbnjhojwhcndcfjcyrc.supabase.co/functions/v1/resultados-dia';
  const cfg=window.M17_CONFIG||{};
@@ -529,29 +560,96 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
      render();
      setInitialResultBaseline();
      const mins=Math.max(0,Math.round((Date.now()-(cached.savedAt||Date.now()))/60000));
-     setLiveStatus('Resultados mostrados','comprobando novedades…',true);$('#updatedText').textContent=mins<2?'Última vista guardada recientemente':`Última vista guardada hace ${mins} min`;
+     setLiveStatus('Eventos mostrados','comprobando novedades…',true);$('#updatedText').textContent=mins<2?'Última vista guardada recientemente':`Última vista guardada hace ${mins} min`;
      return true;
    }catch{return false}
  }
+
+ function offeredStartDateTime(offeredItem){
+   const t=String(offeredItem?.time||'').trim();
+   const m=t.match(/^(\d{1,2}):(\d{2})$/);
+   if(!m)return null;
+   const d=new Date();
+   d.setHours(Number(m[1]),Number(m[2]),0,0);
+   return d;
+ }
+
+ function humanRemaining(ms){
+   const mins=Math.max(0,Math.floor(ms/60000));
+   const h=Math.floor(mins/60),m=mins%60;
+   if(h<=0)return `Empieza en ${m} min`;
+   if(m===0)return `Empieza en ${h} h`;
+   return `Empieza en ${h} h ${m} min`;
+ }
+
+ function offeredStatus(offeredItem,matchedResult){
+   if(matchedResult){
+     return {kind:'finished',text:'Finalizado',score:true};
+   }
+
+   const start=offeredStartDateTime(offeredItem);
+   if(!start){
+     return {kind:'pending',text:'No finalizado',score:false};
+   }
+
+   const diff=start.getTime()-Date.now();
+
+   if(diff>30*60*1000){
+     return {kind:'pending',text:humanRemaining(diff),score:false};
+   }
+   if(diff>0){
+     return {kind:'soon',text:humanRemaining(diff),score:false};
+   }
+
+   // Sin resultado definitivo todavía: evitamos afirmar "en directo" demasiado tiempo.
+   if(diff>=-120*60*1000){
+     return {kind:'live',text:'No finalizado',score:false};
+   }
+
+   return {kind:'pending',text:'No finalizado',score:false};
+ }
+
+ function resultMatchForOffered(offeredItem){
+   const key=resultKey({offered:offeredItem,api:{}});
+   for(const m of matches||[]){
+     if(resultKey(m)===key)return m;
+   }
+
+   // fallback más flexible por equipos + hora
+   const oh=normalize(offeredItem?.home||'');
+   const oa=normalize(offeredItem?.away||'');
+   const ot=String(offeredItem?.time||'');
+   for(const m of matches||[]){
+     const mo=m.offered||{};
+     if(
+       normalize(mo.home||'')===oh &&
+       normalize(mo.away||'')===oa &&
+       String(mo.time||'')===ot
+     ) return m;
+   }
+   return null;
+ }
+
  function render(){
    $('#countFinal').textContent=matches.length;
    const heroCount=$('#heroResultCount');
-   if(heroCount)heroCount.textContent=matches.length;
+   if(heroCount)heroCount.textContent=(offered||[]).length;
 
-   if(!matches.length){
-     $('#content').innerHTML='<div class="empty">Todavía no hay resultados finalizados disponibles.<br>Vuelve a consultar en unos minutos.</div>';
+   if(!(offered||[]).length){
+     $('#content').innerHTML='<div class="empty">Todavía no hay eventos publicados en la cartelera de hoy.</div>';
      return;
-   }
-
-   const groups=new Map();
-   for(const item of matches){
-     const sport=sportMap(item.api?.sport||item.offered?.sport||'');
-     if(!groups.has(sport))groups.set(sport,[]);
-     groups.get(sport).push(item);
    }
 
    const labels={Football:'Fútbol',Basketball:'Baloncesto',Tennis:'Tenis'};
    const order=['Football','Basketball','Tennis'];
+   const groups=new Map();
+
+   for(const o of offered){
+     const sport=sportMap(o.sport||'');
+     if(!groups.has(sport))groups.set(sport,[]);
+     groups.get(sport).push(o);
+   }
+
    let body='';
 
    for(const sport of [...groups.keys()].sort((a,b)=>{
@@ -561,19 +659,34 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
      const items=groups.get(sport)||[];
      const label=labels[sport]||sport||'Otros';
 
-     body+=`<tr class="groupRow"><td colspan="4">${esc(label)}<small>${items.length} ${items.length===1?'resultado':'resultados'}</small></td></tr>`;
+     body+=`<tr class="groupRow"><td colspan="4">${esc(label)}<small>${items.length} ${items.length===1?'evento':'eventos'}</small></td></tr>`;
 
-     for(const x of items){
-       const e=x.api||{},o=x.offered||{};
-       const [s1,s2]=displayScores(x);
-       const isNew=newResultKeys.has(resultKey(x));
-       const retired=e.status==='STATUS_RETIRED';
-       const isTennis=sportMap(e.sport||o.sport)==='Tennis';
-       const sets=isTennis?setsText(x):'';
-       const competition=competitionText(e);
-       const home=esc(o.home||e.home||'');
-       const away=esc(o.away||e.away||'');
-       const eventTitle=`${home} <span style="color:#607b8d;font-weight:700">vs</span> ${away}`;
+     for(const o of items){
+       const matched=resultMatchForOffered(o);
+       const state=offeredStatus(o,matched);
+
+       let score='—';
+       let sets='';
+       let competition='';
+
+       if(matched){
+         const e=matched.api||{};
+         const [s1,s2]=displayScores(matched);
+         score=`${esc(s1??'—')} - ${esc(s2??'—')}`;
+         competition=competitionText(e)||'';
+         if(sportMap(e.sport||o.sport)==='Tennis'){
+           sets=setsText(matched)||'';
+         }
+       }
+
+       const isNew=matched ? newResultKeys.has(resultKey(matched)) : false;
+
+       let eventTitle='';
+       if(o.home||o.away){
+         eventTitle=`${esc(o.home||'')} <span style="color:#607b8d;font-weight:700">vs</span> ${esc(o.away||'')}`;
+       }else{
+         eventTitle=esc(o.title||o.sourceLine||'Evento');
+       }
 
        body+=`
          <tr class="${isNew?'newRow':''}">
@@ -583,9 +696,11 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
              ${competition?`<span class="eventSub">${esc(competition)}</span>`:''}
              ${sets?`<span class="setsLine">Sets: ${esc(sets)}</span>`:''}
            </td>
-           <td class="scoreCell">${esc(s1??'—')} - ${esc(s2??'—')}</td>
+           <td class="scoreCell ${matched?'':'pendingScore'}">${score}</td>
            <td class="statusCell">
-             <span class="statusPill"><span class="statusDot"></span>${retired?'Retirado':'Finalizado'}</span>
+             <span class="statusPill ${state.kind}">
+               <span class="statusDot"></span>${esc(state.text)}
+             </span>
            </td>
          </tr>`;
      }
@@ -606,7 +721,6 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
        </table>
      </div>`;
  }
-
  function dedupeEvents(list){const seen=new Set(),out=[];for(const e of list){const id=apiId(e)||`${e?.sport||''}|${e?.event_date||''}|${e?.home||''}|${e?.away||''}`;if(seen.has(id))continue;seen.add(id);out.push(e)}return out}
 
  /* V51 · respaldo estricto de fútbol con SportScore.
@@ -778,7 +892,7 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
  }
  async function load(force=false){
    $('#dateText').textContent=formatDate();
-   if(!matches.length)setLiveStatus('Cargando resultados','comprobando novedades…',true);else setLiveStatus('Resultados mostrados','comprobando novedades…',true);
+   if(!matches.length)setLiveStatus('Cargando resultados','comprobando novedades…',true);else setLiveStatus('Eventos mostrados','comprobando novedades…',true);
 
    try{
      const published=await loadPublished();
@@ -843,7 +957,7 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
      detectNewResults(beforeFirstUpdate);
      render();
      saveFastCache(targetDate);
-     setLiveStatus('Resultados mostrados','comprobando novedades…',true);$('#updatedText').textContent='';
+     setLiveStatus('Eventos mostrados','comprobando novedades…',true);$('#updatedText').textContent='';
 
      /*
        V58 · REFRESCO DE TENIS EN SEGUNDO PLANO
@@ -935,13 +1049,13 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
        una actualización puntual de red.
      */
      if(matches.length){
-       setLiveStatus('Resultados mostrados','no se pudo comprobar ahora',false);$('#updatedText').textContent='Mostrando últimos resultados disponibles';
+       setLiveStatus('Eventos mostrados','última comprobación incompleta',false);$('#updatedText').textContent='Se volverá a intentar automáticamente';
        render();
      }else{
        matches=[];
        $('#countFinal').textContent='0';const heroCount=$('#heroResultCount');if(heroCount)heroCount.textContent='0';
        $('#countDay').textContent=offered.length||'—';
-       setLiveStatus('Sin conexión','no se pudieron comprobar novedades',false);$('#updatedText').textContent='No se pudo actualizar';
+       setLiveStatus('Eventos mostrados','no se pudo completar la comprobación',false);$('#updatedText').textContent='Se volverá a intentar automáticamente';
        $('#content').innerHTML=`<div class="error">${esc(err?.message||'No se pudieron consultar los resultados.')}</div>`;
      }
    }
