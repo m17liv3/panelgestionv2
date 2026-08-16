@@ -404,6 +404,158 @@
 }
 </style>
 
+
+<style id="cartelera-fit-screen-v28-4">
+@media (max-width:480px){
+  #carteleraSheet{
+    bottom:72px !important;
+    height:auto !important;
+    max-height:calc(100dvh - 78px) !important;
+    overflow:hidden !important;
+  }
+
+  #carteleraSheet .cartSheetHeader{
+    min-height:44px !important;
+    padding:4px 10px !important;
+    align-items:center !important;
+  }
+
+  #carteleraSheet .cartHeaderLeft{
+    min-width:0 !important;
+    display:flex !important;
+    flex-direction:column !important;
+    gap:1px !important;
+  }
+
+  #carteleraSheet .cartSheetHeader h3{
+    margin:0 !important;
+    font-size:.82rem !important;
+    line-height:1.05 !important;
+  }
+
+  #carteleraSheet .cartHeaderVisits{
+    display:flex !important;
+    align-items:center !important;
+    gap:5px !important;
+    color:#6f879d !important;
+    font-size:8px !important;
+    line-height:1 !important;
+  }
+
+  #carteleraSheet .cartHeaderVisits b{
+    color:#00ffb3 !important;
+    font-size:10px !important;
+    font-weight:900 !important;
+  }
+
+  #carteleraSheet .cartHeaderDot{
+    opacity:.55 !important;
+  }
+
+  #carteleraSheet .sheet-body{
+    height:auto !important;
+    overflow:hidden !important;
+    padding:5px 9px 6px !important;
+  }
+
+  #carteleraSheet .cartClientLinkCard{
+    padding:6px 8px !important;
+    margin-bottom:6px !important;
+  }
+
+  #carteleraSheet .cartClientLinkCard > div:first-child{
+    margin-bottom:4px !important;
+    font-size:8px !important;
+    letter-spacing:1.35px !important;
+  }
+
+  #carteleraSheet #clienteLinkBox{
+    padding:4px 7px !important;
+    font-size:9px !important;
+    line-height:1.15 !important;
+  }
+
+  #carteleraSheet #copyClienteLinkBtn{
+    margin-top:4px !important;
+    padding:6px !important;
+    font-size:10px !important;
+    line-height:1 !important;
+  }
+
+  #carteleraSheet .cartSectionTitle{
+    margin:4px 0 3px !important;
+    font-size:8px !important;
+    letter-spacing:1.3px !important;
+  }
+
+  #carteleraSheet .cartUploadRow{
+    gap:5px !important;
+    margin-bottom:4px !important;
+    flex-wrap:nowrap !important;
+  }
+
+  #carteleraSheet #cart-img-file{
+    min-width:0 !important;
+    min-height:30px !important;
+    padding:3px 5px !important;
+    font-size:9px !important;
+  }
+
+  #carteleraSheet #cart-upload-btn{
+    flex:0 0 auto !important;
+    min-height:30px !important;
+    padding:4px 8px !important;
+    font-size:9px !important;
+  }
+
+  #carteleraSheet #cart-texto{
+    height:92px !important;
+    min-height:92px !important;
+    max-height:92px !important;
+    padding:6px 8px !important;
+    font-size:9.5px !important;
+    line-height:1.28 !important;
+    resize:none !important;
+  }
+
+  #carteleraSheet .cartMetaRow{
+    margin-top:2px !important;
+    min-height:10px !important;
+  }
+
+  #carteleraSheet #cart-char-count,
+  #carteleraSheet #cart-detected-inline{
+    font-size:8px !important;
+    line-height:1 !important;
+  }
+
+  #carteleraSheet .cartActionRow{
+    gap:5px !important;
+    margin-top:4px !important;
+    flex-wrap:nowrap !important;
+  }
+
+  #carteleraSheet .cartActionRow button{
+    min-height:30px !important;
+    padding:5px 7px !important;
+    font-size:9px !important;
+    line-height:1 !important;
+  }
+
+  #carteleraSheet #cartClearBtn{
+    min-height:28px !important;
+    margin-top:3px !important;
+    padding:5px !important;
+    font-size:9px !important;
+    line-height:1 !important;
+  }
+
+  #carteleraSheet .sheet-handle{
+    margin:3px auto 2px !important;
+  }
+}
+</style>
+
 </head>
 <body class="auth-locked">
 <!-- clientes-expandibles-home-clean-v10-20260726 -->
@@ -1481,8 +1633,15 @@
 <div class="sheet-overlay" id="carteleraOverlay" onclick="closeSheet('carteleraSheet','carteleraOverlay')"></div>
 <div class="sheet" id="carteleraSheet" style="max-height:92vh;overflow-y:auto;">
   <div class="sheet-handle"></div>
-  <div class="sheet-header">
-    <h3>&#128249; Cartelera del dia</h3>
+  <div class="sheet-header cartSheetHeader">
+    <div class="cartHeaderLeft">
+      <h3>&#128249; Cartelera del dia</h3>
+      <div class="cartHeaderVisits">
+        <span><b id="cart-visits-today">0</b> hoy</span>
+        <span class="cartHeaderDot">·</span>
+        <span><b id="cart-visits-total">0</b> total</span>
+      </div>
+    </div>
     <button class="sheet-close" onclick="closeSheet('carteleraSheet','carteleraOverlay')">x</button>
   </div>
   <div class="sheet-body" style="padding-bottom:30px;">
@@ -1517,13 +1676,6 @@
       <button onclick="cartLoadExisting()" style="padding:12px 16px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:#E8F4FF;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer;">&#8634; Recargar</button>
     </div>
     <button id="cartClearBtn" onclick="cartClear()" style="margin-top:8px;width:100%;padding:10px;background:rgba(255,71,87,0.1);border:1px solid rgba(255,71,87,0.3);color:#FF4757;border-radius:8px;font-weight:600;font-size:14px;cursor:pointer;">&#128465; Borrar cartelera</button>
-
-    <div class="cartVisitsCompact">
-      <span class="cartVisitsCompactTitle">📊 Visitas</span>
-      <span class="cartVisitsMetric"><b id="cart-visits-today">0</b><small>Hoy</small></span>
-      <span class="cartVisitsDivider"></span>
-      <span class="cartVisitsMetric"><b id="cart-visits-total">0</b><small>Total</small></span>
-    </div>
   </div>
 </div>
 
