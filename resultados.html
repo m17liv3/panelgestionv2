@@ -287,7 +287,7 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
 </main>
 <script src="config.js"></script>
 <script>
- // M17LIV3 resultados V64.5 · cabecera enfocada en resultados finalizados
+ // M17LIV3 resultados V64.5.1 · fix fetchResults
 (function(){
  const API_PROXY='https://qjbnjhojwhcndcfjcyrc.supabase.co/functions/v1/resultados-dia';
  const cfg=window.M17_CONFIG||{};
@@ -780,6 +780,20 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
        </table>
      </div>`;
  }
+
+ async function fetchResults(date,sports,force=false,options={}){
+   if(!sports.length)return [];
+   const params=new URLSearchParams({date,sports:sports.join(','),v:'64.5.1'});
+   if(force)params.set('force','1');
+   if(options.tennisDone)params.set('tennis_done','1');
+   if(options.tennisCacheOnly)params.set('tennis_cache_only','1');
+   const apiResponse=await fetch(`${API_PROXY}?${params.toString()}`,{cache:'no-store'});
+   let j={};
+   try{j=await apiResponse.json()}catch{}
+   if(!apiResponse.ok||j.error)throw new Error(j.error||`Respuesta ${apiResponse.status}`);
+   return Array.isArray(j.events)?j.events:[];
+ }
+
  function dedupeEvents(list){const seen=new Set(),out=[];for(const e of list){const id=apiId(e)||`${e?.sport||''}|${e?.event_date||''}|${e?.home||''}|${e?.away||''}`;if(seen.has(id))continue;seen.add(id);out.push(e)}return out}
 
  /* V51 · respaldo estricto de fútbol con SportScore.
