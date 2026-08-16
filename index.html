@@ -326,6 +326,84 @@
 }
 </style>
 
+
+<style id="cartelera-fit-screen-v28-3">
+@media (max-width:480px){
+  #carteleraSheet .cartVisitsCompact{
+    display:flex !important;
+    align-items:center !important;
+    gap:9px !important;
+    margin-top:6px !important;
+    padding:6px 9px !important;
+    min-height:36px !important;
+    border:1px solid rgba(0,212,255,.12) !important;
+    border-radius:10px !important;
+    background:rgba(0,0,0,.18) !important;
+  }
+
+  #carteleraSheet .cartVisitsCompactTitle{
+    color:#7AA3C8 !important;
+    font-size:8px !important;
+    letter-spacing:1.25px !important;
+    text-transform:uppercase !important;
+    white-space:nowrap !important;
+  }
+
+  #carteleraSheet .cartVisitsMetric{
+    display:flex !important;
+    align-items:baseline !important;
+    gap:4px !important;
+    margin-left:auto !important;
+  }
+
+  #carteleraSheet .cartVisitsMetric b{
+    color:#00ffb3 !important;
+    font-size:20px !important;
+    line-height:1 !important;
+    font-weight:900 !important;
+  }
+
+  #carteleraSheet .cartVisitsMetric small{
+    color:#7AA3C8 !important;
+    font-size:7px !important;
+    letter-spacing:.8px !important;
+    text-transform:uppercase !important;
+  }
+
+  #carteleraSheet .cartVisitsDivider{
+    width:1px !important;
+    height:20px !important;
+    background:rgba(0,212,255,.12) !important;
+  }
+}
+
+@media (max-width:480px) and (max-height:760px){
+  #carteleraSheet #cart-texto{
+    height:102px !important;
+    min-height:102px !important;
+    max-height:102px !important;
+  }
+
+  #carteleraSheet .cartClientLinkCard{
+    margin-bottom:5px !important;
+  }
+
+  #carteleraSheet .cartActionRow{
+    margin-top:4px !important;
+  }
+
+  #carteleraSheet #cartClearBtn{
+    margin-top:3px !important;
+  }
+
+  #carteleraSheet .cartVisitsCompact{
+    margin-top:4px !important;
+    padding:5px 8px !important;
+    min-height:32px !important;
+  }
+}
+</style>
+
 </head>
 <body class="auth-locked">
 <!-- clientes-expandibles-home-clean-v10-20260726 -->
@@ -1440,18 +1518,12 @@
     </div>
     <button id="cartClearBtn" onclick="cartClear()" style="margin-top:8px;width:100%;padding:10px;background:rgba(255,71,87,0.1);border:1px solid rgba(255,71,87,0.3);color:#FF4757;border-radius:8px;font-weight:600;font-size:14px;cursor:pointer;">&#128465; Borrar cartelera</button>
 
-    <div class="cartVisitsTitle" style="margin-top:24px;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#7AA3C8;margin-bottom:12px;">&#128202; Visitas a la cartelera</div>
-    <div class="cartVisitsGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-      <div class="cartVisitCard" style="background:rgba(0,0,0,0.25);border:1px solid rgba(0,212,255,0.12);border-radius:12px;padding:16px;text-align:center;">
-        <div id="cart-visits-today" class="cartVisitNumber" style="font-size:36px;font-weight:700;font-family:'Rajdhani',sans-serif;background:linear-gradient(135deg,#00D4FF,#39FF14);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">-</div>
-        <div class="cartVisitLabel" style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#7AA3C8;margin-top:4px;">Hoy</div>
-      </div>
-      <div class="cartVisitCard" style="background:rgba(0,0,0,0.25);border:1px solid rgba(0,212,255,0.12);border-radius:12px;padding:16px;text-align:center;">
-        <div id="cart-visits-total" class="cartVisitNumber" style="font-size:36px;font-weight:700;font-family:'Rajdhani',sans-serif;background:linear-gradient(135deg,#00D4FF,#39FF14);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">-</div>
-        <div class="cartVisitLabel" style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#7AA3C8;margin-top:4px;">Total</div>
-      </div>
+    <div class="cartVisitsCompact">
+      <span class="cartVisitsCompactTitle">📊 Visitas</span>
+      <span class="cartVisitsMetric"><b id="cart-visits-today">0</b><small>Hoy</small></span>
+      <span class="cartVisitsDivider"></span>
+      <span class="cartVisitsMetric"><b id="cart-visits-total">0</b><small>Total</small></span>
     </div>
-    <button id="cartResetVisitsBtn" onclick="cartResetVisits()" style="margin-top:10px;background:none;border:none;color:rgba(255,71,87,0.5);font-size:11px;cursor:pointer;width:100%;text-align:right;">&#128465; Resetear contador de hoy</button>
   </div>
 </div>
 
