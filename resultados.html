@@ -275,7 +275,7 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
 </main>
 <script src="config.js"></script>
 <script>
- // M17LIV3 resultados V64.1 · seguimiento fútbol tenis baloncesto
+ // M17LIV3 resultados V64.2 · excluye fútbol sala
 (function(){
  const API_PROXY='https://qjbnjhojwhcndcfjcyrc.supabase.co/functions/v1/resultados-dia';
  const cfg=window.M17_CONFIG||{};
@@ -639,10 +639,27 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
    return null;
  }
 
+
+ function isSupportedResultsSport(offeredItem){
+   const raw=normalize(
+     offeredItem?.sport||
+     offeredItem?.category||
+     offeredItem?.title||
+     offeredItem?.sourceLine||
+     ''
+   );
+
+   // Excluir expresamente fútbol sala / futsal.
+   if(/\bfutsal\b|\bfutbol sala\b|\bfútbol sala\b/.test(raw))return false;
+
+   const mapped=sportMap(offeredItem?.sport||'');
+   return ['Football','Tennis','Basketball'].includes(mapped);
+ }
+
  function render(){
    $('#countFinal').textContent=matches.length;
    const heroCount=$('#heroResultCount');
-   const filteredOffered=(offered||[]).filter(o=>['Football','Tennis','Basketball'].includes(sportMap(o.sport||'')));
+   const filteredOffered=(offered||[]).filter(isSupportedResultsSport);
    if(heroCount)heroCount.textContent=filteredOffered.length;
 
    if(!filteredOffered.length){
@@ -656,7 +673,7 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
 
    for(const o of offered){
      const sport=sportMap(o.sport||'');
-     if(!['Football','Tennis','Basketball'].includes(sport))continue;
+     if(!isSupportedResultsSport(o))continue;
      if(!groups.has(sport))groups.set(sport,[]);
      groups.get(sport).push(o);
    }
