@@ -69,6 +69,17 @@ body::before{
   font-weight:850;
   letter-spacing:.04em
 }
+.trackingSummary{
+  margin-top:7px;
+  color:#a8bfcd;
+  font-size:.92rem;
+  font-weight:800
+}
+.trackingSummary span{
+  color:var(--cyan);
+  font-weight:1000
+}
+
 
 
 /* Estado de sincronización: mismo lenguaje visual que la cartelera */
@@ -232,13 +243,14 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
 <body oncontextmenu="return false">
 <main class="page">
   <section class="intro">
-    <div class="eyebrow">Programación premium</div>
+    <div class="eyebrow">Resultados premium</div>
     <div class="heroTitleRow">
       <span id="heroResultCount" class="heroCount">0</span>
-      <span class="heroLabel">eventos de hoy</span>
+      <span class="heroLabel">resultados finalizados</span>
     </div>
+    <div class="trackingSummary"><span id="heroTrackedCount">0</span> eventos en seguimiento hoy</div>
     <div id="dateText" class="dateLine"></div>
-    <div class="trackingLine">SEGUIMIENTO DE RESULTADOS · ⚽ Fútbol · 🎾 Tenis · 🏀 Baloncesto</div>
+    <div class="trackingLine">⚽ Fútbol · 🎾 Tenis · 🏀 Baloncesto</div>
   </section>
 
   <div class="syncBar" id="liveStatus">
@@ -255,7 +267,7 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
 
   <section class="resultsCard">
     <div class="sectionLabel">
-      <span>Resultados</span>
+      <span>Resultados de la cartelera</span>
       <span class="right">M17LIV3</span>
     </div>
     <div id="content">
@@ -275,7 +287,7 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
 </main>
 <script src="config.js"></script>
 <script>
- // M17LIV3 resultados V64.4 · filtro estricto deportes con API
+ // M17LIV3 resultados V64.5 · cabecera enfocada en resultados finalizados
 (function(){
  const API_PROXY='https://qjbnjhojwhcndcfjcyrc.supabase.co/functions/v1/resultados-dia';
  const cfg=window.M17_CONFIG||{};
@@ -569,7 +581,7 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
      render();
      setInitialResultBaseline();
      const mins=Math.max(0,Math.round((Date.now()-(cached.savedAt||Date.now()))/60000));
-     setLiveStatus('Eventos mostrados','comprobando novedades…',true);$('#updatedText').textContent=mins<2?'Última vista guardada recientemente':`Última vista guardada hace ${mins} min`;
+     setLiveStatus('Resultados mostrados','comprobando nuevos resultados…',true);$('#updatedText').textContent=mins<2?'Última vista guardada recientemente':`Última vista guardada hace ${mins} min`;
      return true;
    }catch{return false}
  }
@@ -675,8 +687,11 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
  function render(){
    $('#countFinal').textContent=matches.length;
    const heroCount=$('#heroResultCount');
+   const trackedCount=$('#heroTrackedCount');
    const filteredOffered=(offered||[]).filter(isSupportedResultsSport);
-   if(heroCount)heroCount.textContent=filteredOffered.length;
+
+   if(heroCount)heroCount.textContent=matches.length;
+   if(trackedCount)trackedCount.textContent=filteredOffered.length;
 
    if(!filteredOffered.length){
      $('#content').innerHTML='<div class="empty">Todavía no hay eventos de fútbol, tenis o baloncesto publicados en la cartelera de hoy.</div>';
@@ -936,7 +951,7 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
  }
  async function load(force=false){
    $('#dateText').textContent=formatDate();
-   if(!matches.length)setLiveStatus('Cargando resultados','comprobando novedades…',true);else setLiveStatus('Eventos mostrados','comprobando novedades…',true);
+   if(!matches.length)setLiveStatus('Cargando resultados','comprobando novedades…',true);else setLiveStatus('Resultados mostrados','comprobando nuevos resultados…',true);
 
    try{
      const published=await loadPublished();
@@ -1001,7 +1016,7 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
      detectNewResults(beforeFirstUpdate);
      render();
      saveFastCache(targetDate);
-     setLiveStatus('Eventos mostrados','comprobando novedades…',true);$('#updatedText').textContent='';
+     setLiveStatus('Resultados mostrados','comprobando nuevos resultados…',true);$('#updatedText').textContent='';
 
      /*
        V58 · REFRESCO DE TENIS EN SEGUNDO PLANO
@@ -1093,13 +1108,13 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
        una actualización puntual de red.
      */
      if(matches.length){
-       setLiveStatus('Eventos mostrados','última comprobación incompleta',false);$('#updatedText').textContent='Se volverá a intentar automáticamente';
+       setLiveStatus('Resultados disponibles','última comprobación incompleta',false);$('#updatedText').textContent='Se volverá a intentar automáticamente';
        render();
      }else{
        matches=[];
        $('#countFinal').textContent='0';const heroCount=$('#heroResultCount');if(heroCount)heroCount.textContent='0';
        $('#countDay').textContent=offered.length||'—';
-       setLiveStatus('Eventos mostrados','no se pudo completar la comprobación',false);$('#updatedText').textContent='Se volverá a intentar automáticamente';
+       setLiveStatus('Resultados disponibles','no se pudo completar la comprobación',false);$('#updatedText').textContent='Se volverá a intentar automáticamente';
        $('#content').innerHTML=`<div class="error">${esc(err?.message||'No se pudieron consultar los resultados.')}</div>`;
      }
    }
