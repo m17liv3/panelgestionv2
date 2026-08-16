@@ -287,9 +287,10 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
 </main>
 <script src="config.js"></script>
 <script>
- // M17LIV3 resultados V64.5.4 · ledger persistente de finalizados
+ // M17LIV3 resultados V64.6 · caché compartida Supabase + SportScore reforzado
 (function(){
  const API_PROXY='https://qjbnjhojwhcndcfjcyrc.supabase.co/functions/v1/resultados-dia';
+ const SHARED_RESULTS_CACHE='https://qjbnjhojwhcndcfjcyrc.supabase.co/functions/v1/resultados-cache';
  const cfg=window.M17_CONFIG||{};
  const BIN_ID=cfg.cartBinId||'';
  const BIN_KEY=cfg.cartKey||'';
@@ -557,7 +558,28 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
  }
 
 
- const FINAL_LEDGER_PREFIX='m17liv3_final_results_v64_5_4_';
+
+ async function fetchSharedFinals(date){
+   try{
+     const r=await fetch(`${SHARED_RESULTS_CACHE}?date=${encodeURIComponent(date)}`,{cache:'no-store'});
+     if(!r.ok)return [];
+     const j=await r.json();
+     return Array.isArray(j?.matches)?j.matches:[];
+   }catch{return []}
+ }
+
+ async function saveSharedFinals(date,list){
+   try{
+     if(!date||!Array.isArray(list)||!list.length)return;
+     await fetch(SHARED_RESULTS_CACHE,{
+       method:'POST',
+       headers:{'Content-Type':'application/json'},
+       body:JSON.stringify({date,matches:list})
+     });
+   }catch{}
+ }
+
+ const FINAL_LEDGER_PREFIX='m17liv3_final_results_v64_6_';
 
  function finalLedgerKey(date){return FINAL_LEDGER_PREFIX+(date||localDate())}
 
@@ -598,7 +620,7 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
  }
 
 
- const FAST_CACHE_PREFIX='m17liv3_results_fast_v64_5_4_';
+ const FAST_CACHE_PREFIX='m17liv3_results_fast_v64_6_';
  function fastCacheKey(date){return FAST_CACHE_PREFIX+(date||localDate())}
  function saveFastCache(date){
    try{
@@ -609,6 +631,7 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
        offered
      }));
      mergeIntoFinalLedger(date,matches);
+     saveSharedFinals(date,matches).catch(()=>{});
    }catch{}
  }
  function restoreFastCache(){
@@ -843,7 +866,7 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
 
  async function fetchResults(date,sports,force=false,options={}){
    if(!sports.length)return [];
-   const params=new URLSearchParams({date,sports:sports.join(','),v:'64.5.4'});
+   const params=new URLSearchParams({date,sports:sports.join(','),v:'64.6'});
    if(force)params.set('force','1');
    if(options.tennisDone)params.set('tennis_done','1');
    if(options.tennisCacheOnly)params.set('tennis_cache_only','1');
@@ -916,9 +939,13 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
    if(n.includes('atletico madrid'))set.add('atletico-madrid');
    if(n.includes('manchester city'))set.add('manchester-city');
    if(/\b(basel|basilea)\b/.test(n)){set.add('basel');set.add('fc-basel');set.add('fc-basel-1893')}
+   if(/\bgirona\b/.test(n)){set.add('girona');set.add('girona-fc')}
+   if(/\bleganes\b/.test(n)){set.add('leganes');set.add('cd-leganes')}
+   if(/\bgornik zabrze\b/.test(n)){set.add('gornik-zabrze');set.add('ks-gornik-zabrze')}
+   if(/\bwisla krakow\b/.test(n)){set.add('wisla-krakow');set.add('wisla');set.add('wisla-krakow-sa')}
    return [...set].filter(Boolean)
  }
- function ssValidate(diag,ev,targetDate){if(!diag||!diag.score||!ssFinished(diag.status)||!diag.bestTemporal)return false;if(diag.bestTemporal.date!==targetDate)return false;if(diag.bestTemporal.diff==null||diag.bestTemporal.diff>30)return false;return true}
+ function ssValidate(diag,ev,targetDate){if(!diag||!diag.score||!ssFinished(diag.status)||!diag.bestTemporal)return false;if(diag.bestTemporal.date!==targetDate)return false;if(diag.bestTemporal.diff==null||diag.bestTemporal.diff>45)return false;return true}
  async function ssProbe(ev,targetDate,recent){
    const mapped=sportMap(ev.sport);
    const ssSport=mapped==='Basketball'?'basketball':'football';
@@ -935,7 +962,7 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
      Es el que validamos con Alemania Women 60-65 España Women y evita
      mezclar marcadores de otros partidos presentes en una página de equipo.
    */
-   const maxSlugs=ssSport==='basketball'?12:6;
+   const maxSlugs=ssSport==='basketball'?12:18;
    for(const slug of [...new Set(slugs)].slice(0,maxSlugs)){
      const r=await ssGet(`https://sportscore.com/api/widget/match/?sport=${ssSport}&slug=${encodeURIComponent(slug)}&src=${SPORT_SCORE_SRC}`);
      if(r.ok&&ssHasTeams(r.data,ev.home,ev.away)){
@@ -1034,6 +1061,7 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
      offered=(published.events||[]).map(cleanOfferedEvent);
      $('#countDay').textContent=offered.length;
      const targetDate=published.date||localDate();
+     const sharedFinalsPromise=fetchSharedFinals(targetDate);
 
      const offeredSports=[...new Set(offered.map(o=>sportMap(o.sport)).filter(s=>SUPPORTED.has(s)))];
      const hasFootball=offeredSports.includes('Football');
@@ -1094,10 +1122,12 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
        por lo que un evento que ya no esté publicado no se mostrará.
      */
      const ledgerMatches=loadFinalLedger(targetDate);
+     const sharedMatches=await sharedFinalsPromise;
 
      const stickyApiEvents=[
        ...(matches||[]),
-       ...ledgerMatches
+       ...ledgerMatches,
+       ...sharedMatches
      ]
        .map(m=>m&&m.api)
        .filter(Boolean);
