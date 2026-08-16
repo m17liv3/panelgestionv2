@@ -275,7 +275,7 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
 </main>
 <script src="config.js"></script>
 <script>
- // M17LIV3 resultados V64.2 · excluye fútbol sala
+ // M17LIV3 resultados V64.3 · exclusión robusta de fútbol sala
 (function(){
  const API_PROXY='https://qjbnjhojwhcndcfjcyrc.supabase.co/functions/v1/resultados-dia';
  const cfg=window.M17_CONFIG||{};
@@ -641,16 +641,22 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
 
 
  function isSupportedResultsSport(offeredItem){
-   const raw=normalize(
-     offeredItem?.sport||
-     offeredItem?.category||
-     offeredItem?.title||
-     offeredItem?.sourceLine||
-     ''
-   );
+   /*
+     Importante: sport suele venir como "Fútbol" aunque el evento sea
+     "Fútbol Sala". Por eso comprobamos TODOS los campos descriptivos
+     concatenados, no solo el primer valor disponible.
+   */
+   const raw=normalize([
+     offeredItem?.sport,
+     offeredItem?.category,
+     offeredItem?.title,
+     offeredItem?.sourceLine,
+     offeredItem?.home,
+     offeredItem?.away
+   ].filter(Boolean).join(' '));
 
    // Excluir expresamente fútbol sala / futsal.
-   if(/\bfutsal\b|\bfutbol sala\b|\bfútbol sala\b/.test(raw))return false;
+   if(/\bfutsal\b|\bfutbol sala\b/.test(raw))return false;
 
    const mapped=sportMap(offeredItem?.sport||'');
    return ['Football','Tennis','Basketball'].includes(mapped);
