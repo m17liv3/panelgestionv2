@@ -62,6 +62,14 @@ body::before{
 .dateLine{
   margin-top:6px;color:var(--text);font-size:1.02rem;text-transform:capitalize
 }
+.trackingLine{
+  margin-top:9px;
+  color:#8eabbc;
+  font-size:.72rem;
+  font-weight:850;
+  letter-spacing:.04em
+}
+
 
 /* Estado de sincronización: mismo lenguaje visual que la cartelera */
 .syncBar{
@@ -230,6 +238,7 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
       <span class="heroLabel">eventos de hoy</span>
     </div>
     <div id="dateText" class="dateLine"></div>
+    <div class="trackingLine">SEGUIMIENTO DE RESULTADOS · ⚽ Fútbol · 🎾 Tenis · 🏀 Baloncesto</div>
   </section>
 
   <div class="syncBar" id="liveStatus">
@@ -266,7 +275,7 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
 </main>
 <script src="config.js"></script>
 <script>
- // M17LIV3 resultados V64 · todos los eventos + estado + resultado final
+ // M17LIV3 resultados V64.1 · seguimiento fútbol tenis baloncesto
 (function(){
  const API_PROXY='https://qjbnjhojwhcndcfjcyrc.supabase.co/functions/v1/resultados-dia';
  const cfg=window.M17_CONFIG||{};
@@ -633,10 +642,11 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
  function render(){
    $('#countFinal').textContent=matches.length;
    const heroCount=$('#heroResultCount');
-   if(heroCount)heroCount.textContent=(offered||[]).length;
+   const filteredOffered=(offered||[]).filter(o=>['Football','Tennis','Basketball'].includes(sportMap(o.sport||'')));
+   if(heroCount)heroCount.textContent=filteredOffered.length;
 
-   if(!(offered||[]).length){
-     $('#content').innerHTML='<div class="empty">Todavía no hay eventos publicados en la cartelera de hoy.</div>';
+   if(!filteredOffered.length){
+     $('#content').innerHTML='<div class="empty">Todavía no hay eventos de fútbol, tenis o baloncesto publicados en la cartelera de hoy.</div>';
      return;
    }
 
@@ -646,6 +656,7 @@ body *::-moz-selection{background:transparent!important;color:inherit!important}
 
    for(const o of offered){
      const sport=sportMap(o.sport||'');
+     if(!['Football','Tennis','Basketball'].includes(sport))continue;
      if(!groups.has(sport))groups.set(sport,[]);
      groups.get(sport).push(o);
    }
