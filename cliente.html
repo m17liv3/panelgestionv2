@@ -16,7 +16,7 @@
     .eyebrow{font-size:clamp(.72rem,1.25vw,.9rem);letter-spacing:.22em;text-transform:uppercase;color:var(--cyan);font-weight:900;margin-bottom:10px}
     h1{font-size:clamp(2rem,5vw,4.6rem);line-height:1;margin:0;font-weight:950;letter-spacing:-.05em}
     .sub{color:var(--muted);font-size:clamp(.95rem,1.8vw,1.22rem);margin:14px auto 28px;max-width:700px}
-    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(18px,2.6vw,32px);align-items:stretch;margin-bottom:clamp(18px,2.6vw,30px)}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(18px,2.6vw,32px);align-items:stretch}
     .choice{appearance:none;text-decoration:none;color:inherit;text-align:left;position:relative;min-height:clamp(250px,42vh,420px);border-radius:30px;border:2px solid var(--border);background:linear-gradient(145deg,rgba(16,28,46,.96),rgba(8,15,28,.98));padding:clamp(24px,4vw,46px);display:flex;flex-direction:column;justify-content:space-between;cursor:pointer;outline:none;overflow:hidden;transition:border-color .06s linear,background .06s linear}
     .choice::after{content:"";position:absolute;inset:auto -12% -36% 25%;height:70%;background:radial-gradient(circle,rgba(0,229,255,.11),transparent 65%);pointer-events:none}
     .choice.results::after{background:radial-gradient(circle,rgba(120,255,85,.11),transparent 65%)}
@@ -31,9 +31,16 @@
     .selected{display:inline-flex;align-items:center;gap:8px;padding:7px 11px;border-radius:999px;background:rgba(0,229,255,.1);border:1px solid rgba(0,229,255,.18);font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;opacity:0;transition:none}
     .results .selected{background:rgba(120,255,85,.09);border-color:rgba(120,255,85,.18)}
     .choice:focus .selected,.choice.focused .selected{opacity:1}
-    .hint{margin-top:18px;color:#6f879d;font-size:clamp(.75rem,1.4vw,.95rem)}
+    .back-help{margin:22px auto 0;max-width:880px;display:flex;align-items:center;justify-content:center;gap:clamp(14px,2vw,22px);padding:clamp(16px,2vw,22px) clamp(18px,3vw,30px);border-radius:22px;border:2px solid rgba(255,255,255,.12);background:linear-gradient(135deg,rgba(14,25,42,.96),rgba(7,14,25,.98));box-shadow:0 16px 40px rgba(0,0,0,.28);text-align:left}
+    .back-em{color:#fff;font-weight:800}
 
-    /* TV Box / Android TV: compacto y rápido */
+    /* Visor interno: evita que Android mande cartelera/resultados a Chrome */
+    #m17Viewer{position:fixed;inset:0;z-index:99999;background:#050812;display:none;padding:0;margin:0}
+    #m17Viewer.open{display:block}
+    #m17Frame{display:block;width:100%;height:100%;border:0;background:#050812}
+    #m17Loading{position:absolute;inset:0;display:grid;place-items:center;background:#050812;color:#8aa1b8;font-size:1rem;letter-spacing:.04em;pointer-events:none}
+    #m17Viewer.ready #m17Loading{display:none}
+
     @media (min-width:900px) and (orientation:landscape){
       body{align-items:center;padding:18px 28px;background:#050812}
       .portal{width:min(1280px,96vw)}
@@ -48,26 +55,14 @@
       .choice p{font-size:.96rem;line-height:1.38;max-width:560px}
       .foot{margin-top:16px;font-size:.94rem}
       .selected{font-size:.72rem;padding:6px 10px}
-      .hint{margin-top:11px;font-size:.8rem}
+      .back-help{margin-top:12px;max-width:920px;padding:11px 18px;border-radius:16px;gap:14px;box-shadow:none}
       .choice:focus,.choice.focused{outline:4px solid rgba(0,229,255,.95);outline-offset:3px}
       .choice.results:focus,.choice.results.focused{outline-color:rgba(120,255,85,.95)}
     }
-
     @media (min-width:900px) and (orientation:landscape) and (max-height:720px){
-      body{align-items:flex-start;padding-top:12px;padding-bottom:12px}
-      .eyebrow{margin-bottom:3px}
-      h1{font-size:2.55rem}
-      .sub{margin:5px auto 10px;font-size:.9rem}
-      .choice{min-height:220px;height:270px;padding:20px 24px}
-      .icon{width:58px;height:58px}
-      .choice h2{font-size:1.65rem;margin:10px 0 6px}
-      .choice p{font-size:.88rem;line-height:1.3}
-      .foot{margin-top:10px}
-      .hint{margin-top:7px}
+      body{align-items:flex-start;padding-top:12px;padding-bottom:12px}.eyebrow{margin-bottom:3px}h1{font-size:2.55rem}.sub{margin:5px auto 10px;font-size:.9rem}.choice{min-height:220px;height:270px;padding:20px 24px}.icon{width:58px;height:58px}.choice h2{font-size:1.65rem;margin:10px 0 6px}.choice p{font-size:.88rem;line-height:1.3}.foot{margin-top:10px}.back-help{padding:8px 14px;margin-top:8px}
     }
-
     @media(max-width:720px){body{align-items:flex-start}.grid{grid-template-columns:1fr}.choice{min-height:230px;border-radius:24px}.portal{padding-top:14px}.choice:focus,.choice.focused{transform:scale(1.015)}}
-    @media(min-width:721px) and (max-height:650px){body{align-items:flex-start;padding-top:18px}.choice{min-height:270px}.sub{margin-bottom:18px}.choice h2{margin-top:14px}.hint{margin-top:14px}}
   </style>
 </head>
 <body oncontextmenu="return false">
@@ -108,20 +103,88 @@
         <div class="foot"><span class="selected">● Seleccionado</span><span>ABRIR →</span></div>
       </a>
     </section>
-</main>
+    <aside class="back-help" aria-label="Cómo volver a la aplicación">
+      <p>Pulsa el botón <span class="back-em">ATRÁS de tu mando</span> para regresar a la app y seguir disfrutando del contenido.</p>
+    </aside>
+  </main>
+
+  <div id="m17Viewer" aria-hidden="true">
+    <div id="m17Loading">Cargando M17LIV3…</div>
+    <iframe id="m17Frame" title="M17LIV3"></iframe>
+  </div>
+
   <script>
-// M17LIV3 cliente V34 · sin bloque Atrás + más aire visual
+    // M17LIV3 cliente · navegación interna para WebView Android/TV Box
     (function(){
-      var cards=Array.from(document.querySelectorAll('.choice')); var idx=0;
-      function focusAt(i){idx=(i+cards.length)%cards.length;cards[idx].focus({preventScroll:true});cards.forEach((c,j)=>c.classList.toggle('focused',j===idx));}
-      cards.forEach((c,i)=>{c.addEventListener('focus',()=>{idx=i;cards.forEach((x,j)=>x.classList.toggle('focused',j===i));});});
+      var cards=Array.from(document.querySelectorAll('.choice'));
+      var idx=0;
+      var viewer=document.getElementById('m17Viewer');
+      var frame=document.getElementById('m17Frame');
+
+      function focusAt(i){
+        idx=(i+cards.length)%cards.length;
+        cards[idx].focus({preventScroll:true});
+        cards.forEach(function(c,j){c.classList.toggle('focused',j===idx);});
+      }
+
+      function openInternal(url){
+        viewer.classList.remove('ready');
+        viewer.classList.add('open');
+        viewer.setAttribute('aria-hidden','false');
+        document.body.style.overflow='hidden';
+        frame.src=url;
+      }
+
+      function closeInternal(){
+        viewer.classList.remove('open','ready');
+        viewer.setAttribute('aria-hidden','true');
+        frame.src='about:blank';
+        document.body.style.overflow='';
+        setTimeout(function(){focusAt(idx);},30);
+      }
+
+      cards.forEach(function(c,i){
+        c.addEventListener('focus',function(){
+          idx=i;
+          cards.forEach(function(x,j){x.classList.toggle('focused',j===i);});
+        });
+        c.addEventListener('click',function(e){
+          e.preventDefault();
+          openInternal(c.getAttribute('href'));
+        });
+      });
+
+      frame.addEventListener('load',function(){
+        if(!viewer.classList.contains('open')) return;
+        viewer.classList.add('ready');
+        try{
+          var path=frame.contentWindow.location.pathname || '';
+          if(/\/cliente\.html$/i.test(path)) closeInternal();
+        }catch(_){ }
+      });
+
       document.addEventListener('keydown',function(e){
+        if(viewer.classList.contains('open')){
+          if(['Escape','Backspace','BrowserBack','GoBack'].includes(e.key)){
+            e.preventDefault();
+            closeInternal();
+          }
+          return;
+        }
         if(['ArrowLeft','ArrowUp'].includes(e.key)){e.preventDefault();focusAt(idx-1);}
         else if(['ArrowRight','ArrowDown'].includes(e.key)){e.preventDefault();focusAt(idx+1);}
         else if(e.key==='Enter'||e.key===' '){e.preventDefault();cards[idx].click();}
-        else if(['Escape','Backspace','BrowserBack','GoBack'].includes(e.key)){e.preventDefault();if(history.length>1) history.back();}
+        else if(['Escape','Backspace','BrowserBack','GoBack'].includes(e.key)){
+          e.preventDefault();
+          if(history.length>1) history.back();
+        }
       });
-      window.addEventListener('load',()=>focusAt(0));
+
+      window.addEventListener('message',function(e){
+        if(e && e.data==='M17_BACK') closeInternal();
+      });
+
+      window.addEventListener('load',function(){focusAt(0);});
     })();
   </script>
 </body>
