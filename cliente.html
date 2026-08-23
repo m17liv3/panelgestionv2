@@ -114,7 +114,7 @@
   </div>
 
   <script>
-    // M17LIV3 cliente · navegación interna para WebView Android/TV Box · TV REMOTE FIX 2026-08-23
+    // M17LIV3 cliente · navegación interna para WebView Android/TV Box · TV REMOTE FIX SUAVE 2026-08-23
     (function(){
       var cards=Array.from(document.querySelectorAll('.choice'));
       var idx=0;
@@ -150,7 +150,8 @@
         try{
           var w=frame.contentWindow;
           if(!w) return;
-          var step=Math.max(320,Math.round((w.innerHeight||window.innerHeight||720)*0.72));
+          // Desplazamiento corto pensado para mando de TV.
+          var step=110;
           w.scrollBy({top:direction*step,left:0,behavior:'smooth'});
         }catch(_){ }
       }
