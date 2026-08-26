@@ -321,7 +321,7 @@
   </main>
 
   <script src="config.js"></script>
-  <!-- Cartelera Premium V3.3.6 · vaciado visual automático al cambiar de día -->
+  <!-- Cartelera Premium V3.3.7 · lector compatible con el formato real del panel -->
   <script>
     (function () {
       'use strict';
@@ -398,11 +398,14 @@
           if (/^[.\-_=·•:~*]{5,}$/.test(line)) return;
           if (/^[^\p{L}\p{N}]{5,}$/u.test(line)) return;
 
-          var header = line.replace(/^[^\p{L}\p{N}]+/u,'').trim();
+          var header = line
+            .replace(/^[^\p{L}\p{N}]+/u,'')
+            .replace(/[^\p{L}\p{N}]+$/u,'')
+            .trim();
           if (
             !/^⏰/.test(line) &&
             !/^📺/.test(line) &&
-            !/^🗂/.test(line) &&
+            !/^(?:🗂|📁|📂)/.test(line) &&
             !/^\d{1,2}:\d{2}/.test(line) &&
             header &&
             header === header.toUpperCase() &&
@@ -413,7 +416,12 @@
             return;
           }
 
-          var ev = line.match(/^(?:⏰\s*)?(\d{1,2}:\d{2})\s*[–—-]\s*(.+)$/);
+          /*
+            El panel publica normalmente "08:00 · EVENTO", aunque también
+            admitimos guion, raya, barra o dos puntos para no dejar la tabla
+            vacía si cambia ligeramente el formato pegado.
+          */
+          var ev = line.match(/^(?:⏰\s*)?(\d{1,2}:\d{2})\s*(?:[·•|:–—-]\s*)?(.+)$/);
           if (ev) {
             finish();
             current = {
@@ -429,12 +437,18 @@
           if (!current) return;
 
           if (/^📺/.test(line)) {
-            current.channel = line.replace(/^📺\s*/,'').trim();
+            current.channel = line
+              .replace(/^📺\s*/,'')
+              .replace(/^CANAL\s*:\s*/i,'')
+              .trim();
             return;
           }
 
-          if (/^🗂/.test(line)) {
-            current.folder = line.replace(/^🗂\s*/,'').trim();
+          if (/^(?:🗂|📁|📂)/.test(line)) {
+            current.folder = line
+              .replace(/^(?:🗂|📁|📂)\s*/,'')
+              .replace(/^(?:GRUPO|CARPETA)\s*:\s*/i,'')
+              .trim();
             return;
           }
 
@@ -526,8 +540,14 @@
 
         if (!events.length) {
           host.innerHTML = '';
+          /* Nunca ocultamos una cartelera válida solo porque su formato no
+             haya podido convertirse en filas. En ese caso se muestra el
+             texto original como respaldo. */
+          scheduleText.style.display = 'block';
           return;
         }
+
+        scheduleText.style.display = 'none';
 
         var groups = new Map();
         events.forEach(function(ev){
@@ -567,7 +587,7 @@
         var publishedDate = String(record.eventos_fecha || '').trim();
 
         /*
-          V3.3.6: la cartelera solo es visible durante el día para el que
+          V3.3.7: la cartelera solo es visible durante el día para el que
           fue publicada. Al llegar a las 00:00 de Madrid, la fecha deja de
           coincidir y ocultamos texto e imagen sin borrar el registro.
         */
