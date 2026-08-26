@@ -179,7 +179,7 @@
     .sportCell{display:none}
     .eventCell{color:var(--text);font-weight:850;line-height:1.35;white-space:normal;overflow-wrap:anywhere}
     .channelCell{width:135px;color:#d6e5ee;font-size:.76rem}
-    .folderCell{width:145px;color:#bfff7c;font-size:.70rem;font-weight:850}
+    .folderCell{width:220px;color:#bfff7c;font-size:.72rem;font-weight:850;white-space:normal;overflow-wrap:anywhere}
     .sportGroupRow td{padding:10px 14px;color:#e9fbff;font-size:.82rem;font-weight:950;letter-spacing:.05em;background:linear-gradient(90deg,rgba(0,216,255,.08),rgba(108,255,67,.035));border-top:1px solid rgba(0,216,255,.13);border-bottom:1px solid rgba(0,216,255,.08)}
     .sportGroupRow small{margin-left:8px;color:var(--muted);font-size:.68rem;font-weight:750}
     
@@ -322,7 +322,7 @@
   </main>
 
   <script src="config.js"></script>
-  <!-- Cartelera Premium V3.3.9 · pastilla de estado completa y sin recorte -->
+  <!-- Cartelera Premium V3.4.0 · tabla sin columna Estado -->
   <script>
     (function () {
       'use strict';
@@ -559,18 +559,16 @@
         var body = '';
 
         groups.forEach(function(items, sport){
-          body += '<tr class="sportGroupRow"><td colspan="5">' +
+          body += '<tr class="sportGroupRow"><td colspan="4">' +
             escapeHtml(sport) +
             '<small>' + items.length + ' ' + (items.length === 1 ? 'evento' : 'eventos') + '</small></td></tr>';
 
           items.forEach(function(ev){
-            var status = eventStatusFor(ev.time, sport, ev.title);
             body += '<tr>' +
               '<td class="timeCell">' + escapeHtml(ev.time) + '</td>' +
               '<td class="eventCell">' + escapeHtml(ev.title) + '</td>' +
               '<td class="channelCell">' + escapeHtml(ev.channel) + '</td>' +
               '<td class="folderCell">' + (ev.folder ? '📁 ' + escapeHtml(ev.folder) : '') + '</td>' +
-              '<td class="statusCell"><span class="eventStatus ' + status.kind + '"><span class="statusDot"></span>' + escapeHtml(status.text) + '</span></td>' +
             '</tr>';
           });
         });
@@ -578,7 +576,7 @@
         host.innerHTML =
           '<div class="scheduleTableWrap">' +
             '<table class="scheduleTable">' +
-              '<thead><tr><th>Hora</th><th>Evento</th><th>Canal</th><th>Buscar en</th><th style="text-align:right">Estado</th></tr></thead>' +
+              '<thead><tr><th>Hora</th><th>Evento</th><th>Canal</th><th>Buscar en</th></tr></thead>' +
               '<tbody>' + body + '</tbody>' +
             '</table>' +
           '</div>';
@@ -588,7 +586,7 @@
         var publishedDate = String(record.eventos_fecha || '').trim();
 
         /*
-          V3.3.9: la cartelera solo es visible durante el día para el que
+          V3.4.0: la cartelera solo es visible durante el día para el que
           fue publicada. Al llegar a las 00:00 de Madrid, la fecha deja de
           coincidir y ocultamos texto e imagen sin borrar el registro.
         */
