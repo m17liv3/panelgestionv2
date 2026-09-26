@@ -7181,7 +7181,7 @@ function movieTplInit() {
   var uploadBtn1 = document.getElementById('tplUploadFixed1Btn');
   var uploadBtn2 = document.getElementById('tplUploadFixed2Btn');
   var uploadBtn3 = document.getElementById('tplUploadFixed3Btn');
-  if (downloadBtn) downloadBtn.onclick = movieTplDownloadJpeg;
+  if (downloadBtn) downloadBtn.onclick = movieTplDownloadPng;
   if (uploadBtn1) uploadBtn1.onclick = function(){ movieTplUploadToFixed('pelicula_1', this); };
   if (uploadBtn2) uploadBtn2.onclick = function(){ movieTplUploadToFixed('pelicula_2', this); };
   if (uploadBtn3) uploadBtn3.onclick = function(){ movieTplUploadToFixed('pelicula_3', this); };
@@ -7281,54 +7281,9 @@ function movieTplDraw(){
   var ctx = movieTplCtx, W = movieTplW, H = movieTplH;
   ctx.save();
   ctx.clearRect(0,0,W,H);
-  ctx.fillStyle = '#04070d';
-  ctx.fillRect(0,0,W,H);
-
-  /* Fondo cinematografico generado con la propia portada. */
-  if (movieTplPosterImg){
-    var img = movieTplPosterImg;
-    var scale = Math.max(W / img.width, H / img.height) * 1.10;
-    var dw = img.width * scale;
-    var dh = img.height * scale;
-    var dx = (W - dw) / 2 + 110;
-    var dy = (H - dh) / 2;
-    ctx.save();
-    ctx.globalAlpha = 0.46;
-    ctx.filter = 'blur(28px) saturate(1.18) contrast(1.05)';
-    ctx.drawImage(img, dx-45, dy-45, dw+90, dh+90);
-    ctx.restore();
-  }
-
-  var shade = ctx.createLinearGradient(0,0,W,0);
-  shade.addColorStop(0,'rgba(3,7,14,0.94)');
-  shade.addColorStop(0.35,'rgba(3,7,14,0.82)');
-  shade.addColorStop(0.68,'rgba(3,7,14,0.68)');
-  shade.addColorStop(1,'rgba(3,7,14,0.82)');
-  ctx.fillStyle = shade;
-  ctx.fillRect(0,0,W,H);
-
-  var verticalShade = ctx.createLinearGradient(0,0,0,H);
-  verticalShade.addColorStop(0,'rgba(2,5,10,0.50)');
-  verticalShade.addColorStop(0.42,'rgba(2,5,10,0.04)');
-  verticalShade.addColorStop(1,'rgba(2,5,10,0.66)');
-  ctx.fillStyle = verticalShade;
-  ctx.fillRect(0,0,W,H);
-
-  var cyanGlow = ctx.createRadialGradient(80,120,10,80,120,520);
-  cyanGlow.addColorStop(0,'rgba(34,211,238,0.13)');
-  cyanGlow.addColorStop(1,'rgba(34,211,238,0)');
-  ctx.fillStyle = cyanGlow;
-  ctx.fillRect(0,0,W,H);
-
-  var limeGlow = ctx.createRadialGradient(W-80,H-80,20,W-80,H-80,620);
-  limeGlow.addColorStop(0,'rgba(163,230,53,0.10)');
-  limeGlow.addColorStop(1,'rgba(163,230,53,0)');
-  ctx.fillStyle = limeGlow;
-  ctx.fillRect(0,0,W,H);
   ctx.restore();
 
   movieTplDrawDots(W-285, 48, 215, 150);
-  movieTplDrawLogo();
   movieTplDrawPoster();
   movieTplDrawTextContent();
   movieTplDrawNeonFrame();
@@ -7350,18 +7305,6 @@ function movieTplDrawDots(x0,y0,w,h){
 function movieTplDrawNeonFrame(){
   var ctx = movieTplCtx, W = movieTplW, H = movieTplH;
   ctx.save();
-  var margin = 18;
-  var grad = ctx.createLinearGradient(0,0,W,H);
-  grad.addColorStop(0,'rgba(34,211,238,0.76)');
-  grad.addColorStop(0.52,'rgba(34,211,238,0.28)');
-  grad.addColorStop(1,'rgba(163,230,53,0.72)');
-  ctx.strokeStyle = grad;
-  ctx.lineWidth = 2;
-  ctx.shadowColor = 'rgba(34,211,238,0.28)';
-  ctx.shadowBlur = 12;
-  movieTplRoundRect(ctx, margin, margin, W - margin*2, H - margin*2, 24);
-  ctx.stroke();
-
   var accent = ctx.createLinearGradient(62,0,330,0);
   accent.addColorStop(0,'#22d3ee');
   accent.addColorStop(1,'#a3e635');
@@ -7371,6 +7314,16 @@ function movieTplDrawNeonFrame(){
   ctx.beginPath();
   ctx.moveTo(62, H-36);
   ctx.lineTo(300, H-36);
+  ctx.stroke();
+
+  var topAccent = ctx.createLinearGradient(W-470,0,W-76,0);
+  topAccent.addColorStop(0,'rgba(34,211,238,0)');
+  topAccent.addColorStop(1,'rgba(163,230,53,0.80)');
+  ctx.strokeStyle = topAccent;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(W-470,91);
+  ctx.lineTo(W-76,91);
   ctx.stroke();
   ctx.restore();
 }
@@ -7406,7 +7359,7 @@ function movieTplDrawLogo(){
 
 function movieTplDrawPoster(){
   var ctx = movieTplCtx;
-  var h = 620, w = h * (2/3), x = 68, y = 190, r = 28;
+  var h = 760, w = h * (2/3), x = 58, y = 70, r = 30;
   ctx.save();
   movieTplRoundRect(ctx, x-4, y-4, w+8, h+8, r+4);
   var grad = ctx.createLinearGradient(x,y,x+w,y+h);
@@ -7462,7 +7415,7 @@ function movieTplDrawPoster(){
 
 function movieTplDrawTextContent(){
   var ctx = movieTplCtx, W = movieTplW;
-  var leftX = 555;
+  var leftX = 620;
   var contentW = W-leftX-76;
   ctx.textBaseline = 'alphabetic';
 
@@ -7800,31 +7753,31 @@ function movieTplSetStatus(msg, cls){
   el.className = 'movieTplStatus' + (cls ? ' ' + cls : '');
 }
 
-function movieTplCanvasToJpegBlob(){
+function movieTplCanvasToPngBlob(){
   return new Promise(function(resolve, reject){
     try{
       movieTplCanvas.toBlob(function(blob){
         if(blob) resolve(blob);
-        else reject(new Error('No se pudo generar el JPEG'));
-      }, 'image/jpeg', 0.92);
+        else reject(new Error('No se pudo generar el PNG'));
+      }, 'image/png');
     }catch(err){ reject(err); }
   });
 }
 
-async function movieTplDownloadJpeg(){
+async function movieTplDownloadPng(){
   try{
     movieTplDraw();
-    var blob = await movieTplCanvasToJpegBlob();
+    var blob = await movieTplCanvasToPngBlob();
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
     var safeTitle = (movieTplState.title || 'plantilla').toLowerCase().replace(/[^a-z0-9]+/gi,'_').slice(0,40);
     a.href = url;
-    a.download = 'm17liv3_' + (safeTitle || 'plantilla') + '.jpg';
+    a.download = 'm17liv3_' + (safeTitle || 'plantilla') + '.png';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
-    movieTplSetStatus('JPEG descargado', 'ok');
+    movieTplSetStatus('PNG transparente descargado', 'ok');
   }catch(err){
     movieTplSetStatus('Error al descargar: posible problema CORS con el poster.', 'err');
   }
@@ -7835,7 +7788,7 @@ async function movieTplUploadImgBB(){
   movieTplSetStatus('Generando imagen...', '');
   movieTplDraw();
   var blob;
-  try{ blob = await movieTplCanvasToJpegBlob(); }
+  try{ blob = await movieTplCanvasToPngBlob(); }
   catch(err){ movieTplSetStatus('Error al generar la imagen. Puede ser CORS del poster.', 'err'); return; }
   movieTplSetStatus('Subiendo a imgBB...', '');
   try{
@@ -7921,12 +7874,12 @@ async function movieTplUploadToFixed(slotKey, btnEl){
   movieTplSetStatus('Generando imagen para ' + slot.label + '...', '');
   movieTplDraw();
   var blob;
-  try { blob = await movieTplCanvasToJpegBlob(); }
+  try { blob = await movieTplCanvasToPngBlob(); }
   catch(err){ movieTplSetStatus('Error al generar la imagen. Puede ser CORS del poster.', 'err'); return; }
   var oldText = btnEl ? btnEl.textContent : '';
   if (btnEl) { btnEl.disabled = true; btnEl.textContent = 'Subiendo...'; }
   try {
-    await uploadBlobToFixedSlot(slotKey, blob, 'image/jpeg');
+    await uploadBlobToFixedSlot(slotKey, blob, 'image/png');
     movieTplSetStatus('Subida correctamente a ' + slot.label + (slotKey === 'pelicula_3' ? ' · enlace público actualizado sin caché' : ''), 'ok');
     movieTplRenderFixedPreviews();
     try { loadFixedSlotImage(slotKey); } catch(e) {}
