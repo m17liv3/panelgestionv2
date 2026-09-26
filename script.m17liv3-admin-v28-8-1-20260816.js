@@ -5843,7 +5843,7 @@ function openCartelera() {
   closeSheet('menuSheet','menuOverlay');
   var base = window.location.href.replace('index.html','').split('?')[0];
   if (!base.endsWith('/')) base += '/';
-  document.getElementById('clienteLinkBox').textContent = base + 'cartelera.html';
+  document.getElementById('clienteLinkBox').textContent = base + 'cliente.html';
   cartLoadExisting();
   openSheet('carteleraSheet','carteleraOverlay');
 }
@@ -5863,24 +5863,19 @@ async function cartLoadExisting() {
     if (!res.ok) return;
     var data = await res.json();
     var record = data.record || {};
-    var today = new Intl.DateTimeFormat('sv-SE', {
-      timeZone: 'Europe/Madrid',
-      year: 'numeric', month: '2-digit', day: '2-digit'
-    }).format(new Date());
-    var publicationIsToday = String(record.eventos_fecha || '') === today;
-    var texto = publicationIsToday ? (record.texto || '') : '';
+    var texto = record.texto || '';
     document.getElementById('cart-texto').value = texto;
     document.getElementById('cart-char-count').textContent = texto.length + ' caracteres';
     cartRenderDetectedEvents(texto);
-    var imgUrl = publicationIsToday ? (record.imagen_dia || '') : '';
+    var imgUrl = record.imagen_dia || '';
     if (imgUrl) {
       document.getElementById('cart-img-link').textContent = imgUrl;
       document.getElementById('cart-imgbb-result').style.display = 'block';
       document.getElementById('cart-preview-img').src = imgUrl;
     } else {
       document.getElementById('cart-imgbb-result').style.display = 'none';
-      document.getElementById('cart-preview-img').removeAttribute('src');
     }
+    var today = new Date().toISOString().slice(0,10);
     var visits = record.visits || {};
     document.getElementById('cart-visits-today').textContent = visits[today] || 0;
     var total = Object.values(visits).reduce(function(a,b){ return a+b; }, 0);
@@ -7284,21 +7279,55 @@ function movieTplWrapText(ctx, text, x, y, maxWidth, lineHeight, maxLines){
 function movieTplDraw(){
   if(!movieTplCtx) return;
   var ctx = movieTplCtx, W = movieTplW, H = movieTplH;
-  ctx.fillStyle = '#070b14';
+  ctx.save();
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle = '#04070d';
   ctx.fillRect(0,0,W,H);
 
-  var g1 = ctx.createRadialGradient(150,100,50,150,100,500);
-  g1.addColorStop(0,'rgba(34,211,238,0.10)');
-  g1.addColorStop(1,'rgba(34,211,238,0)');
-  ctx.fillStyle = g1; ctx.fillRect(0,0,W,H);
+  /* Fondo cinematografico generado con la propia portada. */
+  if (movieTplPosterImg){
+    var img = movieTplPosterImg;
+    var scale = Math.max(W / img.width, H / img.height) * 1.10;
+    var dw = img.width * scale;
+    var dh = img.height * scale;
+    var dx = (W - dw) / 2 + 110;
+    var dy = (H - dh) / 2;
+    ctx.save();
+    ctx.globalAlpha = 0.46;
+    ctx.filter = 'blur(28px) saturate(1.18) contrast(1.05)';
+    ctx.drawImage(img, dx-45, dy-45, dw+90, dh+90);
+    ctx.restore();
+  }
 
-  var g2 = ctx.createRadialGradient(W-150,H-100,50,W-150,H-100,600);
-  g2.addColorStop(0,'rgba(163,230,53,0.06)');
-  g2.addColorStop(1,'rgba(163,230,53,0)');
-  ctx.fillStyle = g2; ctx.fillRect(0,0,W,H);
+  var shade = ctx.createLinearGradient(0,0,W,0);
+  shade.addColorStop(0,'rgba(3,7,14,0.94)');
+  shade.addColorStop(0.35,'rgba(3,7,14,0.82)');
+  shade.addColorStop(0.68,'rgba(3,7,14,0.68)');
+  shade.addColorStop(1,'rgba(3,7,14,0.82)');
+  ctx.fillStyle = shade;
+  ctx.fillRect(0,0,W,H);
 
-  movieTplDrawDots(W-340, 30, 280, 220);
-  movieTplDrawDots(0, H-240, 100, 240);
+  var verticalShade = ctx.createLinearGradient(0,0,0,H);
+  verticalShade.addColorStop(0,'rgba(2,5,10,0.50)');
+  verticalShade.addColorStop(0.42,'rgba(2,5,10,0.04)');
+  verticalShade.addColorStop(1,'rgba(2,5,10,0.66)');
+  ctx.fillStyle = verticalShade;
+  ctx.fillRect(0,0,W,H);
+
+  var cyanGlow = ctx.createRadialGradient(80,120,10,80,120,520);
+  cyanGlow.addColorStop(0,'rgba(34,211,238,0.13)');
+  cyanGlow.addColorStop(1,'rgba(34,211,238,0)');
+  ctx.fillStyle = cyanGlow;
+  ctx.fillRect(0,0,W,H);
+
+  var limeGlow = ctx.createRadialGradient(W-80,H-80,20,W-80,H-80,620);
+  limeGlow.addColorStop(0,'rgba(163,230,53,0.10)');
+  limeGlow.addColorStop(1,'rgba(163,230,53,0)');
+  ctx.fillStyle = limeGlow;
+  ctx.fillRect(0,0,W,H);
+  ctx.restore();
+
+  movieTplDrawDots(W-285, 48, 215, 150);
   movieTplDrawLogo();
   movieTplDrawPoster();
   movieTplDrawTextContent();
@@ -7308,8 +7337,8 @@ function movieTplDraw(){
 function movieTplDrawDots(x0,y0,w,h){
   var ctx = movieTplCtx;
   ctx.save();
-  ctx.fillStyle = 'rgba(34,211,238,0.25)';
-  var gap = 22;
+  ctx.fillStyle = 'rgba(34,211,238,0.18)';
+  var gap = 24;
   for(var x=x0; x<x0+w; x+=gap){
     for(var y=y0; y<y0+h; y+=gap){
       ctx.beginPath(); ctx.arc(x,y,1.6,0,Math.PI*2); ctx.fill();
@@ -7321,24 +7350,36 @@ function movieTplDrawDots(x0,y0,w,h){
 function movieTplDrawNeonFrame(){
   var ctx = movieTplCtx, W = movieTplW, H = movieTplH;
   ctx.save();
-  var margin = 6;
+  var margin = 18;
   var grad = ctx.createLinearGradient(0,0,W,H);
-  grad.addColorStop(0,'#22d3ee'); grad.addColorStop(1,'#a3e635');
+  grad.addColorStop(0,'rgba(34,211,238,0.76)');
+  grad.addColorStop(0.52,'rgba(34,211,238,0.28)');
+  grad.addColorStop(1,'rgba(163,230,53,0.72)');
   ctx.strokeStyle = grad;
-  ctx.lineWidth = 4;
-  ctx.shadowColor = 'rgba(34,211,238,0.6)';
-  ctx.shadowBlur = 18;
-  movieTplRoundRect(ctx, margin, margin, W - margin*2, H - margin*2, 18);
+  ctx.lineWidth = 2;
+  ctx.shadowColor = 'rgba(34,211,238,0.28)';
+  ctx.shadowBlur = 12;
+  movieTplRoundRect(ctx, margin, margin, W - margin*2, H - margin*2, 24);
+  ctx.stroke();
+
+  var accent = ctx.createLinearGradient(62,0,330,0);
+  accent.addColorStop(0,'#22d3ee');
+  accent.addColorStop(1,'#a3e635');
+  ctx.strokeStyle = accent;
+  ctx.lineWidth = 5;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(62, H-36);
+  ctx.lineTo(300, H-36);
   ctx.stroke();
   ctx.restore();
 }
 
 function movieTplDrawLogo(){
   var ctx = movieTplCtx;
-  var posterX = 45, posterW = 580 * (2/3);
-  var areaW = 320, areaH = 230;
-  var areaX = posterX + (posterW - areaW)/2;
-  var areaY = 25;
+  var areaW = 245, areaH = 112;
+  var areaX = 68;
+  var areaY = 52;
   if (movieTplLogoImg){
     var iw = movieTplLogoImg.width, ih = movieTplLogoImg.height;
     var scale = Math.min(areaW/iw, areaH/ih);
@@ -7355,7 +7396,7 @@ function movieTplDrawLogo(){
     ctx.stroke();
     ctx.setLineDash([]);
     ctx.fillStyle = 'rgba(255,255,255,0.28)';
-    ctx.font = '600 24px Arial, sans-serif';
+    ctx.font = '600 20px Arial, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('TU LOGO AQUI', areaX+areaW/2, areaY+areaH/2);
@@ -7365,29 +7406,36 @@ function movieTplDrawLogo(){
 
 function movieTplDrawPoster(){
   var ctx = movieTplCtx;
-  var h = 580, w = h * (2/3), x = 45, y = 280, r = 22;
+  var h = 620, w = h * (2/3), x = 68, y = 190, r = 28;
   ctx.save();
-  movieTplRoundRect(ctx, x, y, w, h, r);
+  movieTplRoundRect(ctx, x-4, y-4, w+8, h+8, r+4);
   var grad = ctx.createLinearGradient(x,y,x+w,y+h);
-  grad.addColorStop(0,'#22d3ee'); grad.addColorStop(1,'#a3e635');
-  ctx.strokeStyle = grad; ctx.lineWidth = 4; ctx.shadowColor = 'rgba(34,211,238,0.5)'; ctx.shadowBlur = 20; ctx.stroke();
+  grad.addColorStop(0,'rgba(34,211,238,0.95)');
+  grad.addColorStop(0.55,'rgba(34,211,238,0.42)');
+  grad.addColorStop(1,'rgba(163,230,53,0.92)');
+  ctx.strokeStyle = grad;
+  ctx.lineWidth = 3;
+  ctx.shadowColor = 'rgba(0,0,0,0.82)';
+  ctx.shadowBlur = 34;
+  ctx.shadowOffsetY = 18;
+  ctx.stroke();
   ctx.restore();
 
   ctx.save();
-  movieTplRoundRect(ctx, x+2, y+2, w-4, h-4, r-2);
+  movieTplRoundRect(ctx, x, y, w, h, r);
   ctx.clip();
   if (movieTplPosterImg){
-    ctx.fillStyle = '#0d1422'; ctx.fillRect(x+2,y+2,w-4,h-4);
+    ctx.fillStyle = '#0d1422'; ctx.fillRect(x,y,w,h);
     var ir = movieTplPosterImg.width / movieTplPosterImg.height;
-    var tr = (w-4) / (h-4);
+    var tr = w / h;
     var sw, sh;
     if (ir > tr){ sh = movieTplPosterImg.height; sw = sh * tr; }
     else { sw = movieTplPosterImg.width; sh = sw / tr; }
     var zoom = (movieTplState.posterZoom || 100) / 100;
     sw = sw / zoom; sh = sh / zoom;
-    var dw = w-4, dh = h-4;
-    if (sw > movieTplPosterImg.width){ var ratioW = movieTplPosterImg.width / sw; sw = movieTplPosterImg.width; dw = (w-4) * ratioW; }
-    if (sh > movieTplPosterImg.height){ var ratioH = movieTplPosterImg.height / sh; sh = movieTplPosterImg.height; dh = (h-4) * ratioH; }
+    var drawW = w, drawH = h;
+    if (sw > movieTplPosterImg.width){ var ratioW = movieTplPosterImg.width / sw; sw = movieTplPosterImg.width; drawW = w * ratioW; }
+    if (sh > movieTplPosterImg.height){ var ratioH = movieTplPosterImg.height / sh; sh = movieTplPosterImg.height; drawH = h * ratioH; }
     var maxOffX = movieTplPosterImg.width - sw;
     var maxOffY = movieTplPosterImg.height - sh;
     var sx = (movieTplPosterImg.width - sw) / 2;
@@ -7396,11 +7444,11 @@ function movieTplDrawPoster(){
     sy += (movieTplState.posterOffsetY || 0) / 100 * (maxOffY / 2);
     sx = Math.max(0, Math.min(maxOffX, sx));
     sy = Math.max(0, Math.min(maxOffY, sy));
-    var dx = x+2 + ((w-4) - dw)/2;
-    var dy = y+2 + ((h-4) - dh)/2;
-    ctx.drawImage(movieTplPosterImg, sx, sy, sw, sh, dx, dy, dw, dh);
+    var dx = x + (w - drawW)/2;
+    var dy = y + (h - drawH)/2;
+    ctx.drawImage(movieTplPosterImg, sx, sy, sw, sh, dx, dy, drawW, drawH);
   } else {
-    ctx.fillStyle = '#0d1422'; ctx.fillRect(x+2,y+2,w-4,h-4);
+    ctx.fillStyle = 'rgba(13,20,34,0.94)'; ctx.fillRect(x,y,w,h);
     ctx.strokeStyle = '#3a4a66'; ctx.lineWidth = 4;
     var ix = x+w/2-65, iy = y+h/2-130, isz=130;
     movieTplRoundRect(ctx, ix, iy, isz, isz, 14); ctx.stroke();
@@ -7414,52 +7462,127 @@ function movieTplDrawPoster(){
 
 function movieTplDrawTextContent(){
   var ctx = movieTplCtx, W = movieTplW;
-  var leftX = 590;
-  ctx.fillStyle = '#f5f7fa'; ctx.font = '900 62px Arial, sans-serif'; ctx.textBaseline = 'alphabetic';
-  ctx.fillText('PELICULA', leftX, 95);
-  var grad = ctx.createLinearGradient(leftX, 0, leftX+800, 0);
-  grad.addColorStop(0,'#22d3ee'); grad.addColorStop(1,'#a3e635');
-  ctx.fillStyle = grad; ctx.font = '900 62px Arial, sans-serif'; ctx.fillText('RECOMENDADA', leftX, 170);
-  ctx.fillStyle = '#a3e635'; ctx.font = '700 34px Arial, sans-serif'; ctx.fillText('de la semana', leftX, 225);
-  var lineY = 213, lineStartX = leftX + 380;
-  ctx.strokeStyle = '#a3e635'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(lineStartX,lineY); ctx.lineTo(W-90,lineY); ctx.stroke();
-  ctx.beginPath(); ctx.fillStyle = '#a3e635'; ctx.arc(W-90,lineY,7,0,Math.PI*2); ctx.fill();
+  var leftX = 555;
+  var contentW = W-leftX-76;
+  ctx.textBaseline = 'alphabetic';
 
-  ctx.fillStyle = '#f5f7fa'; ctx.font = '900 52px Arial, sans-serif';
+  /* Etiqueta editorial compacta para no competir con el titulo. */
+  ctx.save();
+  movieTplRoundRect(ctx, leftX, 63, 395, 56, 28);
+  ctx.fillStyle = 'rgba(7,18,29,0.72)';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(34,211,238,0.52)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.fillStyle = '#22d3ee';
+  ctx.arc(leftX+28, 91, 6, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle = '#dffaff';
+  ctx.font = '800 22px Arial, sans-serif';
+  ctx.fillText('PELÍCULA RECOMENDADA', leftX+48, 99);
+  ctx.restore();
+
+  var topLine = ctx.createLinearGradient(leftX+425,0,W-76,0);
+  topLine.addColorStop(0,'rgba(34,211,238,0.12)');
+  topLine.addColorStop(1,'rgba(163,230,53,0.72)');
+  ctx.strokeStyle = topLine;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(leftX+425,91);
+  ctx.lineTo(W-76,91);
+  ctx.stroke();
+
+  ctx.fillStyle = '#ffffff';
+  ctx.shadowColor = 'rgba(0,0,0,0.70)';
+  ctx.shadowBlur = 14;
+  ctx.font = '900 67px Arial, sans-serif';
   var titleText = (movieTplState.title || 'TITULO DE LA PELICULA').toUpperCase();
-  var titleLines = movieTplWrapText(ctx, titleText, leftX, 320, W-leftX-90, 60, 2);
-  var yCursor = 320 + (titleLines > 1 ? 60 : 0) + 65;
+  movieTplWrapText(ctx, titleText, leftX, 218, contentW, 75, 2);
+  ctx.shadowBlur = 0;
 
-  ctx.font = '700 26px Arial, sans-serif';
+  var metaY = 365;
   var genreText = (movieTplState.genre || 'GENERO').toUpperCase();
-  var padX = 26, pillH = 50, textW = ctx.measureText(genreText).width, pillW = textW + padX*2;
-  movieTplRoundRect(ctx, leftX, yCursor-pillH+10, pillW, pillH, pillH/2);
-  ctx.strokeStyle = '#a3e635'; ctx.lineWidth = 2; ctx.stroke();
-  ctx.fillStyle = '#a3e635'; ctx.textBaseline = 'middle'; ctx.fillText(genreText, leftX+padX, yCursor-pillH/2+10); ctx.textBaseline = 'alphabetic';
-  yCursor += 75;
+  var genreFontSize = 23;
+  ctx.font = '800 ' + genreFontSize + 'px Arial, sans-serif';
+  while (ctx.measureText(genreText).width > 338 && genreFontSize > 17){
+    genreFontSize -= 1;
+    ctx.font = '800 ' + genreFontSize + 'px Arial, sans-serif';
+  }
+  var padX = 24, pillH = 52, textW = ctx.measureText(genreText).width, pillW = Math.min(textW + padX*2, 390);
+  movieTplRoundRect(ctx, leftX, metaY, pillW, pillH, 16);
+  ctx.fillStyle = 'rgba(163,230,53,0.11)';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(163,230,53,0.72)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  ctx.fillStyle = '#c9ff66';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(genreText, leftX+padX, metaY+pillH/2+1);
+  ctx.textBaseline = 'alphabetic';
 
-  movieTplDrawStar(leftX+18, yCursor-10, 22, '#a3e635');
-  ctx.fillStyle = '#f5f7fa'; ctx.font = '600 30px Arial, sans-serif';
+  var ratingX = leftX + pillW + 18;
+  var ratingW = 178;
+  movieTplRoundRect(ctx, ratingX, metaY, ratingW, pillH, 16);
+  ctx.fillStyle = 'rgba(7,18,29,0.72)';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.13)';
+  ctx.stroke();
+  movieTplDrawStar(ratingX+28, metaY+26, 17, '#a3e635');
+  ctx.fillStyle = '#f5f7fa';
+  ctx.font = '700 24px Arial, sans-serif';
   var ratingVal = parseFloat(movieTplState.rating);
   var ratingStr = (isNaN(ratingVal) ? '0.0' : ratingVal.toFixed(1)) + '/10';
-  ctx.fillText(ratingStr, leftX+50, yCursor);
-  ctx.strokeStyle = '#3a4a66'; ctx.lineWidth = 2;
-  var sepX = leftX + 50 + ctx.measureText(ratingStr).width + 30;
-  ctx.beginPath(); ctx.moveTo(sepX, yCursor-25); ctx.lineTo(sepX, yCursor+5); ctx.stroke();
-  movieTplDrawClock(sepX+35, yCursor-10, 18, '#22d3ee');
-  ctx.fillStyle = '#f5f7fa'; ctx.font = '600 30px Arial, sans-serif';
+  ctx.fillText(ratingStr, ratingX+54, metaY+35);
+
+  var durationX = ratingX + ratingW + 18;
+  var durationW = 190;
+  movieTplRoundRect(ctx, durationX, metaY, durationW, pillH, 16);
+  ctx.fillStyle = 'rgba(7,18,29,0.72)';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.13)';
+  ctx.stroke();
+  movieTplDrawClock(durationX+28, metaY+26, 16, '#22d3ee');
+  ctx.fillStyle = '#f5f7fa';
+  ctx.font = '700 24px Arial, sans-serif';
   var durVal = parseInt(movieTplState.duration, 10);
   var durStr = (isNaN(durVal) ? '00' : durVal) + ' min';
-  ctx.fillText(durStr, sepX+65, yCursor);
-  yCursor += 50;
+  ctx.fillText(durStr, durationX+54, metaY+35);
 
-  ctx.strokeStyle = 'rgba(255,255,255,0.15)'; ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(leftX, yCursor); ctx.lineTo(W-90, yCursor); ctx.stroke();
-  yCursor += 55;
-  ctx.fillStyle = '#22d3ee'; ctx.font = '800 32px Arial, sans-serif'; ctx.fillText('SINOPSIS', leftX, yCursor);
-  yCursor += 45;
-  ctx.fillStyle = '#e6e9ef'; ctx.font = '400 27px Arial, sans-serif';
-  movieTplWrapText(ctx, movieTplState.synopsis || '', leftX, yCursor, W-leftX-90, 40, 7);
+  /* Tarjeta de sinopsis tipo streaming: limpia y legible en television. */
+  var cardX = leftX;
+  var cardY = 462;
+  var cardW = contentW;
+  var cardH = 300;
+  ctx.save();
+  movieTplRoundRect(ctx, cardX, cardY, cardW, cardH, 26);
+  ctx.fillStyle = 'rgba(5,12,21,0.69)';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  var accent = ctx.createLinearGradient(cardX,0,cardX+170,0);
+  accent.addColorStop(0,'#22d3ee');
+  accent.addColorStop(1,'#a3e635');
+  ctx.fillStyle = accent;
+  movieTplRoundRect(ctx, cardX+26, cardY+25, 8, 48, 4);
+  ctx.fill();
+
+  ctx.fillStyle = '#dffaff';
+  ctx.font = '800 25px Arial, sans-serif';
+  ctx.fillText('SINOPSIS', cardX+54, cardY+61);
+  ctx.strokeStyle = 'rgba(255,255,255,0.09)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(cardX+54, cardY+82);
+  ctx.lineTo(cardX+cardW-30, cardY+82);
+  ctx.stroke();
+
+  ctx.fillStyle = '#eef3f8';
+  ctx.font = '500 27px Arial, sans-serif';
+  movieTplWrapText(ctx, movieTplState.synopsis || '', cardX+30, cardY+126, cardW-60, 39, 4);
+  ctx.restore();
 }
 
 function movieTplDrawStar(cx, cy, r, color){
