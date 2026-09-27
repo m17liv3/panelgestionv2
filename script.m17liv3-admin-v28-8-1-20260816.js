@@ -4276,6 +4276,7 @@ function renderCards() {
         renewalNoticeHtml(c, 'card') +
         pendingPaymentNoticeHtml(c, 'card') +
         '<div class="clientCard-actions clientCard-actions-accordion">' +
+          '<button class="act-history" style="grid-column:1 / -1" data-id="'+esc(c.id)+'" onclick="viewClient(this.dataset.id)">&#128337; Ver ficha e historial</button>' +
           '<button class="act-edit" data-id="'+esc(c.id)+'" onclick="editClient(this.dataset.id)">&#9998; Editar</button>' +
           '<button class="act-renew" data-id="'+esc(c.id)+'" onclick="openRenew(this.dataset.id)">&#8635; Renovar</button>' +
           '<button class="act-msg" data-id="'+esc(c.id)+'" onclick="openClientMessages(this.dataset.id)">&#128172; Msg</button>' +
