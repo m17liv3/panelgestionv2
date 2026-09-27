@@ -2895,8 +2895,8 @@ function clientRenewalsHtml(c) {
 
   var sectionTitle = '<div class="premiumSectionTitle">Historial del cliente</div>';
   if (!list.length) {
-    return '<div class="clientRenewalsBlock">' + sectionTitle +
-      '<div class="emptyMini">Todavia no hay renovaciones registradas para este cliente.</div>' +
+    return '<div class="clientRenewalsBlock" style="padding-bottom:120px">' + sectionTitle +
+      '<div class="emptyMini" style="display:block;margin:10px 0 0;padding:16px;border:1px solid rgba(0,229,255,.22);border-radius:14px;background:rgba(7,25,39,.72);color:#9eb4c8">Todavia no hay renovaciones registradas para este cliente.<br><small style="display:block;margin-top:6px">La proxima renovacion aparecera aqui automaticamente.</small></div>' +
     '</div>';
   }
 
@@ -2908,7 +2908,7 @@ function clientRenewalsHtml(c) {
     ? formatDate(String(lastRenewal.createdAt).split('T')[0])
     : '-';
 
-  return '<div class="clientRenewalsBlock">' +
+  return '<div class="clientRenewalsBlock" style="padding-bottom:120px">' +
     sectionTitle +
     '<div class="paymentsStatsGrid">' +
       '<div class="paymentsStat"><span>Renovaciones</span><strong>'+actualRenewals.length+'</strong></div>' +
