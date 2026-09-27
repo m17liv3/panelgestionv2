@@ -15,6 +15,7 @@ var APPS = [
   { name: 'DEADSMART', needsMac: false, needsCode: false },
   { name: 'NANOMID', needsMac: false, needsCode: false },
   { name: 'VUPLAYER', needsMac: true, needsCode: true },
+  { name: 'HOT IPTV', needsMac: true, needsCode: false },
   { name: 'OTRA APP NO CONOCIDA', needsMac: false, needsCode: false, isOther: true }
 ];
 var clients = [];
@@ -4264,7 +4265,13 @@ function updateAppRequirements() {
   var reqApps = selectedApps.filter(function(n){ var a=APPS.find(function(x){return x.name===n;}); return a&&(a.needsMac||a.needsCode); });
   if (reqApps.length > 0) {
     noteEl.style.display = 'block';
-    noteEl.innerHTML = 'AVISO: ' + reqApps.map(function(n){ return '<strong>'+n+'</strong> requiere MAC y Codigo'; }).join(' &bull; ');
+    noteEl.innerHTML = 'AVISO: ' + reqApps.map(function(n){
+      var app = APPS.find(function(x){ return x.name===n; });
+      var requirements = [];
+      if (app && app.needsMac) requirements.push('MAC');
+      if (app && app.needsCode) requirements.push('Codigo');
+      return '<strong>'+esc(n)+'</strong> requiere '+requirements.join(' y ');
+    }).join(' &bull; ');
     macBox.style.display = 'block';
     renderMacCodeForms();
   } else {
@@ -4291,13 +4298,19 @@ function renderMacCodeForms() {
   var existing = getExistingMacCodes();
   var reqApps = selectedApps.filter(function(n){ var a=APPS.find(function(x){return x.name===n;}); return a&&(a.needsMac||a.needsCode); });
   reqApps.forEach(function(appName) {
+    var app = APPS.find(function(x){ return x.name===appName; });
+    if (!app) return;
     var prev = existing[appName]||{};
     var k = appName.replace(/\s/g,'_').replace(/[^a-zA-Z0-9_]/g,'');
     var row = document.createElement('div');
-    row.className = 'formRow2';
-    row.innerHTML =
-      '<div class="formGroup"><label>MAC de '+esc(appName)+' <span class="required-star">*</span></label><input type="text" id="mac_'+k+'" placeholder="AA:BB:CC:DD:EE:FF" maxlength="17" value="'+esc(prev.mac||'')+'"/></div>' +
-      '<div class="formGroup"><label>Codigo de '+esc(appName)+' <span class="required-star">*</span></label><input type="text" id="code_'+k+'" placeholder="Codigo" value="'+esc(prev.code||'')+'"/></div>';
+    row.className = app.needsMac && app.needsCode ? 'formRow2' : '';
+    row.innerHTML = '';
+    if (app.needsMac) {
+      row.innerHTML += '<div class="formGroup"><label>MAC de '+esc(appName)+' <span class="required-star">*</span></label><input type="text" id="mac_'+k+'" placeholder="AA:BB:CC:DD:EE:FF" maxlength="17" value="'+esc(prev.mac||'')+'"/></div>';
+    }
+    if (app.needsCode) {
+      row.innerHTML += '<div class="formGroup"><label>Codigo de '+esc(appName)+' <span class="required-star">*</span></label><input type="text" id="code_'+k+'" placeholder="Codigo" value="'+esc(prev.code||'')+'"/></div>';
+    }
     box.appendChild(row);
     var macInput = document.getElementById('mac_'+k);
     if (macInput) formatMacInput(macInput);
@@ -7174,9 +7187,6 @@ function movieTplInit() {
   if (offY) offY.addEventListener('input', function(){ movieTplState.posterOffsetY = parseFloat(offY.value); movieTplDraw(); });
   if (reset) reset.addEventListener('click', function(){ movieTplResetPosterAdjust(); movieTplDraw(); });
 
-  var logoInput = document.getElementById('tplLogoInput');
-  if (logoInput) logoInput.addEventListener('change', movieTplHandleLogoUpload);
-
   var downloadBtn = document.getElementById('tplDownloadBtn');
   var uploadBtn1 = document.getElementById('tplUploadFixed1Btn');
   var uploadBtn2 = document.getElementById('tplUploadFixed2Btn');
@@ -7187,7 +7197,6 @@ function movieTplInit() {
   if (uploadBtn3) uploadBtn3.onclick = function(){ movieTplUploadToFixed('pelicula_3', this); };
 
   movieTplFillInputsFromState();
-  movieTplRestoreLogo();
   movieTplDraw();
   movieTplInitialized = true;
 }
@@ -7961,20 +7970,16 @@ function seriesTplInit() {
   if (offY) offY.addEventListener('input', function(){ seriesTplState.posterOffsetY = parseFloat(offY.value); seriesTplDraw(); });
   if (reset) reset.addEventListener('click', function(){ seriesTplResetPosterAdjust(); seriesTplDraw(); });
 
-  var logoInput = document.getElementById('seriesTplLogoInput');
-  if (logoInput) logoInput.addEventListener('change', seriesTplHandleLogoUpload);
-
   var downloadBtn = document.getElementById('seriesTplDownloadBtn');
   var uploadBtn1 = document.getElementById('seriesTplUploadFixed1Btn');
   var uploadBtn2 = document.getElementById('seriesTplUploadFixed2Btn');
   var uploadBtn3 = document.getElementById('seriesTplUploadFixed3Btn');
-  if (downloadBtn) downloadBtn.onclick = seriesTplDownloadJpeg;
+  if (downloadBtn) downloadBtn.onclick = seriesTplDownloadPng;
   if (uploadBtn1) uploadBtn1.onclick = function(){ seriesTplUploadToFixed('serie_1', this); };
   if (uploadBtn2) uploadBtn2.onclick = function(){ seriesTplUploadToFixed('serie_2', this); };
   if (uploadBtn3) uploadBtn3.onclick = function(){ seriesTplUploadToFixed('serie_3', this); };
 
   seriesTplFillInputsFromState();
-  seriesTplRestoreLogo();
   seriesTplDraw();
   seriesTplInitialized = true;
 }
@@ -8079,22 +8084,8 @@ function seriesTplWrapText(ctx, text, x, y, maxWidth, lineHeight, maxLines){
 function seriesTplDraw(){
   if(!seriesTplCtx) return;
   var ctx = seriesTplCtx, W = seriesTplW, H = seriesTplH;
-  ctx.fillStyle = '#070b14';
-  ctx.fillRect(0,0,W,H);
-
-  var g1 = ctx.createRadialGradient(150,100,50,150,100,500);
-  g1.addColorStop(0,'rgba(34,211,238,0.10)');
-  g1.addColorStop(1,'rgba(34,211,238,0)');
-  ctx.fillStyle = g1; ctx.fillRect(0,0,W,H);
-
-  var g2 = ctx.createRadialGradient(W-150,H-100,50,W-150,H-100,600);
-  g2.addColorStop(0,'rgba(163,230,53,0.06)');
-  g2.addColorStop(1,'rgba(163,230,53,0)');
-  ctx.fillStyle = g2; ctx.fillRect(0,0,W,H);
-
-  seriesTplDrawDots(W-340, 30, 280, 220);
-  seriesTplDrawDots(0, H-240, 100, 240);
-  seriesTplDrawLogo();
+  ctx.clearRect(0,0,W,H);
+  seriesTplDrawDots(W-285, 48, 215, 150);
   seriesTplDrawPoster();
   seriesTplDrawTextContent();
   seriesTplDrawNeonFrame();
@@ -8103,8 +8094,8 @@ function seriesTplDraw(){
 function seriesTplDrawDots(x0,y0,w,h){
   var ctx = seriesTplCtx;
   ctx.save();
-  ctx.fillStyle = 'rgba(34,211,238,0.25)';
-  var gap = 22;
+  ctx.fillStyle = 'rgba(34,211,238,0.18)';
+  var gap = 24;
   for(var x=x0; x<x0+w; x+=gap){
     for(var y=y0; y<y0+h; y+=gap){
       ctx.beginPath(); ctx.arc(x,y,1.6,0,Math.PI*2); ctx.fill();
@@ -8116,14 +8107,25 @@ function seriesTplDrawDots(x0,y0,w,h){
 function seriesTplDrawNeonFrame(){
   var ctx = seriesTplCtx, W = seriesTplW, H = seriesTplH;
   ctx.save();
-  var margin = 6;
-  var grad = ctx.createLinearGradient(0,0,W,H);
-  grad.addColorStop(0,'#22d3ee'); grad.addColorStop(1,'#a3e635');
-  ctx.strokeStyle = grad;
-  ctx.lineWidth = 4;
-  ctx.shadowColor = 'rgba(34,211,238,0.6)';
-  ctx.shadowBlur = 18;
-  seriesTplRoundRect(ctx, margin, margin, W - margin*2, H - margin*2, 18);
+  var accent = ctx.createLinearGradient(62,0,330,0);
+  accent.addColorStop(0,'#22d3ee');
+  accent.addColorStop(1,'#a3e635');
+  ctx.strokeStyle = accent;
+  ctx.lineWidth = 5;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(62,H-36);
+  ctx.lineTo(300,H-36);
+  ctx.stroke();
+
+  var topAccent = ctx.createLinearGradient(W-470,0,W-76,0);
+  topAccent.addColorStop(0,'rgba(34,211,238,0)');
+  topAccent.addColorStop(1,'rgba(163,230,53,0.80)');
+  ctx.strokeStyle = topAccent;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(W-470,91);
+  ctx.lineTo(W-76,91);
   ctx.stroke();
   ctx.restore();
 }
@@ -8160,29 +8162,36 @@ function seriesTplDrawLogo(){
 
 function seriesTplDrawPoster(){
   var ctx = seriesTplCtx;
-  var h = 580, w = h * (2/3), x = 45, y = 280, r = 22;
+  var h = 760, w = h * (2/3), x = 58, y = 70, r = 30;
   ctx.save();
-  seriesTplRoundRect(ctx, x, y, w, h, r);
+  seriesTplRoundRect(ctx, x-4, y-4, w+8, h+8, r+4);
   var grad = ctx.createLinearGradient(x,y,x+w,y+h);
-  grad.addColorStop(0,'#22d3ee'); grad.addColorStop(1,'#a3e635');
-  ctx.strokeStyle = grad; ctx.lineWidth = 4; ctx.shadowColor = 'rgba(34,211,238,0.5)'; ctx.shadowBlur = 20; ctx.stroke();
+  grad.addColorStop(0,'rgba(34,211,238,0.95)');
+  grad.addColorStop(0.55,'rgba(34,211,238,0.42)');
+  grad.addColorStop(1,'rgba(163,230,53,0.92)');
+  ctx.strokeStyle = grad;
+  ctx.lineWidth = 3;
+  ctx.shadowColor = 'rgba(0,0,0,0.82)';
+  ctx.shadowBlur = 34;
+  ctx.shadowOffsetY = 18;
+  ctx.stroke();
   ctx.restore();
 
   ctx.save();
-  seriesTplRoundRect(ctx, x+2, y+2, w-4, h-4, r-2);
+  seriesTplRoundRect(ctx, x, y, w, h, r);
   ctx.clip();
   if (seriesTplPosterImg){
-    ctx.fillStyle = '#0d1422'; ctx.fillRect(x+2,y+2,w-4,h-4);
+    ctx.fillStyle = '#0d1422'; ctx.fillRect(x,y,w,h);
     var ir = seriesTplPosterImg.width / seriesTplPosterImg.height;
-    var tr = (w-4) / (h-4);
+    var tr = w / h;
     var sw, sh;
     if (ir > tr){ sh = seriesTplPosterImg.height; sw = sh * tr; }
     else { sw = seriesTplPosterImg.width; sh = sw / tr; }
     var zoom = (seriesTplState.posterZoom || 100) / 100;
     sw = sw / zoom; sh = sh / zoom;
-    var dw = w-4, dh = h-4;
-    if (sw > seriesTplPosterImg.width){ var ratioW = seriesTplPosterImg.width / sw; sw = seriesTplPosterImg.width; dw = (w-4) * ratioW; }
-    if (sh > seriesTplPosterImg.height){ var ratioH = seriesTplPosterImg.height / sh; sh = seriesTplPosterImg.height; dh = (h-4) * ratioH; }
+    var drawW = w, drawH = h;
+    if (sw > seriesTplPosterImg.width){ var ratioW = seriesTplPosterImg.width / sw; sw = seriesTplPosterImg.width; drawW = w * ratioW; }
+    if (sh > seriesTplPosterImg.height){ var ratioH = seriesTplPosterImg.height / sh; sh = seriesTplPosterImg.height; drawH = h * ratioH; }
     var maxOffX = seriesTplPosterImg.width - sw;
     var maxOffY = seriesTplPosterImg.height - sh;
     var sx = (seriesTplPosterImg.width - sw) / 2;
@@ -8191,11 +8200,11 @@ function seriesTplDrawPoster(){
     sy += (seriesTplState.posterOffsetY || 0) / 100 * (maxOffY / 2);
     sx = Math.max(0, Math.min(maxOffX, sx));
     sy = Math.max(0, Math.min(maxOffY, sy));
-    var dx = x+2 + ((w-4)-dw)/2;
-    var dy = y+2 + ((h-4)-dh)/2;
-    ctx.drawImage(seriesTplPosterImg, sx, sy, sw, sh, dx, dy, dw, dh);
+    var dx = x + (w-drawW)/2;
+    var dy = y + (h-drawH)/2;
+    ctx.drawImage(seriesTplPosterImg, sx, sy, sw, sh, dx, dy, drawW, drawH);
   } else {
-    ctx.fillStyle = '#0d1422'; ctx.fillRect(x+2,y+2,w-4,h-4);
+    ctx.fillStyle = 'rgba(13,20,34,0.94)'; ctx.fillRect(x,y,w,h);
     ctx.strokeStyle = '#3a4a66'; ctx.lineWidth = 4;
     var ix = x+w/2-65, iy = y+h/2-130, isz = 130;
     seriesTplRoundRect(ctx, ix, iy, isz, isz, 14); ctx.stroke();
@@ -8208,78 +8217,153 @@ function seriesTplDrawPoster(){
 
 function seriesTplDrawTextContent(){
   var ctx = seriesTplCtx, W = seriesTplW;
-  var leftX = 590;
-
-  ctx.fillStyle = '#f5f7fa';
-  ctx.font = '900 62px Arial, sans-serif';
-  ctx.fillText('SERIE', leftX, 95);
-  var grad = ctx.createLinearGradient(leftX,0,leftX+800,0);
-  grad.addColorStop(0,'#22d3ee'); grad.addColorStop(1,'#a3e635');
-  ctx.fillStyle = grad; ctx.font = '900 62px Arial, sans-serif'; ctx.fillText('RECOMENDADA', leftX, 170);
-  ctx.fillStyle = '#a3e635'; ctx.font = '700 34px Arial, sans-serif'; ctx.fillText('de la semana', leftX, 225);
-  ctx.strokeStyle = '#a3e635'; ctx.lineWidth = 3;
-  ctx.beginPath(); ctx.moveTo(leftX+380, 213); ctx.lineTo(W-90, 213); ctx.stroke();
-  ctx.beginPath(); ctx.fillStyle = '#a3e635'; ctx.arc(W-90, 213, 7, 0, Math.PI*2); ctx.fill();
-
-  ctx.fillStyle = '#f5f7fa';
-  ctx.font = '900 50px Arial, sans-serif';
-  var titleText = (seriesTplState.title || 'TITULO DE LA SERIE').toUpperCase();
-  var titleLines = seriesTplWrapText(ctx, titleText, leftX, 310, W-leftX-90, 56, 2);
-  var yCursor = 310 + (titleLines>1 ? 56 : 0) + 58;
-
-  ctx.font = '700 24px Arial, sans-serif';
-  var genreText = (seriesTplState.genre || 'GENERO').toUpperCase();
-  var padX = 24;
-  var pillH = 46;
-  var pillW = Math.min(ctx.measureText(genreText).width + padX*2, W-leftX-90);
-  seriesTplRoundRect(ctx, leftX, yCursor-pillH+10, pillW, pillH, pillH/2);
-  ctx.strokeStyle = '#a3e635'; ctx.lineWidth = 2; ctx.stroke();
-  ctx.fillStyle = '#a3e635'; ctx.textBaseline = 'middle';
-  var clippedGenre = genreText;
-  while(ctx.measureText(clippedGenre).width > pillW - padX*2 && clippedGenre.length > 0){ clippedGenre = clippedGenre.slice(0, -1); }
-  if(clippedGenre !== genreText) clippedGenre = clippedGenre.slice(0, -3) + '...';
-  ctx.fillText(clippedGenre, leftX+padX, yCursor-pillH/2+10);
+  var leftX = 620;
+  var contentW = W-leftX-76;
   ctx.textBaseline = 'alphabetic';
-  yCursor += 68;
 
-  seriesTplDrawStar(leftX+18, yCursor-10, 22, '#a3e635');
-  ctx.fillStyle = '#f5f7fa'; ctx.font = '600 28px Arial, sans-serif';
+  ctx.save();
+  seriesTplRoundRect(ctx, leftX, 63, 330, 56, 28);
+  ctx.fillStyle = 'rgba(7,18,29,0.72)';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(34,211,238,0.52)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.fillStyle = '#22d3ee';
+  ctx.arc(leftX+28,91,6,0,Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle = '#dffaff';
+  ctx.font = '800 22px Arial, sans-serif';
+  ctx.fillText('SERIE RECOMENDADA', leftX+48,99);
+  ctx.restore();
+
+  ctx.fillStyle = '#ffffff';
+  ctx.shadowColor = 'rgba(0,0,0,0.70)';
+  ctx.shadowBlur = 14;
+  ctx.font = '900 67px Arial, sans-serif';
+  var titleText = (seriesTplState.title || 'TITULO DE LA SERIE').toUpperCase();
+  seriesTplWrapText(ctx, titleText, leftX, 210, contentW, 72, 2);
+  ctx.shadowBlur = 0;
+
+  var metaY = 320;
+  var genreText = (seriesTplState.genre || 'GENERO').toUpperCase();
+  var genreFontSize = 22;
+  ctx.font = '800 ' + genreFontSize + 'px Arial, sans-serif';
+  while(ctx.measureText(genreText).width > 320 && genreFontSize > 17){
+    genreFontSize -= 1;
+    ctx.font = '800 ' + genreFontSize + 'px Arial, sans-serif';
+  }
+  var padX = 22, pillH = 52;
+  var pillW = Math.min(ctx.measureText(genreText).width + padX*2, 364);
+  seriesTplRoundRect(ctx, leftX, metaY, pillW, pillH, 16);
+  ctx.fillStyle = 'rgba(163,230,53,0.11)';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(163,230,53,0.72)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  ctx.fillStyle = '#c9ff66';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(genreText, leftX+padX, metaY+pillH/2+1);
+  ctx.textBaseline = 'alphabetic';
+
+  var ratingX = leftX + pillW + 16;
+  var ratingW = 166;
+  seriesTplRoundRect(ctx, ratingX, metaY, ratingW, pillH, 16);
+  ctx.fillStyle = 'rgba(7,18,29,0.72)';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.13)';
+  ctx.stroke();
+  seriesTplDrawStar(ratingX+27, metaY+26, 17, '#a3e635');
+  ctx.fillStyle = '#f5f7fa';
+  ctx.font = '700 23px Arial, sans-serif';
   var ratingVal = parseFloat(seriesTplState.rating);
   var ratingStr = (isNaN(ratingVal) ? '0.0' : ratingVal.toFixed(1)) + '/10';
-  ctx.fillText(ratingStr, leftX+50, yCursor);
+  ctx.fillText(ratingStr, ratingX+52, metaY+35);
 
-  ctx.strokeStyle = '#3a4a66'; ctx.lineWidth = 2;
-  var sepX = leftX + 50 + ctx.measureText(ratingStr).width + 28;
-  ctx.beginPath(); ctx.moveTo(sepX, yCursor-25); ctx.lineTo(sepX, yCursor+5); ctx.stroke();
-  ctx.fillStyle = '#22d3ee'; ctx.font = '700 25px Arial, sans-serif';
+  var yearX = ratingX + ratingW + 16;
+  var yearW = 220;
+  seriesTplRoundRect(ctx, yearX, metaY, yearW, pillH, 16);
+  ctx.fillStyle = 'rgba(7,18,29,0.72)';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.13)';
+  ctx.stroke();
+  ctx.fillStyle = '#22d3ee';
+  ctx.font = '800 18px Arial, sans-serif';
+  ctx.fillText('ESTRENO', yearX+18, metaY+34);
+  ctx.fillStyle = '#f5f7fa';
+  ctx.font = '700 23px Arial, sans-serif';
   var yearText = (seriesTplState.year || '----');
-  ctx.fillText('ESTRENO ' + yearText, sepX+30, yCursor);
-  yCursor += 48;
+  ctx.fillText(yearText, yearX+140, metaY+35);
 
-  ctx.fillStyle = '#e6e9ef'; ctx.font = '600 25px Arial, sans-serif';
+  var secondY = 389;
   var seasons = seriesTplState.seasons || '1';
   var episodes = seriesTplState.episodes || '8';
-  ctx.fillText(seasons + ' temp.  ·  ' + episodes + ' episodios', leftX, yCursor);
-  yCursor += 48;
+  var seasonsW = 240;
+  seriesTplRoundRect(ctx, leftX, secondY, seasonsW, 48, 15);
+  ctx.fillStyle = 'rgba(7,18,29,0.72)';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(34,211,238,0.28)';
+  ctx.stroke();
+  ctx.fillStyle = '#dffaff';
+  ctx.font = '800 21px Arial, sans-serif';
+  ctx.fillText(seasons + (String(seasons)==='1' ? ' TEMPORADA' : ' TEMPORADAS'), leftX+22, secondY+32);
 
-  ctx.strokeStyle = 'rgba(255,255,255,0.15)'; ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(leftX, yCursor); ctx.lineTo(W-90, yCursor); ctx.stroke();
-  yCursor += 43;
+  var episodesX = leftX + seasonsW + 16;
+  var episodesW = 235;
+  seriesTplRoundRect(ctx, episodesX, secondY, episodesW, 48, 15);
+  ctx.fillStyle = 'rgba(7,18,29,0.72)';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(34,211,238,0.28)';
+  ctx.stroke();
+  ctx.fillStyle = '#dffaff';
+  ctx.fillText(episodes + (String(episodes)==='1' ? ' EPISODIO' : ' EPISODIOS'), episodesX+22, secondY+32);
 
-  ctx.fillStyle = '#22d3ee'; ctx.font = '800 25px Arial, sans-serif'; ctx.fillText('CREADA POR', leftX, yCursor);
-  ctx.fillStyle = '#e6e9ef'; ctx.font = '400 24px Arial, sans-serif';
-  seriesTplWrapText(ctx, seriesTplState.creator || '-', leftX+190, yCursor, W-leftX-280, 30, 1);
-  yCursor += 42;
+  var cardX = leftX;
+  var cardY = 466;
+  var cardW = contentW;
+  var cardH = 344;
+  ctx.save();
+  seriesTplRoundRect(ctx, cardX, cardY, cardW, cardH, 26);
+  ctx.fillStyle = 'rgba(5,12,21,0.69)';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
 
-  ctx.fillStyle = '#22d3ee'; ctx.font = '800 25px Arial, sans-serif'; ctx.fillText('REPARTO', leftX, yCursor);
-  ctx.fillStyle = '#e6e9ef'; ctx.font = '400 24px Arial, sans-serif';
-  seriesTplWrapText(ctx, seriesTplState.cast || '-', leftX+150, yCursor, W-leftX-240, 30, 2);
-  yCursor += 62;
+  ctx.fillStyle = '#22d3ee';
+  ctx.font = '800 20px Arial, sans-serif';
+  ctx.fillText('CREADA POR', cardX+28, cardY+48);
+  ctx.fillStyle = '#eef3f8';
+  ctx.font = '600 22px Arial, sans-serif';
+  seriesTplWrapText(ctx, seriesTplState.creator || '-', cardX+185, cardY+48, cardW-215, 28, 1);
 
-  ctx.fillStyle = '#22d3ee'; ctx.font = '800 28px Arial, sans-serif'; ctx.fillText('SINOPSIS', leftX, yCursor);
-  yCursor += 38;
-  ctx.fillStyle = '#e6e9ef'; ctx.font = '400 24px Arial, sans-serif';
-  seriesTplWrapText(ctx, seriesTplState.synopsis || '', leftX, yCursor, W-leftX-90, 34, 7);
+  ctx.fillStyle = '#22d3ee';
+  ctx.font = '800 20px Arial, sans-serif';
+  ctx.fillText('REPARTO', cardX+28, cardY+91);
+  ctx.fillStyle = '#eef3f8';
+  ctx.font = '500 21px Arial, sans-serif';
+  seriesTplWrapText(ctx, seriesTplState.cast || '-', cardX+148, cardY+91, cardW-178, 27, 2);
+
+  ctx.strokeStyle = 'rgba(255,255,255,0.09)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(cardX+28, cardY+139);
+  ctx.lineTo(cardX+cardW-28, cardY+139);
+  ctx.stroke();
+
+  var synopsisAccent = ctx.createLinearGradient(cardX,0,cardX+170,0);
+  synopsisAccent.addColorStop(0,'#22d3ee');
+  synopsisAccent.addColorStop(1,'#a3e635');
+  ctx.fillStyle = synopsisAccent;
+  seriesTplRoundRect(ctx, cardX+26, cardY+161, 8, 43, 4);
+  ctx.fill();
+  ctx.fillStyle = '#dffaff';
+  ctx.font = '800 24px Arial, sans-serif';
+  ctx.fillText('SINOPSIS', cardX+54, cardY+193);
+  ctx.fillStyle = '#eef3f8';
+  ctx.font = '500 24px Arial, sans-serif';
+  seriesTplWrapText(ctx, seriesTplState.synopsis || '', cardX+30, cardY+237, cardW-60, 34, 4);
+  ctx.restore();
 }
 
 function seriesTplDrawStar(cx, cy, r, color){
@@ -8498,31 +8582,31 @@ function seriesTplSetStatus(msg, cls){
   el.className = 'movieTplStatus' + (cls ? ' ' + cls : '');
 }
 
-function seriesTplCanvasToJpegBlob(){
+function seriesTplCanvasToPngBlob(){
   return new Promise(function(resolve, reject){
     try{
       seriesTplCanvas.toBlob(function(blob){
         if(blob) resolve(blob);
-        else reject(new Error('No se pudo generar el JPEG'));
-      }, 'image/jpeg', 0.92);
+        else reject(new Error('No se pudo generar el PNG'));
+      }, 'image/png');
     }catch(err){ reject(err); }
   });
 }
 
-async function seriesTplDownloadJpeg(){
+async function seriesTplDownloadPng(){
   try{
     seriesTplDraw();
-    var blob = await seriesTplCanvasToJpegBlob();
+    var blob = await seriesTplCanvasToPngBlob();
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
     var safeTitle = (seriesTplState.title || 'serie').toLowerCase().replace(/[^a-z0-9]+/gi,'_').slice(0,40);
     a.href = url;
-    a.download = 'm17liv3_serie_' + (safeTitle || 'plantilla') + '.jpg';
+    a.download = 'm17liv3_serie_' + (safeTitle || 'plantilla') + '.png';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
-    seriesTplSetStatus('JPEG descargado', 'ok');
+    seriesTplSetStatus('PNG transparente descargado', 'ok');
   }catch(err){
     seriesTplSetStatus('Error al descargar: posible problema CORS con el poster.', 'err');
   }
@@ -8533,7 +8617,7 @@ async function seriesTplUploadImgBB(){
   seriesTplSetStatus('Generando imagen...', '');
   seriesTplDraw();
   var blob;
-  try{ blob = await seriesTplCanvasToJpegBlob(); }
+  try{ blob = await seriesTplCanvasToPngBlob(); }
   catch(err){ seriesTplSetStatus('Error al generar la imagen. Puede ser CORS del poster.', 'err'); return; }
   seriesTplSetStatus('Subiendo a imgBB...', '');
   try{
@@ -8600,12 +8684,12 @@ async function seriesTplUploadToFixed(slotKey, btnEl){
   seriesTplSetStatus('Generando imagen para ' + slot.label + '...', '');
   seriesTplDraw();
   var blob;
-  try { blob = await seriesTplCanvasToJpegBlob(); }
+  try { blob = await seriesTplCanvasToPngBlob(); }
   catch(err){ seriesTplSetStatus('Error al generar la imagen. Puede ser CORS del poster.', 'err'); return; }
   var oldText = btnEl ? btnEl.textContent : '';
   if (btnEl) { btnEl.disabled = true; btnEl.textContent = 'Subiendo...'; }
   try {
-    await uploadBlobToFixedSlot(slotKey, blob, 'image/jpeg');
+    await uploadBlobToFixedSlot(slotKey, blob, 'image/png');
     seriesTplSetStatus('Subida correctamente a ' + slot.label, 'ok');
     seriesTplRenderFixedPreviews();
     try { loadFixedSlotImage(slotKey); } catch(e) {}
