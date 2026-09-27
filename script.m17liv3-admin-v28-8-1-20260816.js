@@ -2563,9 +2563,21 @@ async function loadRenewals(showMsg) {
       return renewals;
     }
     var db = initSupabase();
-    var result = await db.from(SUPABASE_RENEWALS_TABLE).select('*').order('created_at', { ascending: false }).limit(500);
-    if (result.error) throw result.error;
-    renewals = (result.data || []).map(renewalRowToItem);
+    var allRows = [];
+    var pageSize = 500;
+    var from = 0;
+    while (true) {
+      var result = await db.from(SUPABASE_RENEWALS_TABLE)
+        .select('*')
+        .order('created_at', { ascending: false })
+        .range(from, from + pageSize - 1);
+      if (result.error) throw result.error;
+      var pageRows = result.data || [];
+      allRows = allRows.concat(pageRows);
+      if (pageRows.length < pageSize) break;
+      from += pageSize;
+    }
+    renewals = allRows.map(renewalRowToItem);
     renderPaymentsDashboard();
     if (showMsg && typeof showToast === 'function') showToast('Ingresos actualizados');
     return renewals;
@@ -2875,17 +2887,54 @@ async function saveEditedRenewal(btn) {
 }
 
 function clientRenewalsHtml(c) {
-  var list = (renewals || []).filter(function(r){ return String(r.clientId || '') === String(c && c.id || ''); }).slice(0, 20);
-  if (!list.length) return '';
+  var list = (renewals || []).filter(function(r){
+    return String(r.clientId || '') === String(c && c.id || '');
+  }).sort(function(a, b){
+    return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+  });
+
+  var sectionTitle = '<div class="premiumSectionTitle">Historial del cliente</div>';
+  if (!list.length) {
+    return '<div class="clientRenewalsBlock">' + sectionTitle +
+      '<div class="emptyMini">Todavia no hay renovaciones registradas para este cliente.</div>' +
+    '</div>';
+  }
+
+  var actualRenewals = list.filter(function(r){ return Number(r.months || 0) > 0; });
+  var totalPaid = list.reduce(function(total, r){ return total + (isPaymentPaid(r) ? Number(r.amount || 0) : 0); }, 0);
+  var totalPending = list.reduce(function(total, r){ return total + (isPaymentPending(r) ? Number(r.amount || 0) : 0); }, 0);
+  var lastRenewal = actualRenewals.length ? actualRenewals[0] : null;
+  var lastRenewalText = lastRenewal && lastRenewal.createdAt
+    ? formatDate(String(lastRenewal.createdAt).split('T')[0])
+    : '-';
+
   return '<div class="clientRenewalsBlock">' +
-    '<div class="vlabel" style="margin:16px 0 8px">Ingresos / renovaciones de este cliente</div>' +
+    sectionTitle +
+    '<div class="paymentsStatsGrid">' +
+      '<div class="paymentsStat"><span>Renovaciones</span><strong>'+actualRenewals.length+'</strong></div>' +
+      '<div class="paymentsStat"><span>Total pagado</span><strong>'+euro(totalPaid)+'</strong></div>' +
+      '<div class="paymentsStat"><span>Pendiente</span><strong>'+euro(totalPending)+'</strong></div>' +
+      '<div class="paymentsStat"><span>Ultima renovacion</span><strong>'+esc(lastRenewalText)+'</strong></div>' +
+    '</div>' +
     list.map(function(r){
       var pending = isPaymentPending(r);
       var status = pending ? '<span class="paymentStatus pending">Pendiente de pago</span>' : '<span class="paymentStatus paid">Pagado</span>';
+      var isRenewal = Number(r.months || 0) > 0;
+      var renewalNumber = isRenewal ? (actualRenewals.length - actualRenewals.indexOf(r)) : 0;
+      var recordTitle = isRenewal ? ('Renovacion #'+renewalNumber) : 'Alta inicial';
+      var renewedAt = r.createdAt ? formatDateTimeEs(r.createdAt) : 'Fecha no registrada';
+      var paymentLine = pending
+        ? '<strong>Pago:</strong> pendiente'+(r.paymentMethod && r.paymentMethod !== 'Pendiente' ? ' · '+esc(r.paymentMethod) : '')
+        : '<strong>Pagado:</strong> '+(r.paymentPaidAt ? esc(formatDateTimeEs(r.paymentPaidAt)) : 'fecha no registrada')+(r.paymentMethod ? ' · '+esc(r.paymentMethod) : '');
+      var periodLine = isRenewal
+        ? formatDate(r.previousExpiry)+' → '+formatDate(r.newExpiry)
+        : 'Vencimiento inicial: '+formatDate(r.newExpiry);
       return '<div class="paymentItem '+(pending?'paymentItemPending':'')+'">' +
-        '<div class="paymentItemTop"><div class="paymentName">'+esc(r.createdAt ? formatDateTimeEs(r.createdAt) : 'Renovacion')+'</div><div class="'+(pending?'paymentAmount pending':'paymentAmount')+'">'+euro(r.amount)+'</div></div>' +
-        '<div class="paymentMeta">'+status+' · '+esc(r.months || 0)+' mes(es)'+(r.paymentMethod ? ' · '+esc(r.paymentMethod) : '')+'</div>' +
-        '<div class="paymentMeta">'+formatDate(r.previousExpiry)+' → '+formatDate(r.newExpiry)+'</div>' +
+        '<div class="paymentItemTop"><div class="paymentName">'+esc(recordTitle)+'</div><div class="'+(pending?'paymentAmount pending':'paymentAmount')+'">'+euro(r.amount)+'</div></div>' +
+        '<div class="paymentMeta">'+status+(isRenewal?' · '+esc(r.months || 0)+' mes(es)':'')+'</div>' +
+        '<div class="paymentMeta"><strong>Renovado:</strong> '+esc(renewedAt)+'</div>' +
+        '<div class="paymentMeta">'+paymentLine+'</div>' +
+        '<div class="paymentMeta">'+periodLine+'</div>' +
         (r.notes ? '<div class="paymentMeta">Notas: '+esc(r.notes)+'</div>' : '') +
         '<div class="paymentActions">' +
           '<button class="paymentEditBtn" data-renewal-id="'+esc(r.id)+'" onclick="openEditRenewal(this.dataset.renewalId)">&#9998; Editar ingreso</button>' +
