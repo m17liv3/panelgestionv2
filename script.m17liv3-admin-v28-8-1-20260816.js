@@ -5906,7 +5906,7 @@ function openCartelera() {
   closeSheet('menuSheet','menuOverlay');
   var base = window.location.href.replace('index.html','').split('?')[0];
   if (!base.endsWith('/')) base += '/';
-  document.getElementById('clienteLinkBox').textContent = base + 'cliente.html';
+  document.getElementById('clienteLinkBox').textContent = base + 'cartelera.html';
   cartLoadExisting();
   openSheet('carteleraSheet','carteleraOverlay');
 }
