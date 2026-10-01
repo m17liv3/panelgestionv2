@@ -5915,6 +5915,20 @@ function copyClienteLink() {
   }).catch(function() { showToast('No se pudo copiar','error'); });
 }
 
+function cartMadridDateKey() {
+  var parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Europe/Madrid',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).formatToParts(new Date());
+  var values = {};
+  parts.forEach(function(part) {
+    if (part.type !== 'literal') values[part.type] = part.value;
+  });
+  return values.year + '-' + values.month + '-' + values.day;
+}
+
 async function cartLoadExisting() {
   try {
     var res = await fetch('https://api.jsonbin.io/v3/b/' + CART_BIN_ID + '/latest', {
@@ -5923,19 +5937,23 @@ async function cartLoadExisting() {
     if (!res.ok) return;
     var data = await res.json();
     var record = data.record || {};
-    var texto = record.texto || '';
+    var today = cartMadridDateKey();
+    var publicationDate = String(record.eventos_fecha || '').slice(0, 10);
+    var isToday = publicationDate === today;
+    var texto = isToday ? (record.texto || '') : '';
     document.getElementById('cart-texto').value = texto;
     document.getElementById('cart-char-count').textContent = texto.length + ' caracteres';
     cartRenderDetectedEvents(texto);
-    var imgUrl = record.imagen_dia || '';
+    var imgUrl = isToday ? (record.imagen_dia || '') : '';
     if (imgUrl) {
       document.getElementById('cart-img-link').textContent = imgUrl;
       document.getElementById('cart-imgbb-result').style.display = 'block';
       document.getElementById('cart-preview-img').src = imgUrl;
     } else {
       document.getElementById('cart-imgbb-result').style.display = 'none';
+      document.getElementById('cart-img-link').textContent = '';
+      document.getElementById('cart-preview-img').removeAttribute('src');
     }
-    var today = new Date().toISOString().slice(0,10);
     var visits = record.visits || {};
     document.getElementById('cart-visits-today').textContent = visits[today] || 0;
     var total = Object.values(visits).reduce(function(a,b){ return a+b; }, 0);
@@ -5959,7 +5977,7 @@ async function cartSave() {
     var parsedEvents = cartParseDailyEvents(texto);
     record.texto = texto;
     record.eventos_datos = parsedEvents.events;
-    record.eventos_fecha = new Date().toLocaleDateString('sv-SE');
+    record.eventos_fecha = cartMadridDateKey();
     record.eventos_actualizados = new Date().toISOString();
 
     // V42: snapshot exclusivo para la página de resultados.
@@ -6017,7 +6035,7 @@ async function cartClear() {
     record.resultados_eventos = [];
     record.resultados_fecha = '';
     record.resultados_actualizados = new Date().toISOString();
-    record.eventos_fecha = new Date().toLocaleDateString('sv-SE');
+    record.eventos_fecha = cartMadridDateKey();
     record.eventos_actualizados = new Date().toISOString();
     delete record.imagen_dia;
 
