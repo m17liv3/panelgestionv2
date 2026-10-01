@@ -4185,15 +4185,12 @@ function copyText(txt, btn) {
 }
 
 function formatMacInput(input) {
-  input.addEventListener('input', function(e) {
-    var v = e.target.value.replace(/[^0-9a-fA-F]/g, '').toUpperCase();
-    var parts = [];
-    for (var i = 0; i < v.length && i < 12; i += 2) {
-      parts.push(v.substr(i, 2));
-    }
-    var formatted = parts.join(':');
-    e.target.value = formatted;
-  });
+  // Algunas aplicaciones muestran como "MAC" identificadores alfanumericos
+  // que no siguen el formato hexadecimal tradicional. No modificamos el valor
+  // para que escribir y pegar conserve exactamente todos sus caracteres.
+  input.setAttribute('autocomplete', 'off');
+  input.setAttribute('autocapitalize', 'none');
+  input.setAttribute('spellcheck', 'false');
 }
 
 function renderCards() {
@@ -4356,7 +4353,7 @@ function renderMacCodeForms() {
     row.className = app.needsMac && app.needsCode ? 'formRow2' : '';
     row.innerHTML = '';
     if (app.needsMac) {
-      row.innerHTML += '<div class="formGroup"><label>MAC de '+esc(appName)+' <span class="required-star">*</span></label><input type="text" id="mac_'+k+'" placeholder="AA:BB:CC:DD:EE:FF" maxlength="17" value="'+esc(prev.mac||'')+'"/></div>';
+      row.innerHTML += '<div class="formGroup"><label>MAC de '+esc(appName)+' <span class="required-star">*</span></label><input type="text" id="mac_'+k+'" placeholder="MAC o identificador de la app" maxlength="40" value="'+esc(prev.mac||'')+'"/></div>';
     }
     if (app.needsCode) {
       row.innerHTML += '<div class="formGroup"><label>Codigo de '+esc(appName)+' <span class="required-star">*</span></label><input type="text" id="code_'+k+'" placeholder="Codigo" value="'+esc(prev.code||'')+'"/></div>';
@@ -4374,7 +4371,7 @@ function renderOtraExtras() {
   box.innerHTML = '';
   if (hasMac||hasCode) {
     var row = document.createElement('div'); row.className='formRow2';
-    if (hasMac) row.innerHTML += '<div class="formGroup"><label>MAC</label><input type="text" id="fOtraMac" placeholder="AA:BB:CC:DD:EE:FF" maxlength="17"/></div>';
+    if (hasMac) row.innerHTML += '<div class="formGroup"><label>MAC</label><input type="text" id="fOtraMac" placeholder="MAC o identificador de la app" maxlength="40"/></div>';
     if (hasCode) row.innerHTML += '<div class="formGroup"><label>Codigo</label><input type="text" id="fOtraCode" placeholder="Codigo"/></div>';
     box.appendChild(row);
     if (hasMac && document.getElementById('fOtraMac')) formatMacInput(document.getElementById('fOtraMac'));
