@@ -7192,14 +7192,12 @@ function extraPromptClear() {
 // ========== PLANTILLAS PELICULAS ADMIN ==========
 var MOVIE_TPL_TMDB_KEY = CONFIG.tmdbKey || '';
 var MOVIE_TPL_IMGBB_KEY = CONFIG.templateImgBBKey || CONFIG.cartImgBBKey || '';
-var MOVIE_TPL_LOGO_STORAGE_KEY = 'm17liv3_movie_template_logo_dataurl';
 var movieTplInitialized = false;
 var movieTplCanvas = null;
 var movieTplCtx = null;
 var movieTplW = 1600;
 var movieTplH = 900;
 var movieTplPosterImg = null;
-var movieTplLogoImg = null;
 var movieTplDebounceTimer = null;
 var movieTplState = {
   title: 'TITULO DE LA PELICULA',
@@ -7208,7 +7206,6 @@ var movieTplState = {
   duration: '00',
   synopsis: 'Escribe aqui la sinopsis de la pelicula. Tambien puedes buscar en TMDB para rellenar automaticamente titulo, genero, puntuacion, duracion, portada y descripcion.',
   posterUrl: '',
-  logoDataUrl: null,
   posterZoom: 100,
   posterOffsetX: 0,
   posterOffsetY: 0
@@ -7223,6 +7220,7 @@ function openMovieTemplates() {
 
 function movieTplInit() {
   if (movieTplInitialized) return;
+  movieTplRemoveUnusedLogoPanel();
   movieTplCanvas = document.getElementById('tplCanvas');
   if (!movieTplCanvas) return;
   movieTplCtx = movieTplCanvas.getContext('2d');
@@ -7267,6 +7265,28 @@ function movieTplInit() {
 }
 
 document.addEventListener('DOMContentLoaded', movieTplInit);
+
+function movieTplRemoveUnusedLogoPanel() {
+  var root = document.getElementById('movieTplSheet');
+  if (!root) return;
+
+  Array.prototype.slice.call(root.querySelectorAll('.movieTplPanel')).forEach(function(panel){
+    var text = (panel.textContent || '').replace(/\s+/g, ' ').trim().toUpperCase();
+    if (text.indexOf('SUBIR LOGO PNG') !== -1 || /^LOGO(?:\s|$)/.test(text)) {
+      panel.remove();
+    }
+  });
+
+  ['tplLogoFile', 'tplLogoPreviewSmall'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (!el) return;
+    var panel = el.closest ? el.closest('.movieTplPanel') : null;
+    if (panel) panel.remove();
+    else el.remove();
+  });
+
+  try { localStorage.removeItem('m17liv3_movie_template_logo_dataurl'); } catch (err) {}
+}
 
 function movieTplFillInputsFromState() {
   var map = {
@@ -7402,35 +7422,6 @@ function movieTplDrawNeonFrame(){
   ctx.restore();
 }
 
-function movieTplDrawLogo(){
-  var ctx = movieTplCtx;
-  var areaW = 245, areaH = 112;
-  var areaX = 68;
-  var areaY = 52;
-  if (movieTplLogoImg){
-    var iw = movieTplLogoImg.width, ih = movieTplLogoImg.height;
-    var scale = Math.min(areaW/iw, areaH/ih);
-    var dw = iw*scale, dh = ih*scale;
-    var dx = areaX + (areaW-dw)/2;
-    var dy = areaY + (areaH-dh)/2;
-    ctx.drawImage(movieTplLogoImg, dx, dy, dw, dh);
-  } else {
-    ctx.save();
-    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
-    ctx.lineWidth = 2;
-    ctx.setLineDash([8,8]);
-    movieTplRoundRect(ctx, areaX, areaY, areaW, areaH, 14);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle = 'rgba(255,255,255,0.28)';
-    ctx.font = '600 20px Arial, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('TU LOGO AQUI', areaX+areaW/2, areaY+areaH/2);
-    ctx.restore();
-  }
-}
-
 function movieTplDrawPoster(){
   var ctx = movieTplCtx;
   var h = 760, w = h * (2/3), x = 58, y = 70, r = 30;
@@ -7530,13 +7521,27 @@ function movieTplDrawTextContent(){
 
   var metaY = 365;
   var genreText = (movieTplState.genre || 'GENERO').toUpperCase();
+  var padX = 24, pillH = 52;
+  var metaGap = 18, ratingW = 178, durationW = 190;
+  var maxGenreW = contentW - ratingW - durationW - metaGap*2;
+  var maxGenreTextW = maxGenreW - padX*2;
   var genreFontSize = 23;
   ctx.font = '800 ' + genreFontSize + 'px Arial, sans-serif';
-  while (ctx.measureText(genreText).width > 338 && genreFontSize > 17){
+  while (ctx.measureText(genreText).width > maxGenreTextW && genreFontSize > 14){
     genreFontSize -= 1;
     ctx.font = '800 ' + genreFontSize + 'px Arial, sans-serif';
   }
-  var padX = 24, pillH = 52, textW = ctx.measureText(genreText).width, pillW = Math.min(textW + padX*2, 390);
+
+  var genreDisplayText = genreText;
+  if (ctx.measureText(genreDisplayText).width > maxGenreTextW){
+    while (genreDisplayText.length > 1 && ctx.measureText(genreDisplayText + '...').width > maxGenreTextW){
+      genreDisplayText = genreDisplayText.slice(0, -1);
+    }
+    genreDisplayText = genreDisplayText.trim().replace(/[,;:\-]+$/, '') + '...';
+  }
+
+  var textW = ctx.measureText(genreDisplayText).width;
+  var pillW = Math.min(textW + padX*2, maxGenreW);
   movieTplRoundRect(ctx, leftX, metaY, pillW, pillH, 16);
   ctx.fillStyle = 'rgba(163,230,53,0.11)';
   ctx.fill();
@@ -7545,11 +7550,10 @@ function movieTplDrawTextContent(){
   ctx.stroke();
   ctx.fillStyle = '#c9ff66';
   ctx.textBaseline = 'middle';
-  ctx.fillText(genreText, leftX+padX, metaY+pillH/2+1);
+  ctx.fillText(genreDisplayText, leftX+padX, metaY+pillH/2+1);
   ctx.textBaseline = 'alphabetic';
 
-  var ratingX = leftX + pillW + 18;
-  var ratingW = 178;
+  var ratingX = leftX + pillW + metaGap;
   movieTplRoundRect(ctx, ratingX, metaY, ratingW, pillH, 16);
   ctx.fillStyle = 'rgba(7,18,29,0.72)';
   ctx.fill();
@@ -7562,8 +7566,7 @@ function movieTplDrawTextContent(){
   var ratingStr = (isNaN(ratingVal) ? '0.0' : ratingVal.toFixed(1)) + '/10';
   ctx.fillText(ratingStr, ratingX+54, metaY+35);
 
-  var durationX = ratingX + ratingW + 18;
-  var durationW = 190;
+  var durationX = ratingX + ratingW + metaGap;
   movieTplRoundRect(ctx, durationX, metaY, durationW, pillH, 16);
   ctx.fillStyle = 'rgba(7,18,29,0.72)';
   ctx.fill();
@@ -7784,40 +7787,6 @@ function movieTplResetPosterAdjust(){
   if(offX) offX.value = 0;
   if(offY) offY.value = 0;
   if(val) val.textContent = '100';
-}
-
-function movieTplHandleLogoUpload(e){
-  var file = e.target.files[0];
-  if(!file) return;
-  var reader = new FileReader();
-  reader.onload = async function(ev){
-    movieTplState.logoDataUrl = ev.target.result;
-    try{ localStorage.setItem(MOVIE_TPL_LOGO_STORAGE_KEY, movieTplState.logoDataUrl); }catch(err){}
-    movieTplLogoImg = await movieTplLoadImage(movieTplState.logoDataUrl, false);
-    var prev = document.getElementById('tplLogoPreviewSmall');
-    if(prev) prev.src = movieTplState.logoDataUrl;
-    movieTplDraw();
-    movieTplSetStatus('Logo actualizado', 'ok');
-  };
-  reader.readAsDataURL(file);
-}
-
-async function movieTplRestoreLogo(){
-  try{
-    var saved = localStorage.getItem(MOVIE_TPL_LOGO_STORAGE_KEY);
-    if(saved){
-      movieTplState.logoDataUrl = saved;
-      movieTplLogoImg = await movieTplLoadImage(saved, false);
-      var prev = document.getElementById('tplLogoPreviewSmall');
-      if(prev) prev.src = saved;
-    } else {
-      movieTplLogoImg = await movieTplLoadImage('assets/logo.png', false);
-    }
-    movieTplDraw();
-  }catch(err){
-    console.warn(err);
-    movieTplDraw();
-  }
 }
 
 function movieTplSetStatus(msg, cls){
