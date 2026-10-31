@@ -589,7 +589,7 @@
         <button onclick="quickFilter('')">&#10005; Quitar filtro</button>
       </div>
       <div class="searchBar clientsSearchOnly">
-        <input type="search" id="searchBox" placeholder="Buscar por nombre, usuario, teléfono o etiqueta..." autocomplete="off" autocapitalize="off" spellcheck="false" oninput="renderCards()"/>
+        <input type="search" id="searchBox" placeholder="Buscar por ID, nombre, usuario o teléfono..." autocomplete="off" autocapitalize="off" spellcheck="false" oninput="renderCards()"/>
       </div>
       <div id="cardsContainer"></div>
       <div class="empty" id="emptyState" style="display:none">
@@ -738,7 +738,7 @@
 
     <div class="clientBrowserSearchBox">
       <span>&#128269;</span>
-      <input type="search" id="clientBrowserSearch" placeholder="Buscar cliente, usuario, teléfono o app..." oninput="clientBrowserSearchChanged()"/>
+      <input type="search" id="clientBrowserSearch" placeholder="Buscar ID, cliente, usuario, teléfono o app..." oninput="clientBrowserSearchChanged()"/>
       <button type="button" onclick="clientBrowserClearSearch()" id="clientBrowserSearchClear">x</button>
     </div>
 
@@ -764,6 +764,10 @@
     <div class="formGroup">
       <label>Nombre / Apodo <span class="required-star">*</span></label>
       <input type="text" id="fName" placeholder="Ej: Juan Garcia"/>
+    </div>
+    <div class="formGroup">
+      <label>ID del cliente</label>
+      <input type="text" id="fClientCode" placeholder="Ej: CLI-001" autocomplete="off"/>
     </div>
     <div class="formGroup">
       <label>Teléfono / WhatsApp</label>

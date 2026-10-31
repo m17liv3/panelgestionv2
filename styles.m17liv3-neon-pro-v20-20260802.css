@@ -5973,6 +5973,61 @@ button:disabled {
   transform: translateY(1px) rotate(180deg);
 }
 
+.clientCard-idRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 12px 11px 14px;
+  padding: 9px 10px;
+  border: 1px solid rgba(var(--client-accent-rgb), .17);
+  border-radius: 10px;
+  background: rgba(var(--client-accent-rgb), .035);
+}
+
+.clientCard-idRow > span {
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.clientCard-idRow small {
+  flex: none;
+  color: #75859a;
+  font-size: .54rem;
+  font-weight: 900;
+  letter-spacing: .75px;
+}
+
+.clientCard-idRow strong {
+  min-width: 0;
+  color: #eaf6ff;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: .72rem;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.clientIdCopy {
+  flex: none;
+  min-height: 29px;
+  padding: 0 10px;
+  border: 1px solid rgba(var(--client-accent-rgb), .31);
+  border-radius: 8px;
+  background: rgba(var(--client-accent-rgb), .08);
+  color: var(--client-accent);
+  font-size: .62rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.clientIdCopy.done {
+  color: #07140e;
+  background: var(--green);
+  border-color: var(--green);
+}
+
 .clientCard-expand {
   display: none;
   border-top: 1px solid rgba(255,255,255,.065);
@@ -5986,7 +6041,7 @@ button:disabled {
 
 .clientCard-detailGrid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0,1fr));
+  grid-template-columns: repeat(4, minmax(0,1fr));
   padding: 0 12px;
 }
 
@@ -6594,6 +6649,20 @@ body.auth-locked [id$="Overlay"]:not(#loadingOverlay) {
 
   .clientCard-summaryStatus {
     max-width: 128px;
+  }
+
+  .clientCard-idRow {
+    margin-left: 12px;
+  }
+
+  .clientCard-idRow > span {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .clientCard-detailGrid {
+    grid-template-columns: repeat(2, minmax(0,1fr));
   }
 }
 
