@@ -7425,6 +7425,15 @@ html[data-theme="light"] .bottomNavItem.active {
   background: rgba(0,135,163,.08) !important;
   box-shadow: inset 0 0 0 1px rgba(0,135,163,.14) !important;
 }
+html[data-theme="light"] .bottomNavItem small,
+html[data-theme="light"] .bottomNavItem:active small {
+  color: #263a4c !important;
+  text-shadow: none !important;
+}
+html[data-theme="light"] .bottomNavItem.active small {
+  color: #006f88 !important;
+  text-shadow: none !important;
+}
 
 html[data-theme="light"] #loginBox,
 html[data-theme="light"] #mfaBox {
