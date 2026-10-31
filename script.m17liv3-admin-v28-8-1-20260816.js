@@ -1470,6 +1470,41 @@ function setLogoSrc(src) {
   });
 }
 
+var APP_THEME_KEY = 'm17_app_theme';
+
+function getAppTheme() {
+  try { return localStorage.getItem(APP_THEME_KEY) === 'light' ? 'light' : 'dark'; }
+  catch (e) { return 'dark'; }
+}
+
+function applyAppTheme(theme, persist) {
+  theme = theme === 'light' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', theme);
+  if (persist !== false) {
+    try { localStorage.setItem(APP_THEME_KEY, theme); } catch (e) {}
+  }
+
+  var isLight = theme === 'light';
+  var btn = document.getElementById('themeToggleBtn');
+  var icon = document.getElementById('themeToggleIcon');
+  var label = isLight ? 'Activar modo noche' : 'Activar modo día';
+  if (icon) icon.textContent = isLight ? '🌙' : '☀️';
+  if (btn) {
+    btn.setAttribute('title', label);
+    btn.setAttribute('aria-label', label);
+    btn.setAttribute('aria-pressed', isLight ? 'true' : 'false');
+  }
+
+  var metaTheme = document.querySelector('meta[name="theme-color"]');
+  if (metaTheme) metaTheme.setAttribute('content', isLight ? '#edf5fa' : '#030812');
+}
+
+function toggleAppTheme() {
+  var nextTheme = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+  applyAppTheme(nextTheme, true);
+  if (typeof showToast === 'function') showToast(nextTheme === 'light' ? 'Modo día activado' : 'Modo noche activado');
+}
+
 function applyAppCustomization(custom) {
   var c = custom || getCustomization();
   var name = c.name || 'M17LIV3 Gestión Clientes';
@@ -1487,6 +1522,7 @@ function applyAppCustomization(custom) {
   if (metaTheme) metaTheme.setAttribute('content', accent);
 
   setLogoSrc(logo);
+  applyAppTheme(getAppTheme(), false);
 }
 
 async function openCustomization() {

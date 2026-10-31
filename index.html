@@ -10,6 +10,16 @@
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-title" content="M17LIV3"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<script>
+  (function () {
+    try {
+      var savedTheme = localStorage.getItem('m17_app_theme');
+      document.documentElement.setAttribute('data-theme', savedTheme === 'light' ? 'light' : 'dark');
+    } catch (e) {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
+  })();
+</script>
 <link rel="manifest" href="manifest.webmanifest"/>
 <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png"/>
 <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png"/>
@@ -481,6 +491,7 @@
     <img src="assets/logo.png" alt="M17LIV3"/>
     <span class="topbar-title">M17LIV3</span>
     <div class="topbar-right">
+      <button type="button" class="iconBtn themeToggleBtn" id="themeToggleBtn" onclick="toggleAppTheme()" title="Activar modo día" aria-label="Activar modo día"><span id="themeToggleIcon" aria-hidden="true">&#9728;&#65039;</span></button>
       <button class="iconBtn refreshBtn" onclick="refreshWebApp()" title="Actualizar web-app" aria-label="Actualizar web-app">&#8635;</button>
     </div>
   </div>

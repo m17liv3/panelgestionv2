@@ -7157,3 +7157,294 @@ body { color: var(--text); }
   .homeStatusCard strong { font-size:1.35rem !important; }
   .bottomNavItem small { font-size:.54rem !important; }
 }
+
+/* =========================================================
+   M17LIV3 · MODO DÍA / NOCHE
+   El modo oscuro sigue siendo el diseño predeterminado.
+   ========================================================= */
+.themeToggleBtn span {
+  display: inline-block;
+  line-height: 1;
+  transition: transform .22s ease;
+}
+.themeToggleBtn:active span { transform: rotate(18deg) scale(.9); }
+.topbar {
+  display: grid !important;
+  grid-template-columns: 43px minmax(0,1fr) auto;
+  gap: 10px;
+}
+.topbar-title {
+  min-width: 0;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.topbar-right { justify-content: flex-end; }
+
+html[data-theme="light"] {
+  color-scheme: light;
+  --bg: #edf5fa;
+  --bg2: #f7fbfd;
+  --card: #ffffff;
+  --card2: #f0f6fa;
+  --text: #172637;
+  --muted: #60758a;
+  --border: rgba(55, 91, 121, .18);
+  --cyan: #0087a3;
+  --green: #238b48;
+  --orange: #b96b00;
+  --red: #d4374e;
+  --purple: #7047d7;
+}
+
+html[data-theme="light"],
+html[data-theme="light"] body {
+  background:
+    radial-gradient(circle at 7% 0%, rgba(0,135,163,.12), transparent 27rem),
+    radial-gradient(circle at 96% 18%, rgba(35,139,72,.08), transparent 24rem),
+    linear-gradient(180deg, #f7fbfd 0%, #edf5fa 48%, #e8f1f7 100%) fixed !important;
+  color: var(--text) !important;
+}
+
+html[data-theme="light"] #loginPage,
+html[data-theme="light"] #mfaPage {
+  background: radial-gradient(ellipse at 50% 24%, #d9f4f8 0%, #edf5fa 68%) !important;
+}
+
+html[data-theme="light"] .topbar {
+  background: rgba(255,255,255,.88) !important;
+  border-bottom-color: rgba(0,135,163,.18) !important;
+  box-shadow: 0 10px 30px rgba(45,78,104,.11) !important;
+}
+html[data-theme="light"] .topbar img { filter: drop-shadow(0 4px 8px rgba(0,83,104,.16)); }
+html[data-theme="light"] .topbar-title {
+  background: linear-gradient(90deg, #007d99, #218642) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+}
+html[data-theme="light"] .iconBtn {
+  background: #f4f9fc !important;
+  border-color: rgba(0,135,163,.25) !important;
+  color: #007d99 !important;
+  box-shadow: 0 4px 12px rgba(45,78,104,.08) !important;
+}
+
+html[data-theme="light"] .homeEyebrow,
+html[data-theme="light"] .clientsSectionEyebrow { color: #007d99 !important; }
+html[data-theme="light"] .homeHeroControl h2,
+html[data-theme="light"] .clientsSectionHero h2 { color: #142536 !important; }
+html[data-theme="light"] .homeHeroControl p,
+html[data-theme="light"] .clientsSectionHero p { color: #60758a !important; }
+
+html[data-theme="light"] .homeStatusCard,
+html[data-theme="light"] .homeMoneyCard,
+html[data-theme="light"] .homePanelLinks,
+html[data-theme="light"] .homePanelLinkCard {
+  background: linear-gradient(145deg, #ffffff, #f3f8fb) !important;
+  border-color: rgba(55,91,121,.17) !important;
+  box-shadow: 0 9px 24px rgba(45,78,104,.09), inset 0 1px 0 #fff !important;
+}
+html[data-theme="light"] .homeStatusCard small,
+html[data-theme="light"] .homeStatusCard em,
+html[data-theme="light"] .homeMoneyCard small { color: #60758a !important; }
+html[data-theme="light"] .homePanelLinksHead { border-bottom-color: rgba(55,91,121,.12) !important; }
+
+html[data-theme="light"] .clientsNewButton,
+html[data-theme="light"] .clientsCloseButton {
+  background: #ffffff !important;
+  border-color: rgba(0,135,163,.30) !important;
+  color: #007d99 !important;
+  box-shadow: 0 5px 14px rgba(45,78,104,.08) !important;
+}
+html[data-theme="light"] .clientsQuickFilters button {
+  background: #ffffff !important;
+  border-color: rgba(55,91,121,.19) !important;
+  color: #536b80 !important;
+}
+html[data-theme="light"] .clientsQuickFilters button.active {
+  color: #052028 !important;
+  border-color: transparent !important;
+  background: linear-gradient(135deg, #28d9ef, #70ef65) !important;
+}
+html[data-theme="light"] .activeFilterBar {
+  background: rgba(0,135,163,.07) !important;
+  border-color: rgba(0,135,163,.20) !important;
+  color: #007d99 !important;
+}
+html[data-theme="light"] .searchBar input {
+  background: #ffffff !important;
+  border-color: rgba(0,135,163,.22) !important;
+  color: #172637 !important;
+  box-shadow: inset 0 1px 0 #fff, 0 5px 14px rgba(45,78,104,.06) !important;
+}
+html[data-theme="light"] input::placeholder,
+html[data-theme="light"] textarea::placeholder { color: #8495a5 !important; opacity: 1; }
+
+html[data-theme="light"] .clientCard {
+  background: linear-gradient(145deg, #ffffff, #f4f8fb) !important;
+  border-color: rgba(55,91,121,.17) !important;
+  box-shadow: 0 10px 25px rgba(45,78,104,.10) !important;
+}
+html[data-theme="light"] .clientCard-name,
+html[data-theme="light"] .clientCard-summary .clientCard-name { color: #172637 !important; }
+html[data-theme="light"] .clientCard-app,
+html[data-theme="light"] .clientCard-summaryDate { color: #667b8e !important; }
+html[data-theme="light"] .clientCard-idRow {
+  background: rgba(0,135,163,.045) !important;
+  border-color: rgba(0,135,163,.17) !important;
+}
+html[data-theme="light"] .clientCard-idRow small,
+html[data-theme="light"] .clientDetailBlock > span { color: #667b8e !important; }
+html[data-theme="light"] .clientCard-idRow strong,
+html[data-theme="light"] .clientDetailBlock strong { color: #193044 !important; }
+html[data-theme="light"] .clientCard-expand,
+html[data-theme="light"] .clientCard-expanded {
+  background: rgba(230,240,246,.62) !important;
+  border-top-color: rgba(55,91,121,.11) !important;
+}
+html[data-theme="light"] .clientCard-detailItem,
+html[data-theme="light"] .clientDetailBlock {
+  background: rgba(255,255,255,.68) !important;
+  border-color: rgba(55,91,121,.10) !important;
+}
+html[data-theme="light"] .clientCard-actions button,
+html[data-theme="light"] .clientCard-expandedActions button,
+html[data-theme="light"] .clientCard-actions-accordion button {
+  background: #ffffff !important;
+  border-color: rgba(55,91,121,.16) !important;
+}
+html[data-theme="light"] .clientCommTag.neutral { color: #60758a !important; }
+
+html[data-theme="light"] .sheet-overlay {
+  background: rgba(26,45,61,.32) !important;
+  backdrop-filter: blur(5px);
+}
+html[data-theme="light"] .sheet {
+  background: linear-gradient(180deg, #ffffff 0%, #edf5fa 100%) !important;
+  border-color: rgba(0,135,163,.22) !important;
+  box-shadow: 0 -20px 60px rgba(45,78,104,.25) !important;
+}
+html[data-theme="light"] .sheet-header {
+  background: rgba(255,255,255,.70) !important;
+  border-bottom-color: rgba(55,91,121,.12) !important;
+}
+html[data-theme="light"] .sheet-header h3 { color: #172637 !important; }
+html[data-theme="light"] .sheet-close {
+  color: #526a7e !important;
+  background: #edf5fa !important;
+  border-color: rgba(55,91,121,.17) !important;
+}
+html[data-theme="light"] .formGroup label,
+html[data-theme="light"] .vlabel { color: #566f83 !important; }
+html[data-theme="light"] .formGroup input,
+html[data-theme="light"] .formGroup textarea,
+html[data-theme="light"] .formGroup select,
+html[data-theme="light"] .inp,
+html[data-theme="light"] select {
+  background: #ffffff !important;
+  color: #172637 !important;
+  border-color: rgba(0,135,163,.20) !important;
+  box-shadow: inset 0 1px 2px rgba(45,78,104,.04) !important;
+}
+html[data-theme="light"] select option { background: #ffffff !important; color: #172637 !important; }
+
+html[data-theme="light"] .menuItem {
+  background: rgba(255,255,255,.82) !important;
+  border-color: rgba(55,91,121,.14) !important;
+}
+html[data-theme="light"] .menuItem .ico2 { background: rgba(0,135,163,.08) !important; color: #007d99 !important; }
+
+html[data-theme="light"] .paymentsStat,
+html[data-theme="light"] .financeStatCard,
+html[data-theme="light"] .financeSummaryCard,
+html[data-theme="light"] .financeChart,
+html[data-theme="light"] .chartCard,
+html[data-theme="light"] .financeChartCard,
+html[data-theme="light"] .financeComparisonCard,
+html[data-theme="light"] .financeMonthCard,
+html[data-theme="light"] .financeFormBox,
+html[data-theme="light"] .paymentItem,
+html[data-theme="light"] .financeMovementItem,
+html[data-theme="light"] .financeItem {
+  background: #ffffff !important;
+  border-color: rgba(55,91,121,.15) !important;
+  box-shadow: 0 7px 20px rgba(45,78,104,.07) !important;
+}
+html[data-theme="light"] .financeCompareGrid div { background: #f2f7fa !important; border-color: rgba(55,91,121,.12) !important; }
+
+html[data-theme="light"] .premiumClientHero,
+html[data-theme="light"] .clientCleanCard {
+  background: linear-gradient(145deg, #ffffff, #eef5f9) !important;
+  box-shadow: 0 10px 28px rgba(45,78,104,.10) !important;
+}
+html[data-theme="light"] .premiumClientName,
+html[data-theme="light"] .clientCleanNameRow h4 { color: #172637 !important; }
+html[data-theme="light"] .premiumDataCard,
+html[data-theme="light"] .premiumAppCard,
+html[data-theme="light"] .premiumNotes,
+html[data-theme="light"] .premiumOptionList button,
+html[data-theme="light"] .clientCleanSection,
+html[data-theme="light"] .clientCleanAppPill,
+html[data-theme="light"] .renewPaymentBox,
+html[data-theme="light"] .backupPanel,
+html[data-theme="light"] .messageTemplateHelp,
+html[data-theme="light"] .movieTplPanel {
+  background: #ffffff !important;
+  border-color: rgba(55,91,121,.15) !important;
+  box-shadow: 0 6px 18px rgba(45,78,104,.06) !important;
+}
+html[data-theme="light"] .premiumDataLabel,
+html[data-theme="light"] .premiumAppMeta,
+html[data-theme="light"] .premiumClientSub,
+html[data-theme="light"] .clientCleanSub { color: #60758a !important; }
+html[data-theme="light"] .premiumDataValue,
+html[data-theme="light"] .premiumAppTop strong,
+html[data-theme="light"] .premiumNotes,
+html[data-theme="light"] .premiumOptionList button strong { color: #172637 !important; }
+html[data-theme="light"] .premiumCodeLine code { color: #006f88 !important; background: #edf5fa !important; }
+
+html[data-theme="light"] .movieTplResultItem,
+html[data-theme="light"] .movieTplPosterThumb,
+html[data-theme="light"] .movieTplFileRow img,
+html[data-theme="light"] .movieTplLinkBox,
+html[data-theme="light"] .movieTplFileLabel {
+  background: #f2f7fa !important;
+  border-color: rgba(55,91,121,.16) !important;
+  color: #172637 !important;
+}
+
+html[data-theme="light"] .bottomNav {
+  background: rgba(255,255,255,.94) !important;
+  border-color: rgba(0,135,163,.20) !important;
+  box-shadow: 0 12px 38px rgba(45,78,104,.20), inset 0 1px 0 #fff !important;
+}
+html[data-theme="light"] .bottomNavItem { color: #60758a !important; }
+html[data-theme="light"] .bottomNavItem.active {
+  color: #007d99 !important;
+  background: rgba(0,135,163,.08) !important;
+  box-shadow: inset 0 0 0 1px rgba(0,135,163,.14) !important;
+}
+
+html[data-theme="light"] #loginBox,
+html[data-theme="light"] #mfaBox {
+  background: linear-gradient(155deg, #ffffff, #edf5fa) !important;
+  border-color: rgba(0,135,163,.20) !important;
+  box-shadow: 0 24px 70px rgba(45,78,104,.20) !important;
+}
+html[data-theme="light"] #loginBox h2,
+html[data-theme="light"] #mfaBox h2 { color: #172637 !important; }
+html[data-theme="light"] #loginBox p,
+html[data-theme="light"] #mfaBox p { color: #60758a !important; }
+
+html[data-theme="light"] .btnMain,
+html[data-theme="light"] .btnFull.primary,
+html[data-theme="light"] button.primary,
+html[data-theme="light"] .clientsQuickFilters button.active {
+  background: linear-gradient(135deg, #28d9ef, #70ef65) !important;
+  color: #052028 !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .themeToggleBtn span { transition: none; }
+}
