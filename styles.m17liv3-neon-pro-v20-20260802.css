@@ -7435,6 +7435,45 @@ html[data-theme="light"] .bottomNavItem.active small {
   text-shadow: none !important;
 }
 
+/* Cartelera: campos que tienen estilos oscuros propios en el HTML. */
+html[data-theme="light"] #carteleraSheet .cartClientLinkCard {
+  background: rgba(0,135,163,.055) !important;
+  border-color: rgba(0,135,163,.19) !important;
+}
+html[data-theme="light"] #carteleraSheet .cartSectionTitle {
+  color: #527086 !important;
+}
+html[data-theme="light"] #carteleraSheet #cart-img-file,
+html[data-theme="light"] #carteleraSheet #cart-texto {
+  background: #ffffff !important;
+  color: #172637 !important;
+  border-color: rgba(0,135,163,.24) !important;
+  box-shadow: inset 0 1px 2px rgba(45,78,104,.04), 0 5px 15px rgba(45,78,104,.06) !important;
+}
+html[data-theme="light"] #carteleraSheet #cart-texto::placeholder {
+  color: #74899b !important;
+  opacity: 1 !important;
+}
+html[data-theme="light"] #carteleraSheet #cart-img-file::file-selector-button {
+  margin-right: 10px;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 7px;
+  background: #dcecf3;
+  color: #20384a;
+  font-weight: 800;
+  cursor: pointer;
+}
+html[data-theme="light"] #carteleraSheet #clienteLinkBox,
+html[data-theme="light"] #carteleraSheet #cart-img-link {
+  background: #eaf5f8 !important;
+  color: #006f88 !important;
+  border-color: rgba(0,135,163,.21) !important;
+}
+html[data-theme="light"] #carteleraSheet #cart-char-count {
+  color: #60758a !important;
+}
+
 html[data-theme="light"] #loginBox,
 html[data-theme="light"] #mfaBox {
   background: linear-gradient(155deg, #ffffff, #edf5fa) !important;
