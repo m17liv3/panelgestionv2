@@ -3838,6 +3838,7 @@ async function exportFinanceExcel() {
 // ========== PANELES EXTERNOS EDITABLES ==========
 var DEFAULT_PANEL_LINKS = [
   { key: 'ibo', label: 'Panel IBO', url: 'https://damaplay.top/panelr/m17live/' },
+  { key: 'kds', label: 'Panel KDS PLAYER', url: '' },
   { key: 'k13', label: 'Panel K13', url: '' },
   { key: 'jordan', label: 'Panel Jordan', url: '' }
 ];
@@ -4018,7 +4019,7 @@ async function openPanelLinksEditor() {
     var input = document.getElementById('panelLinkInput-' + key);
     if (input) input.value = panelLinkByKey(key).url || '';
   };
-  set('ibo'); set('k13'); set('jordan');
+  set('ibo'); set('kds'); set('k13'); set('jordan');
   var st = document.getElementById('panelLinksEditorStatus');
   if (st) st.textContent = 'Actualiza los enlaces y pulsa Guardar enlaces. Se sincronizan entre Windows y móvil.';
   openSheet('panelLinksSheet','panelLinksOverlay');
