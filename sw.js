@@ -1,4 +1,4 @@
-const CACHE_NAME = 'm17liv3-panel-kds-player-20261102';
+const CACHE_NAME = 'm17liv3-inicio-sin-resumen-20261102';
 const ASSETS = [
   './','./index.html','./cartelera.html','./config.js','./manifest.webmanifest',
   './styles.m17liv3-neon-pro-v20-20260802.css','./script.m17liv3-admin-v28-8-1-20260816.js',
